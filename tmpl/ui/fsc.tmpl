@@ -1,0 +1,46 @@
+<div class="fsc">
+<p>Please Specify the action to perform</p>
+<p><select class="form-control actionm">
+<option value="touch">Touch (create file at path specified)</option>
+<option value="dir">Create directory at path specified</option>
+<option value="upload">Upload binary</option>
+</select></p>
+<p style="display:none" class="filem"><input type="file" id="filePicker"></p>
+<label class="label label-info">Creating file in directory {{ .Path }}</label>
+{{bForm .Form }}
+<script type="text/javascript">
+$(".actionm").change(function(e){
+	e.preventDefault();
+
+	if($(this).val() == "upload"){
+		$(".filem").css('display','block')
+	} else  {
+		$(".filem").css('display','none');
+	}
+		$("input[name='fmode']").val($(this).val());
+	
+
+});
+var handleFileSelect = function(evt) {
+    var files = evt.target.files;
+    var file = files[0];
+
+    if (files && file) {
+        var reader = new FileReader();
+
+        reader.onload = function(readerEvt) {
+            var binaryString = readerEvt.target.result;
+            $("input[name='basesix']").val(btoa(binaryString));
+        };
+
+        reader.readAsBinaryString(file);
+    }
+};
+
+if (window.File && window.FileReader && window.FileList && window.Blob) {
+    document.getElementById('filePicker').addEventListener('change', handleFileSelect, false);
+} else {
+    alert('The File APIs are not fully supported in this browser.');
+}
+</script>
+</div>

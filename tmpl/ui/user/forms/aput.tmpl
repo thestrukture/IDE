@@ -1,0 +1,12 @@
+{{ $rin := RandTen }}
+<div id="{{ $rin }}" >
+<div class="input-group aput" path="{{ .Link }}"  >
+      <input type="text" name="var" data-key="{{ .Param }}" value="{{ .Value }}" class="form-control required" placeholder="{{ .Param }}">
+      <span class="input-group-btn">
+        <button class="btn btn-primary" type="button">{{FA /{`Text`: `save`}/ }}</button>
+      </span>
+ </div>
+ <script type="text/javascript">
+ 	$("#{{ $rin }}").havok();
+ </script>
+</div>

@@ -1,0 +1,28 @@
+{{ if .Type | eq "par" }}
+<p class="{{ .Misc }}">{{ .Text }}</p>
+{{end}}
+{{if .Type | eq "h" }}
+<h{{.Misc}}>{{.Text}}</h1{{.Misc}}>
+{{end}}
+
+{{ if .Type | eq "select" }}
+	<select class="form-control xsub"  name="{{ .Name }}" >
+		{{ with .Options}}
+			{{range . }}
+				{{ if . eq .Value}}
+				<option value="{{ . }}" selected>{{ . }}</option>
+				{{ else }}
+				<option value="{{ . }}">{{ . }}</option>
+				{{end}}
+			{{ end }}
+		{{ end }}
+	</select>
+{{ end }}
+
+{{if .Type | neq "h" }}
+	{{if .Type | neq "par" }}
+		{{if .Type | neq "select" }}
+			<p><input class="form-control xsub {{.Misc}}"  {{ if .Value | neq ""  }} value="{{ .Value }}" {{ end}} name="{{.Name}}" type="{{.Type}}" placeholder="{{.Text}}"></p>
+		{{end}}
+	{{end}}
+{{end}}

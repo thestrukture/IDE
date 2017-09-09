@@ -1,0 +1,91 @@
+#hexagon {
+	width: 100px;
+    height: 55px;
+    background: rgba(0,0,0,0.3);;
+    transform: rotateY( -178deg ) rotateX( 117deg ) scale(3);
+    position: absolute;
+    top: 308px;
+    left: 50%;
+	animation: pulse 100s infinite;
+}
+
+.header-p {
+  background:url(/img/star.jpg) center #ec646e;
+
+  animation: bg 50s linear infinite;
+}
+
+.full-height {
+  height:100%;
+}
+
+   @media screen and (max-width: 1048px) {
+         .pop-box {
+            position: absolute;
+            width: 270px;
+            height: 91%;
+            border: 1px dotted rgb(51, 51, 51);
+         }
+
+         .pop-panel {
+            width:100%;
+         }
+    }
+
+.over-flow-fix {
+  overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.inverted-h {
+    background: url(/img/star2.jpg) no-repeat center center; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+.header-f {
+  background:url(/img/bg2.jpg) no-repeat center center; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+.terminal-side {
+  
+}
+
+.navbar-l a {
+  color:#fff !important;
+}
+
+.navbar-l .brand {
+  color:#fff !important;
+}
+
+
+.full-row .row, .full-row .col-sm-6 {
+  height: 100%;
+}
+
+
+
+@keyframes pulse {
+  0%,100% {
+    transform: rotateY( -180deg ) rotateX( 117deg ) scale(5);
+  }
+  50% {
+    transform: rotateY( 180deg ) rotateX( 117deg ) scale(5);
+  }
+}
+
+@keyframes bg {
+  0%,100% {
+    background-position-x: -100px 
+  }
+  50% {
+    background-position-x: -200px 
+  }
+}

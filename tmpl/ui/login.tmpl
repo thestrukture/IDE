@@ -1,0 +1,35 @@
+<div class="tip-red center-panel">
+	<div class="row">
+		<div class="col-xs-1"></div>
+		<div class="col-xs-10 text-center">
+			{{Logo /{`Misc`:`40`}/}}
+			<h3 class="text-muted"><b>Strukture</b></h3>
+
+			<div class="auto-marker" >
+				<div class="marker" path="/api/login">
+				<p class="hidden-aspect text-center"><i class="fa fa-spin fa-cog fa-3x"></i></p>
+				{{Input /{`Name`:`username`,`Type`:`text`,`Text`:`Username`,`Misc`:`required`}/ }}
+				{{Input /{`Name`:`password`,`Type`:`password`,`Text`:`Password`,`Misc`:`required`}/ }}
+				<div class="loader-result"></div>
+				<p>{{Submit /{`Misc`:`primary btn-block`,`Text` : `Login`}/}}</p>
+				</div>
+				
+				<p><a href="/register" class="btn btn-warning-outline btn-block">Register</a></p>
+			
+				
+			</div>
+			<div class="auto-marker">
+				<div style="display:none" class="marker oass" path="">
+				{{Input /{`Name`:`email`,`Type`:`text`,`Text`:`Email of current account`,`Misc`:`required`}/ }}
+				<div class="loader-result"></div>
+				<p>{{Submit /{`Misc`:`primary btn-block`,`Text` : `Reset password`}/}}</p>
+				</div>
+				<p><a href="/password" class="btn btn-primary-outline btn-block">Forgot password</a></p>
+
+
+			</div>
+
+
+		</div>
+	</div>
+</div>

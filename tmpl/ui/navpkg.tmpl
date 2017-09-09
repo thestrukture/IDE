@@ -1,0 +1,16 @@
+   <ul class="nav navbar-nav">
+    <li class="nav-item active">
+      <a class="nav-link" href="/home">Home </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/download-zip?pkg={{ .Misc }}">Download Zip</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/deps?pkg={{ .Misc }}">Dependencies</a>
+    </li>
+  </ul>
+ <form class="form-inline pull-xs-right auto-marker">
+     <button class="btn btn-danger xtrigger" path="/delete?pkg={{ .Misc }}" >Delete this package</button>
+    <a class="btn btn-warning-outline" href="/settings" >Settings</a>
+     <a class="btn btn-danger-outline"  href="/logout" >Logout</a>
+  </form>

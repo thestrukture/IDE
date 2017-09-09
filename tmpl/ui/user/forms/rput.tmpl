@@ -1,0 +1,30 @@
+{{ $rin := RandTen }}
+<div id="{{ $rin }}" >
+
+
+	{{ $count := .Count }}
+	<div class="marker row" data-link="{{ .ListLink }}" path="{{ .Link }}">
+		
+	{{ with .Inputs }}
+		{{range .}}
+			<div class="col-xs-{{ $count }}">
+			{{bInput .}}
+			</div>
+		{{end}}
+	{{ end }}
+	<div class="col-xs-{{ $count }}" style="text-align:right;">
+		{{ if .DLink | neq ""}}
+		<button class=" btn btn-danger" path="{{ .DLink }}"><i class="fa fa-trash"></i></button>
+		{{end}}
+		<button class="dosub btn btn-success"><i class="hidden-aspect fa fa-spinner fa-spin"></i> <i class="fa fa-save"></i></button>
+	</div>
+	<div class="loader-result col-xs-12">
+
+	</div>
+
+	</div>
+
+</div>
+<script type="text/javascript">
+	$("#{{ $rin }}").havok();
+</script>

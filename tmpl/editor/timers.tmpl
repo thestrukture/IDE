@@ -1,0 +1,15 @@
+{{ $rin := RandTen }}
+<div class="tabview" id="{{ $rin }}" style="background-color:#fff;">
+<div class="card card-inverse card-info text-xs-center">
+  <div class="card-block">
+    <blockquote class="card-blockquote">
+     <h3>Timer Editor</h3>
+  	{{bRPUT .CreateForm}}
+    </blockquote>
+  </div>
+</div>
+<script type="text/javascript">
+	
+	 addTab({{ .PKG }} + " - Timers", {{ $rin }} );
+</script>
+</div>

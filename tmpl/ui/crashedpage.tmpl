@@ -1,0 +1,28 @@
+	<!DOCTYPE html>
+<html class="full-height" lang="en">
+  <head>
+    <!-- Required meta tags always come first -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Server side error</title>
+      <link rel="shortcut icon" href="/img/logo.png" />
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/dist/themes/default/style.min.css" />
+     <link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
+
+      <link rel="stylesheet" type="text/css" href="dist/ss.css">
+      <link rel="stylesheet" type="text/css" href="dist/jquery.terminal-0.10.8.min.css">
+  </head>
+  <body class="full-height over-flow-fix" style="background:#333">
+
+    <div style="margin:15px;border-radius:10px;background:#fff;padding:10px;">
+      <h1> <a class="navbar-brand"><img src="/img/logo.png" style="display:inline;width:35px"> Strukture</a> Error performing request <small>(500)</small></h1>
+      <p style="text-muted">Here's the stack trace</p>
+      <textarea class="form-control" style="width:100%;min-height:450px;">{{ .Text }}</textarea>
+    </div>
+
+  </body>
+  </html>

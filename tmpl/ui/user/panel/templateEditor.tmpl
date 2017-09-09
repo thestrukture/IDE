@@ -1,0 +1,34 @@
+
+<div class="tabview" id="{{ .ID }}" pkg="{{ .PKG }}" >
+<div  class="row">
+<style type="text/css">
+	.spl-col .dosub {
+		float:left;
+	}
+</style>
+	<div class="col-sm-9 spl-col">
+		{{bRPUT .Settings }}
+	</div>
+	<div class="col-sm-3 " style="text-align:right">
+		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
+	</div>
+</div>
+<div id="editor{{ .ID }}" class="defed">{{printf "%s" .File}}</div>
+<script type="text/javascript">
+	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
+	 editors["{{ .ID }}"].getSession().setMode("ace/mode/html")
+	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	 editors["{{ .ID }}"].commands.addCommand({
+	    name: 'myCommand',
+	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+	    exec: function(editor) {
+	        //...
+	        SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}');
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+	});
+
+	 
+	 addTab("{{ .SavesTo }}", "{{ .ID }}" );
+</script>
+</div>

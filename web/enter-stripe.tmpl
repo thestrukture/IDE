@@ -1,0 +1,71 @@
+{{if .Session | sc "loginid" }}
+{{$me := .Session | sgo "me"}}
+
+{{ if  $me.StripeID | isExpired $me.TrialEnd }}
+<html lang="en">
+  <head>
+    <!-- Required meta tags always come first -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Home</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
+        <link rel="shortcut icon" href="/img/logo.png" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/dist/themes/default/style.min.css" />
+     <link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
+
+  </head>
+  <body>
+    {{Css}}
+
+    {{ Navbar }}
+
+    {{ $stripeToken := .R | form "stripeToken" }}
+    {{ $email := .R | form "stripeEmail" }}
+    {{ if $stripeToken | neq "" }}
+    <div class="tip-red center-panel">
+       {{ $pay := makeSubscription $stripeToken $email $me }}
+          {{ if $pay | eq "Yes" }}
+             <div class="alert alert-success alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+              <p>Thank you for choosing the strukture! redirecting...</p>
+              <script type="text/javascript">
+                window.location = "/home";
+              </script>
+            </div>
+          {{else}}
+           <div class="alert alert-warning alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <p>Please try again, there was a problem processing your payment.</p>
+          {{Stripe}}
+        </div>
+          {{end}}
+          {{else}}
+           <div class="alert alert-warning alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <p>Your account's trial has expired, to claim it, simply add your payment information.</p>
+          {{Stripe}}
+        </div>
+        {{end}}
+    </div>
+
+
+</body>
+</html>
+
+
+{{else}}
+<script type="text/javascript">
+  window.location = "/home";
+</script>
+{{end}}
+
+{{end}}

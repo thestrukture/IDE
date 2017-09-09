@@ -1,0 +1,49 @@
+ {{ $rin := RandTen }}
+<div class="tabview" style="background:#fff;" id="{{ $rin }}">
+<div class="card card-inverse card-info text-xs-center">
+  <div class="card-block">
+    <blockquote class="card-blockquote">
+     <h1>{{ .Name }}</h1>
+     <p>Latest build status :</p>
+    <h2>{{ if .Build }}
+     	<label class="label label-success">Passed ( {{ .Time }})</label>
+     {{else}}
+     	<label class="label label-danger">Failed ( {{ .Time }})</label>
+     {{end}}</h2>
+      <footer><div class="row"><div class="col-sm-4">
+          <a type="button" href="/api/export?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Download project</a>
+      </div>
+      <div class="col-sm-4">
+      	  <a type="button" href="/api/bin?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Download Binary </a>
+      </div>
+      <div class="col-sm-4">
+          <button type="button" onclick="BuildPKG('{{ .Name }}')" target="_blank" class="btn btn-block btn-danger">Build <i class="fa fa-chevron-circle-right1"></i> </button>
+      </div>
+    
+  </div></footer>
+    </blockquote>
+
+    <h3 style="color:#fff;text-align:left;">Run server</h3>
+    {{ if  .Pid | neq "" }}
+        <p><span class="label label-success">Running... Pid : {{ .Pid }}</span></p>
+    {{end}}
+    <div class="row">
+      <div class="col-sm-4">
+        <p><button class="btn btn-block btn-warning" onclick="StartServer('{{ .Name }}')">Start/Reset server</button></p>
+      </div>
+       <div class="col-sm-4">
+        <p><button class="btn btn-block btn-danger" onclick="StopServer('{{ .Name }}')">Stop server</button></p>
+      </div>
+
+    </div>
+
+
+  </div>
+</div>
+  <p><button class="btn btn-block btn-info" onclick="ClearLogs('{{ .Name }}')">Delete logs</button></p>
+<script type="text/javascript">
+	 //editors["{{ $rin }}"] = ace.edit("editor{{ $rin }}");
+	 //editors["{{ $rin }}"].getSession().setMode("ace/mode/plain_text")
+	 addTab({{.Name}} + " - Build center", {{ $rin }} );
+</script>
+</div>

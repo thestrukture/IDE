@@ -1,0 +1,36 @@
+{{ $rin := RandTen }}
+<div class="modal fade" id="{{ $rin }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:{{ .Color }}">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">{{ .Title }}</h4>
+      </div>
+
+      {{ if .Body | eq "" }}
+      <div class="modal-body">
+        {{bForm .Form}}
+      </div>
+      {{else}}
+      <div class="modal-body">
+        {{ .Body }}
+      </div>
+      <div class="modal-footer">
+       {{with .Buttons }}
+       {{ range .}}
+          {{  bxButton . }}
+       {{end}}
+       {{end}}
+      </div>
+      {{end}}
+
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  $("#{{ $rin }}").modal('show');
+  /* Havok Form Binding if Body is not set */
+
+</script>

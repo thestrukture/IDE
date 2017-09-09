@@ -1,0 +1,2161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gos>
+	<!--Stating the deployment type GoS should compile -->
+	<!-- Curent valid types are webapp,shell and precursor -->
+	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
+	<deploy>webapp</deploy>
+	<port>8884</port>
+	
+	<!-- Using import within different tags will have different results -->
+	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
+	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
+	<!-- To be less dramating, GoS will skip packages that it has already imported -->
+
+	<import src="encoding/gob" />
+	<import src="io/ioutil" />
+	<import src="crypto/sha512" />
+	<!--<import src="encoding/xml" />-->
+	<import src="log" />
+	<import src="html" />
+	<import src="time" />
+    <import src="gopkg.in/mgo.v2/bson"/>
+    <import src="github.com/cheikhshift/gos/core"/>
+    <import src="os" />
+    <import src="strconv" />
+    <import src="strings" />
+    <import src="sync" />
+    <import src="path/filepath" />
+	<!-- Go File output name -->
+	<output>server_out.go</output>
+	
+	<var type="sync.Mutex">mutex</var>
+	<key>something-secretive-is-what-a-gorrilla-needs</key>
+	<!-- The <init/> tag is similar to the init function within Go, -->
+	<!-- -->
+	<main>
+	
+    	pwd, err := os.Getwd()
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				dfd = pwd
+				apps := getApps()
+				newapps := []App{}
+				for _, app := range apps {
+					if app.Name != "" {
+						app.Pid = ""
+						newapps = append(newapps, app)
+					}
+				} 
+				saveApps(newapps)
+       fmt.Println("Strukture up")
+       core.RunCmd("open http://localhost:8884/home")
+	</main>
+
+	<init>
+		gob.Register(&SoftUser{})
+	</init>
+
+	<!-- Contains interfaces and structs
+	 that will be used by the GoS application -->
+	<header> 
+			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
+		<struct name="FSCs">
+			Path string
+			Form Forms
+		</struct>
+
+		<struct name="Dex">
+			Misc string
+			Text string
+			Link string
+		</struct>
+
+		<struct name="SoftUser">
+             Username string
+             Email string
+             Password []byte
+             Apps []App
+             Docker string
+             TrialEnd int64
+             StripeID,FLogin string
+		</struct>
+
+
+		<struct name="USettings">
+			LastPaid string
+			Email string
+			StripeID string
+		</struct>
+
+		<struct name="App">
+			Type string
+			Name string
+			PublicName string
+			Css []string
+			Groups []string
+			Passed,Running bool
+			LatestBuild,Pid string
+		</struct>
+
+		<struct name="TemplateEdits">
+			SavesTo,PKG,PreviewLink,ID,Mime string
+			File []byte
+			Settings rPut
+		</struct>
+
+		<struct name="WebRootEdits">
+			SavesTo,Type,PreviewLink,ID,PKG string
+			File []byte
+		</struct>
+
+
+	
+		<struct name="TEditor">
+			PKG,Type,LType string
+			CreateForm rPut
+		</struct>
+
+		<!-- Boostrap -->
+		<struct name="Navbars">
+			Mode string
+			ID string
+		</struct>
+
+		<struct name="sModal">
+			Title string
+			Body string
+			Color string
+			Buttons []sButton
+			Form Forms
+		</struct>
+
+		<struct name="Forms">
+			Link string
+			Inputs []Inputs
+			Buttons []sButton
+			CTA string
+			Class string
+		</struct>
+
+		<struct name="sButton">
+			Text string
+			Class string
+			Link string
+		</struct>
+
+	     <struct name="sTab">
+			Buttons []sButton
+		</struct>
+
+		<struct name="DForm">
+			Text,Link string
+		</struct>
+		
+
+		<struct name="Alertbs">
+			Type string
+			Text string
+			Redirect string
+		</struct>
+
+		<struct name="Inputs">
+			Misc string
+			Text string
+			Name string
+			Type string
+			Options []string
+			Value string
+		</struct>
+
+		<struct name="Aput">
+			Link,Param,Value string
+		</struct>
+
+		<struct name="rPut">
+			Link string
+			DLink string
+			Inputs []Inputs
+			Count string
+			ListLink string
+		</struct>
+
+		<struct name="sSWAL">
+			Title,Type,Text string
+		</struct>
+
+		<struct name="sPackageEdit">
+			Type,Mainf,Initf,Sessionf string
+			IType,Package,Port,Key,Name,Ffpage,Erpage Aput
+			Css rPut
+			Imports []rPut
+			Variables []rPut
+			CssFiles []rPut
+			CreateVar rPut
+			CreateImport rPut
+			TName string
+		</struct>
+
+		<struct name="DebugObj">
+		 PKG,Id,Username,RawLog,Time string
+		 Bugs []DebugNode
+		</struct>
+
+		<struct name="DebugNode">
+		 Action,Line,CTA string
+		</struct>
+
+	<!-- JSstree struct -->
+	
+
+		<struct name="PkgItem">
+			ID string  `json:"id"`
+			Icon string  `json:"icon"`
+			Text string  `json:"text"`
+			Children []PkgItem  `json:"children"`
+			isXml bool  `json:"isXml"`
+			Parent string  `json:"parent"`
+			Link string  `json:"link"`
+			Type string  `json:"type"`
+			DType string  `json:"dtype"`
+			RType string  `json:"rtype"`
+			NType string  `json:"ntype"`
+			MType string  `json:"mtype"`
+			CType string  `json:"ctype"`
+			AppID string `json:"appid"`
+		</struct>
+
+		<!-- Panels for packages -->
+		<struct name="sROC">
+			Name string
+			CompLog []byte
+			Build bool
+			Time,Pid string
+		</struct>
+
+		<struct name="vHuf">
+			Type,PKG string
+			Edata []byte
+		</struct>
+
+
+		<object struct="Dex" name="myDemoObject">
+		
+		</object>
+	</header>
+	<methods>
+		<!-- Vars are defined as usual except within the var attribute for example :  -->
+		<!-- If there is a basic go function : func hackfmt(data string, data2 string) -->
+		<!-- the attribute names would be called as such var="data string,data2 string" -->
+		<!-- Similar to a go function decleration-->
+		<!--  if a method matches the criteria for an  interface it will be used as an interface method -->
+		<!-- To prevent that use the autoface attribute and set it to "false" By default it is true -->
+		<!-- Use the keep-local="true" attribute to limit a method within a Go file -->
+		
+		<!-- Sometimes your method will return data  -->
+		<!-- And to do so we will need to add a return var list by using the return attribute  -->
+		<method name="BindMisc" var="misc,nav" return="Dex">
+				Nav := nav.(Dex)
+				Nav.Misc = misc.(string)
+				return Nav
+		</method>
+
+		<method name="BindID" var="id,nav" return="Dex">
+				Nav := nav.(Dex)
+				Nav.Misc = id.(string)
+				return Nav
+		</method>
+
+		<method name="RandTen" return="string">
+			return core.NewLen(10)
+		</method>
+
+	
+		<!-- Package methods
+			ID string  `json:"id"`
+			Icon string  `json:"icon"`
+			Text string  `json:"text"`
+			Children []PkgItem  `json:"children"`
+			isXml bool  `json:"isXml"`
+			Link string  `json:"link"`
+			Type string  `json:"type"`
+			Uses string   -->
+
+
+		<method name="Fragmentize" var="inn" return="(finall string)">
+			finall = strings.Replace(inn.(string), ".tmpl","",-1)
+			return 
+
+		</method>
+
+
+		
+
+		<method name="anyBugs" var="packge" return="(ajet bool)" >
+
+			ajet = false //,err := DebugLogs.Find(bson.M{"pkg":packge.(string), "username":usernam.(string)}).Count()
+
+			bugs := GetLogs(packge.(string))
+
+			if len(bugs) > 0 {
+				ajet = true
+			}
+
+			return
+		</method>
+
+		<method name="FindmyBugs" var="packge" return="(ajet []DebugObj)">
+
+			ajet =  GetLogs(packge.(string))
+			sapp := net_getApp(getApps(), packge.(string))
+			if sapp.Pid != "" {
+				activLog := DebugObj{Time:"Server", Bugs:[]DebugNode{} }			
+				ajet = append([]DebugObj{activLog}, ajet...)
+			}
+			return
+		</method>
+
+		<method name="isExpired" var="current,strip" return="bool">
+		
+			if  time.Now().Unix() > current.(int64) {
+				if strip.(string) == "" {
+				return true
+				} else {
+				return false
+				} 
+			}
+
+			return false
+		</method>
+
+		<method name="getTemplate" return="core.Template" var="templates, name">
+			 s := reflect.ValueOf(templates)
+	       	 slice := make([]App,s.Len())
+	          for i,_ := range slice {
+	            v := s.Index(i).Interface().(core.Template) 
+
+				if v.Name == name.(string) {
+					return v
+				}
+	        }
+
+			return core.Template{}
+		</method>
+
+		<method name="mConsole">
+			
+
+		</method>
+
+		<method name="mPut">
+			
+			//response = "OK"
+		</method>
+
+		
+		<method return="[]App" var="apps,name,app" name="updateApp">			
+			 s := reflect.ValueOf(apps)
+			 n := make([]App, s.Len())
+	       	 slice := make([]App,s.Len())
+	          for i,_ := range slice {
+	            v := s.Index(i).Interface().(App) 
+
+				if v.Name == name.(string) {
+					n = append(n,app.(App))
+				} else if v.Name != "" {
+					n = append(n, v)
+				}
+	        }
+			return n
+		</method>
+		<method return="App" var="apps,name" name="getApp">			
+			 s := reflect.ValueOf(apps)
+	       	 slice := make([]App,s.Len())
+	          for i,_ := range slice {
+	            v := s.Index(i).Interface().(App) 
+
+				if v.Name == name.(string) {
+					return v
+				}
+	        }
+
+			return App{}
+		</method>
+
+		
+
+	     <method name="mNew">
+	     
+		</method>
+
+		<method name="mDelete">
+			
+		</method>
+
+		<method name="mRename">
+
+		</method>
+
+		<method name="mAct">
+			
+		</method>
+
+		<method name="mCopy">
+
+		</method>
+
+		<!--<method name="mBuild">
+			me  := session.Values["me"].(*SoftUser)
+			mutex.Lock()
+      		defer mutex.Unlock()
+			gp := os.ExpandEnv("$GOPATH")
+		
+
+			 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/gobu$
+
+                        pathS := strings.Split(r.FormValue("pkg"), "/")
+                        core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/" + $
+                        coreTemplate,err := core.LoadGos(gp + "/src/" +  r.FormValue("p$
+                        coreTemplate.Type = "locale"
+                        //fmt.Println(coreTemplate)
+                        core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "$
+                        os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"$
+                        core.RunCmdB( os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug web/... tmpl/...")
+                        core.RunCmdB("go build")
+
+			if err != nil {
+				response = net_bAlert(Alertbs{Type:"warning",Text:"Error with your XML markup"})
+			} else {
+				_,erg := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + pathS[len(pathS) - 1])
+				if erg == nil {
+					sapp := net_getApp(me.Apps, r.FormValue("pkg"))
+					sapp.Passed = true
+					me.Apps = net_updateApp(me.Apps, r.FormValue("pkg"), sapp)
+					response = net_bAlert(Alertbs{Type:"success",Text:"Your build passed"})
+				} else {
+
+				sapp := net_getApp(me.Apps, r.FormValue("pkg"))
+				sapp.Passed = false
+				me.Apps = net_updateApp(me.Apps, r.FormValue("pkg"), sapp)	
+				response = net_bAlert(Alertbs{Type:"danger",Text:"Your build failed " })
+				}
+			}
+			//Users.Update(bson.M{"uid":me.UID}, me)
+		</method> -->
+
+	
+
+		<method name="mBuild">
+			
+		</method>
+
+		<method name="LineProcess" keep-local="true" var="lineinOut,packag,filee" return="(file,line string)">
+			//UYR can be used to find the support file line and file perf
+		
+			if strings.Contains(filee.(string),"/server_out.go") {
+	
+
+			servout,err := core.ReadLines(core.GOHOME + packag.(string) + "/server_out.go")
+		
+			i,err := strconv.Atoi(lineinOut.(string))
+			qry :=   servout[i - 1] 
+			if err != nil {
+				file = "NA"
+				line = "NA"
+				return
+			} else {
+
+				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
+				/*	i,err = strconv.Atoi(lineinOut)
+
+				qry :=   servout[i] */
+
+				for _,ho := range gossupfiles {
+
+					if ho == "main" || ho == "init" || ho == "session"  {
+						//support file load gos
+						pgos,err := core.PLoadGos(core.GOHOME + packag.(string) + "/gos.gxml")
+						if err != nil {
+							file = "NA"
+							line = "NA"
+							return
+						} else {
+
+							var supfile []string
+
+							if ho == "main" {
+								supfile = strings.Split(pgos.Main, "\n")
+							} else if ho == "init" {
+								supfile = strings.Split(pgos.Init_Func, "\n")
+							} else {
+								supfile = strings.Split(pgos.Session, "\n")
+							}
+
+							for t,mline := range supfile {
+								if(strings.Contains(mline,qry)){
+									file = ho
+									line = fmt.Sprintf("%v", (t + 1 ) )
+									return
+								}
+							}
+
+						}
+
+					} else {
+
+						supfile, err := core.ReadLines(core.GOHOME  + packag.(string) + "/" + ho)
+							if err == nil {
+						for t,mline := range supfile {
+							if(strings.Contains(mline,qry)){
+								file = ho
+								line = fmt.Sprintf("%v", (t +1 ) )
+								return
+							}
+						}
+						}
+
+					}
+
+				}
+
+
+
+			}
+			} else {
+				file = "VENDOR"
+				line = "VENDOR"
+				return
+			}
+
+			return
+		</method>
+
+		<method name="UYRProcess" keep-local="true" var="packag,unfound" return="(file,line string)">
+
+			_,err := core.ReadLines(core.GOHOME + packag.(string) + "/server_out.go")
+
+			if err != nil {
+				file = "NA"
+				line = "NA"
+				return
+			} else {
+
+				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
+			
+				for _,ho := range gossupfiles {
+
+					if ho == "main" || ho == "init" || ho == "session"  {
+						//support file load gos
+						pgos,err := core.PLoadGos(core.GOHOME + packag.(string) + "/gos.gxml")
+						if err != nil {
+							file = "NA"
+							line = "NA"
+							return
+						} else {
+
+							var supfile []string
+
+							if ho == "main" {
+								supfile = strings.Split(pgos.Main, "\n")
+							} else if ho == "init" {
+								supfile = strings.Split(pgos.Init_Func, "\n")
+							} else {
+								supfile = strings.Split(pgos.Session, "\n")
+							}
+
+							for t,mline := range supfile {
+								if(strings.Contains(mline,unfound.(string))){
+									file = ho
+									line = fmt.Sprintf("%v", (t + 1) )
+									return
+								}
+							}
+
+						}
+
+					} else {
+
+						supfile, err := core.ReadLines(core.GOHOME + packag.(string) + "/" + ho)
+
+						if err == nil {
+						for t,mline := range supfile {
+							if(strings.Contains(mline,unfound.(string))){
+								file = ho
+								line = fmt.Sprintf("%v", (t + 1) )
+								return
+							}
+						}
+						}
+
+					}
+
+				}
+
+
+
+			}
+
+			return
+		</method>
+
+		<method name="LineProcessLe" keep-local="true" var="lineinOut,packag,filee" return="(file,line string)">
+			//UYR can be used to find the support file line and file perf
+			
+
+			if strings.Contains(filee.(string),"/server_out.go") {
+			servout,err := core.ReadLines(core.GOHOME  + packag.(string) + "/server_out.go")
+			i,err := strconv.Atoi(lineinOut.(string))
+			i = i - 1
+			qry :=   servout[i] 
+		
+			if err != nil {
+				file = "NA"
+				line = "NA"
+				return
+			} else {
+
+				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
+			
+
+				for _,ho := range gossupfiles {
+
+					if ho == "main" || ho == "init" || ho == "session"  {
+						//support file load gos
+						pgos,err := core.PLoadGos(core.GOHOME  + packag.(string) + "/gos.gxml")
+						if err != nil {
+							file = "NA"
+							line = "NA"
+							return
+						} else {
+
+							var supfile []string
+
+							if ho == "main" {
+								supfile = strings.Split(pgos.Main, "\n")
+							} else if ho == "init" {
+								supfile = strings.Split(pgos.Init_Func, "\n")
+							} else {
+								supfile = strings.Split(pgos.Session, "\n")
+							}
+
+							for t,mline := range supfile {
+								if(strings.Contains(mline,qry)){
+									file = ho
+									line = fmt.Sprintf("%v", (t + 1) )
+									return
+									
+								
+								}
+							}
+
+						}
+
+					} else {
+
+						supfile, err := core.ReadLines(core.GOHOME + packag.(string) + "/" + ho)
+							if err == nil {
+						for t,mline := range supfile {
+							if(strings.Contains(mline,qry)){
+								file = ho
+								line = fmt.Sprintf("%v", (t + 1 ) )
+								return
+							
+							}
+						}
+					}
+
+					}
+
+				}
+
+
+
+			}
+			} else {
+				file = "VENDOR"
+				line = "VENDOR"
+				return
+			}
+
+			return
+		</method>
+
+
+		
+
+	</methods>
+
+		<templates>
+	     	   <template name="Css" tmpl="css" struct="Dex" desc="Little Bootstrap override" />
+	     	   <template name="JS" tmpl="js" struct="Dex" desc="JS End tag" />
+
+	     	   <template name="FA" tmpl="ui/fa" struct="Dex" desc="JS End tag" />
+
+
+	     	   <!-- Dialogs -->
+	     	   <template name="Login" tmpl="ui/login" struct="Dex" desc="Login Prompt" />
+	     	   <template name="Modal" tmpl="ui/modal" struct="sModal" desc="Modal" />
+	     	   <template name="xButton" tmpl="ui/sbutton" struct="sButton" desc="Button Gen" />
+	     	    <template name="jButton" tmpl="ui/user/forms/jbutton" struct="sButton" desc="Button Gen" />
+
+	     	       <template name="PUT" tmpl="ui/user/forms/aput" struct="Aput" desc="Button Gen" />
+
+	     	        <template name="Group" tmpl="ui/user/forms/tab" struct="sTab" desc="Button Gen" />
+
+	     	   <template name="Register" tmpl="ui/register" struct="Dex" desc="Register Prompt" />
+	     	   <template name="Alert" tmpl="ui/alert" struct="Alertbs" desc="Amovible alert" />
+
+	     	    <template name="StructEditor" tmpl="editor/structs" struct="vHuf" desc="Amovible alert" />
+
+	     	     <template name="MethodEditor" tmpl="editor/methods" struct="vHuf" desc="Amovible alert" />
+	     	      <template name="ObjectEditor" tmpl="editor/objects" struct="vHuf" desc="Amovible alert" />
+
+	     	      <template name="EndpointEditor" tmpl="editor/endpoints" struct="TEditor"/>
+
+	     	       <template name="TimerEditor" tmpl="editor/timers" struct="TEditor"/>
+
+	     	   <template name="FSC" tmpl="ui/fsc" struct="FSCs" desc="Amovible alert" />
+	     	   <template name="MV" tmpl="ui/mv" struct="FSCs" desc="Amovible alert" />
+	     	   <template name="RM" tmpl="ui/user/rm" struct="FSCs" />
+
+
+	     	   <template name="WebRootEdit" tmpl="ui/user/panel/webrootedit" struct="WebRootEdits" desc="Amovible alert" />
+
+	     	   <template name="WebRootEdittwo" tmpl="ui/user/panel/webtwo" struct="WebRootEdits" desc="Amovible alert" />
+
+	     	    <template name="uSettings" tmpl="editor/settings" struct="USettings" desc="Amovible alert" />
+
+
+	     	   <!-- User forms -->
+	     	  
+	     	    <template name="Form" tmpl="ui/user/forms/form" struct="Forms" desc="" />
+	     	   
+	     	    <template name="SWAL" tmpl="ui/user/forms/swal" struct="sSWAL" desc="" />
+	     	   	<!-- Panels for users ui/user/panel/ -->
+	     	   	<template name="ROC" tmpl="ui/user/panel/roc" struct="sROC" desc="" />
+
+	     	   	<template name="RPUT" tmpl="ui/user/forms/rput" struct="rPut" desc="" />
+
+	     	   	 <template name="PackageEdit" tmpl="ui/user/panel/package" struct="sPackageEdit" desc="" />
+
+	     	   	  <template name="Delete" tmpl="ui/user/panel/delete" struct="DForm" desc="" />
+
+	     	   	  <template name="Welcome" tmpl="ui/welcome" struct="Dex" desc="" />
+
+	     	   	  <template name="Stripe" tmpl="ui/stripe" struct="Dex" desc="" />
+
+	     	   	  <template name="Debugger" tmpl="ui/debugger" struct="DebugObj" desc="" />
+
+	     	   	
+	     	   	  <template name="TemplateEdit" tmpl="ui/user/panel/templateEditor" struct="TemplateEdits" desc="" />
+	     	   	  <template name="TemplateEditTwo" tmpl="ui/user/panel/tpetwo" struct="TemplateEdits" desc="" />
+
+	     	   	<!-- Dex Elements (Generic) -->
+	     	     <template name="Input" tmpl="ui/input" struct="Inputs" desc="Input Gen" />
+
+	     	     <template name="DebuggerNode" tmpl="ui/debugnode" struct="DebugObj" desc="Input Gen" />
+
+	     	     <template name="Button" tmpl="ui/button" struct="Dex" desc="Button Gen" />
+				 <template name="Submit" tmpl="ui/submit" struct="Dex" desc="Submit Gen" />
+				 <template name="Logo" tmpl="logo" struct="Dex" desc="Strukture logo" />
+	    	 	 <template name="Navbar" tmpl="ui/navbar" struct="Dex" desc="Navbar" />
+	    	 	 <template name="NavCustom" tmpl="ui/navbars" struct="Navbars" desc="Navbar Special..." />
+	    	 	 <template name="NavMain" tmpl="ui/navmain" struct="Dex" desc="Home Page Menu" />
+	    	 	 <template name="NavPKG" tmpl="ui/navpkg" struct="Dex" desc="Package Page Menu" />
+	    	 	 <template name="CrashedPage" tmpl="ui/crashedpage" struct="Dex" desc="Package Page Menu" />
+	    	 	 <template name="EndpointTesting" tmpl="ui/endpointtester" struct="Dex" />
+	    	 	 <template name="NavPromo" tmpl="ui/navpromo" struct="Dex" desc="Package Page Menu" />
+
+          </templates>
+		<endpoints>
+				<!-- Package methods -->
+				<end path="/api/empty" type="GET" >
+					
+					ClearLogs(r.FormValue("pkg"))
+					response = net_bAlert(Alertbs{Type:"success",Text:"Your build logs are cleared." })
+				</end>
+				<end path="/api/get" method="mGet" type="f" >
+					me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+			if r.FormValue("type") == "0" {
+				
+			    mpk := []bson.M{}
+
+
+				apps := getApps()
+
+			   // //Users.Update(bson.M{"uid":me.UID}, me)
+				for _,v := range apps {
+					if v.Name != "" {
+					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + v.Name + "/gos.gxml" )
+					appCo := []PkgItem{}
+					Childtm := []PkgItem{}
+					for _,b := range v.Groups { 
+						tmpls := []PkgItem{}
+						
+						for _,tm := range gos.Templates.Templates {
+							if tm.Bundle == b {
+							tmpls = append(tmpls, PkgItem{Type:"5",AppID:v.Name,Icon:"fa fa-page",DType:"5&tmpl=" + b + "/" + tm.Name,Text:tm.Name,ID: b + "/" +tm.Name})
+							}
+						}
+
+						Childtm = append(Childtm, PkgItem{AppID:v.Name,Text: b,Icon: "fa fa-square",CType:"4&bundle=" + b,DType:"4&bundle=" + b,RType:"4&bundle=" + b,Children:tmpls })
+
+					}
+					appCo = append(appCo, PkgItem{AppID:v.Name,Text: "Bundles",Icon: "fa fa-pencil-square",CType:"3",Children:Childtm} )
+
+					var folders []PkgItem
+
+					_ = filepath.Walk(core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" )  + "/src/" +  v.Name + "/web/", func(path string, file os.FileInfo, _ error) error {
+					//fmt.Println(path)
+						if file.IsDir() {
+						 lpathj := strings.Replace(path, core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name + "/web","",-1)
+
+					   var loca PkgItem = PkgItem{AppID:v.Name,Text: lpathj,Icon: "fa fa-folder",Children:[]PkgItem{}}
+					   	
+					   	loca.CType = "5&path=" + lpathj
+					   	loca.DType = "6&isDir=Yes&path=" + lpathj
+
+					   	loca.MType = "6&path=" + lpathj
+
+					   files,_ := ioutil.ReadDir(path)
+
+					   for _,f := range files {
+					   	if !f.IsDir(){
+					   		var mjk string
+					   		mjk = strings.Replace(path ,  core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name + "/web","",-1) + "/" + f.Name() 
+
+					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-page",Type:"6",ID:mjk,MType : "6&path=" + mjk,DType:"6&isDir=No&path=" + mjk }) 
+					   	
+					   		}
+					   }
+
+					   folders = append(folders,loca)
+
+						}	
+					   //fmt.Println(file,path,file.Name,file.IsDir())
+					//   var loca PkgItem = PkgItem{AppID:v.Name,Text: file.Name(),Icon: "fa fa-folder"}
+					   
+					   
+					 
+
+					   return nil;
+					})
+					var goFiles []PkgItem
+
+						_ = filepath.Walk(core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" )  + "/src/" +  v.Name + "/" , func(path string, file os.FileInfo, _ error) error {
+					//fmt.Println(path)
+						if file.IsDir() {
+							lpathj := strings.Replace(path,  core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name ,"",-1)
+					   var loca PkgItem = PkgItem{AppID:v.Name,Text: lpathj,Icon: "fa fa-circle",Children:[]PkgItem{}}
+						hasgo := false
+						files,_ := ioutil.ReadDir(path)
+					for _,f := range files {
+					   	if !f.IsDir(){
+					   		if strings.Contains(f.Name(), ".go") {
+					   			hasgo = true
+					   		var mjk string
+					   		mjk = strings.Replace(path  , core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name,"",-1) + "/" + f.Name()
+
+					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-code",Type:"60",ID: mjk,MType : "60&path=" + mjk,DType:"60&isDir=No&path=" + mjk }) 
+					   	
+					   		}
+					   	}
+					   }
+
+					
+					   	
+					   	loca.CType = "50&path=" + lpathj
+					   	loca.DType = "60&isDir=Yes&path=" + lpathj
+
+					   	loca.MType = "60&path=" + lpathj
+
+					   
+
+					
+					   if hasgo {
+					 	  goFiles = append(goFiles,loca)
+						}
+						}	
+					   //fmt.Println(file,path,file.Name,file.IsDir())
+					//   var loca PkgItem = PkgItem{AppID:v.Name,Text: file.Name(),Icon: "fa fa-folder"}
+					   
+					   
+					 
+
+					   return nil;
+					})
+
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Text: "Web Resources",CType:"5&path=/",Children:folders,Icon: "fa fa-folder"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Text: "Go SRC",CType:"50&path=/",Children:goFiles,Icon: "fa fa-cube"} )
+
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"16",Text: "Logs",Icon: "fa fa-list"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"18",Text: "Testing",Icon: "fa fa-flask"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"7",Text: "Build center",Icon: "fa fa-server"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"8",Text: "Interfaces",Icon: "fa fa-share-alt"} )
+					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
+					appCo = append(appCo, PkgItem{Type:"10",AppID:v.Name,Text: "Template pipelines",Icon: "fa fa-exchange"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"11",Text: "Web services",Icon: "fa fa-circle-o-notch"} )
+				
+					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"12",Text: "Timers",Icon: "fa fa-clock-o"} )
+
+
+
+
+					rootel := bson.M{"dtype" : "3","text": v.Name,"type":"1","id" : v.Name, "children" : appCo,"appid":v.Name,"btype" : "on"  }
+					if v.Type == "webapp" {
+						rootel["icon"] = "fa fa-globe"
+					} else if v.Type == "bind" {
+						rootel["icon"] = "fa fa-mobile"
+					} else {
+						rootel["icon"] = "fa fa-gift"
+					}
+
+					//append to children
+					//add server in
+         			mpk = append(mpk, rootel)
+         			}
+				}
+
+				response = mResponse(mpk)
+			} else if r.FormValue("type") == "1" {
+
+				//get package
+				sapp := net_getApp(getApps(), r.FormValue("id"))
+				prefix := "/api/put?type=0&id=" + sapp.Name 
+				gos,_ := core.LoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  sapp.Name + "/gos.gxml")
+
+				//load gos
+
+				//set params democss,port,key,name,type
+				editor := sPackageEdit{Type:sapp.Type,TName: sapp.Name }
+				editor.IType = Aput{Link:prefix, Param: "app",Value: gos.Type }
+
+				editor.Port =  Aput{ Link:prefix ,Param: "port",Value: gos.Port }
+				editor.Key =  Aput{ Link:prefix ,Param: "key",Value: gos.Key }
+				editor.Erpage =  Aput{ Link:prefix ,Param: "erpage",Value: gos.ErrorPage }
+				editor.Ffpage =  Aput{ Link:prefix ,Param: "fpage",Value: gos.NPage }
+				editor.Name =  Aput{ Link:prefix ,Param: "Name",Value: sapp.Name }
+				editor.Package =  Aput{Link:"/api/put?type=16&pkg=" + sapp.Name,Param:"npk",Value:gos.Package}
+				editor.Mainf = gos.Main
+				editor.Initf = gos.Init_Func
+				editor.Sessionf = gos.Session 
+				
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Name: "is", Type:"text",Text: "Variable type"})
+				varf = append(varf, Inputs{Name: "name", Type:"text",Text: "Variable name"})
+				editor.CreateVar = rPut{Count:"4",Link:"/api/create?type=0&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=2&pkg=" + sapp.Name }
+
+			   varf = []Inputs{}
+				varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Package path"})
+				
+				editor.CreateImport = rPut{Count:"6",Link:"/api/create?type=1&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=3&pkg=" + sapp.Name  }	
+				varf = []Inputs{}
+				varf = append(varf, Inputs{Name:"src", Type:"text",Text:"Path to css lib"})
+				editor.Css = rPut{Count:"6", Link:"/api/create?type=2&pkg=" + sapp.Name, Inputs: varf,ListLink: "/api/get?type=4&pkg=" + sapp.Name  }
+
+				response = net_bPackageEdit(editor)
+
+
+			} else if r.FormValue("type") == "2" {
+
+		
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				for _,v := range gos.Variables {
+						varf := []Inputs{}
+						varf = append(varf, Inputs{Name: "is", Type:"text",Text: "Variable type",Value:v.Type})
+						varf = append(varf, Inputs{Name: "name", Type:"text",Text: "Variable name",Value: v.Name})
+						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=0&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Count:"4",Link:"/api/act?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Inputs:varf })
+				}
+
+				
+			}  else if r.FormValue("type") == "3" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				for _,v := range gos.RootImports {
+						varf := []Inputs{}
+						varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Package path",Value:v.Src})
+	
+						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Src,Count:"6",Link:"/api/act?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v.Src ,Inputs:varf })
+				}
+
+			}  else if r.FormValue("type") == "4" {
+				sapp := net_getApp(getApps(), r.FormValue("pkg"))
+
+				for _,v := range sapp.Css {					
+
+					    varf := []Inputs{}
+						varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Path to css lib",Value:v})
+	
+						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v,Count:"6",Link:"/api/act?type=3&pkg=" + r.FormValue("pkg") + "&id=" + v ,Inputs:varf })
+				}
+
+			} else if r.FormValue("type") == "5" {
+				data,_ := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/tmpl/" + r.FormValue("id") + ".tmpl" )
+				
+				data = []byte(html.EscapeString(string(data)) )				
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
+
+				 template := net_getTemplate(gos.Templates.Templates, r.FormValue("id"))
+
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Type:"text", Value:template.Struct ,Name:"struct",Text:"Interface to use with template" })
+
+				response = net_bTemplateEdit(TemplateEdits{SavesTo:"tmpl/" + r.FormValue("id") + ".tmpl",ID:net_RandTen(),PKG: r.FormValue("space"),Mime:"html", File :  data,Settings: rPut{Link:"/api/put?type=2&id=" + r.FormValue("id") + "&pkg=" + r.FormValue("space"),Inputs:varf, Count:"6"   } })
+			} else if r.FormValue("type") == "6" {
+
+				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/web" + r.FormValue("id")
+				var ftype string
+				if strings.Contains(filep, ".css"){
+					ftype = "css"
+				} else if strings.Contains(filep,".js"){
+					ftype = "javascript"
+				} else if strings.Contains(filep,".html") {
+					ftype = "html" 
+				} else if strings.Contains(filep,".tmpl") {
+					ftype = "html"
+					//add auto complete linking
+				}
+				data,_ := ioutil.ReadFile(filep)
+				data =  []byte(html.EscapeString(string(data)))
+				response = net_bWebRootEdit(WebRootEdits{SavesTo:r.FormValue("id"),Type:ftype,File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
+
+			} else if r.FormValue("type") == "60" {
+
+				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space")  + r.FormValue("id")
+				
+				data,_ := ioutil.ReadFile(filep)
+				data =  []byte(html.EscapeString(string(data)))
+				response = net_bWebRootEdittwo(WebRootEdits{SavesTo:r.FormValue("id"),Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
+
+			} else if r.FormValue("type") == "7" {
+				sapp := net_getApp(getApps(), r.FormValue("space"))
+				response = net_bROC(sROC{Name:r.FormValue("space"),Build: sapp.Passed,Time:sapp.LatestBuild,Pid : sapp.Pid })
+			} else if r.FormValue("type") == "8" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/structs.dsl"
+					
+				 b,e := ioutil.ReadFile(filep)
+				 if e != nil {
+				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				 } else {
+				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				 }
+				 response = net_bStructEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
+
+			} else if r.FormValue("type") == "9" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/objects.dsl"
+					
+				 b,e := ioutil.ReadFile(filep)
+				 if e != nil {
+				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				 } else {
+				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				 }
+				 response = net_bObjectEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
+
+			} else if r.FormValue("type") == "10" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/methods.dsl"
+					
+				 b,e := ioutil.ReadFile(filep)
+				 if e != nil {
+				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				 } else {
+				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				 }
+				 response = net_bMethodEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
+
+			} else if r.FormValue("type") == "11" {
+
+				varf := []Inputs{}
+				varf = append(varf,Inputs{Name:"path",Type:"text", Text:"Endpoint path"})
+				kput := rPut{ListLink:"/api/get?type=13&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=7&space=" + r.FormValue("space")}
+				response = net_bEndpointEditor(TEditor{CreateForm:kput,PKG:r.FormValue("space")})
+
+			} else if r.FormValue("type") == "12" {
+				varf := []Inputs{}
+				varf = append(varf,Inputs{Name:"name",Type:"text", Text:"Timer name"})
+				kput := rPut{ListLink:"/api/get?type=14&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=8&space=" + r.FormValue("space")}
+				response = net_bTimerEditor(TEditor{CreateForm:kput,PKG:r.FormValue("space")})
+			} else if r.FormValue("type") == "13" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
+
+				for _,v := range gos.Endpoints.Endpoints {
+
+					varf := []Inputs{}
+					varf = append(varf, Inputs{Name:"path", Type:"text",Text:"Endpoint path",Value:v.Path})
+					//varf = append(varf, Inputs{Name:"method", Type:"text",Text:"Endpoint method",Value:v.Method})
+					varf = append(varf, Inputs{Name:"typ", Type:"text",Text:"Request type : GET,POST,PUT,DELETE,f,star...",Value:v.Type})
+
+					response = response + net_bRPUT(rPut{DLink:"/api/delete?type=7&pkg=" + r.FormValue("space") + "&path=" + v.Id ,Link:"/api/put?type=9&id=" + v.Id + "&pkg=" + r.FormValue("space")  ,Count:"12",Inputs:varf})  + ` <script type="text/javascript">
+
+					$(".marker .row",".endp-view").each(function(e,i){
+							var attr = $(this).attr('proc-set');
+
+							
+							if (typeof attr !== typeof undefined && attr !== false) {
+							  // Element has this attribute
+								return;
+							} else {
+								   $(this).attr('proc-set', "can edit")
+							}
+							var tabid = $(this).parents(".tabview").attr("id")
+							$( ".col-xs-12:nth-child(3)",this).css("text-align","left")
+							var mrker = this
+					 		$(".col-xs-12:nth-child(3)",this).prepend($("<button class='btn edt-code btn-success' path='" + $(this).attr("path") + "' tab-id='" + tabid + "'>Edit <span class='hidden-md-down'>code</span></button>").click(function(){
+					 		 
+					 			$.ajax({url: $(this).attr("path").replace("put?type=9", "get?type=13r"),error:function(err){
+					 			
+					 				$(".tabview.active .code-bin").html(err.responseText)
+					 				}
+							 	})
+							 })
+							)
+
+					 	
+
+					 })
+				 	
+				 	</script>`
+					
+
+				}				
+
+			} else if r.FormValue("type") == "13r" {
+
+			gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				for _,v := range gos.Endpoints.Endpoints {
+				
+				if v.Id == r.FormValue("id")  {
+					id := net_RandTen()
+					response = net_bTemplateEditTwo(TemplateEdits{SavesTo:"gosforceasapi/" + r.FormValue("id") + "++()/"  ,ID:id,PKG: r.FormValue("pkg"),Mime:"golang", File :  []byte(v.Method) }) 
+					}
+				}
+
+			} else if r.FormValue("type") == "14" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
+
+				for _,v := range gos.Timers.Timers {
+
+					varf := []Inputs{}
+					varf = append(varf, Inputs{Name:"name", Type:"text",Text:"Timer name",Value:v.Name})
+					varf = append(varf, Inputs{Name:"interval", Type:"number",Text:"Interval",Value:v.Interval})
+					varf = append(varf, Inputs{Name:"unit", Type:"text",Text:"Timer refresh unit",Value:v.Unit})
+					varf = append(varf, Inputs{Name:"method", Type:"text",Text:"Method to execute",Value:v.Method})
+					response = response + net_bRPUT(rPut{DLink:"/api/delete?type=8&pkg=" + r.FormValue("space") + "&name=" + v.Name ,Link:"/api/put?type=10&id=" + v.Name + "&pkg=" + r.FormValue("space"),Count:"2",Inputs:varf}) 
+					
+				}	
+
+			}  else if r.FormValue("type") == "15" {
+
+					tempx := net_buSettings(USettings{StripeID:me.StripeID,LastPaid:"Date",Email:me.Email})
+					response = net_bModal(sModal{Title:"Account settings",Body:tempx,Color:"orange"})
+			}  else if r.FormValue("type") == "16" { 
+
+				response = net_bDebugger(DebugObj{PKG:r.FormValue("space"),Username: ""})
+			} else if r.FormValue("type") == "17" {
+
+				var tDebugNode DebugObj
+
+				if r.FormValue("id") == "Server" {
+					tDebugNode = DebugObj{Time:"Server",Bugs:[]DebugNode{}}
+					gp := os.ExpandEnv("$GOPATH")
+		    		os.Chdir( gp + "/src/" +  r.FormValue("space") )
+		    		//main.log
+		    		rlog, err := ioutil.ReadFile("main.log")
+		    		if err != nil {
+		    			tDebugNode.RawLog = err.Error()
+		    		} else {
+		    			tDebugNode.RawLog = string(rlog)
+		    		}
+				} else {
+ 				logs := GetLogs(r.FormValue("space"))
+			
+				for _, logg := range logs {
+					if logg.Time == r.FormValue("id") {
+						tDebugNode = logg
+					}
+				} 
+				}
+				
+				
+				
+				response = net_bDebuggerNode(tDebugNode)
+				
+			} else if r.FormValue("type") == "18" {
+
+				response = net_bEndpointTesting(Dex{Misc:r.FormValue("space")})
+
+			}
+			callmet = true
+				</end>
+
+				<end path="/api/tester/" type="POST" >
+					gp := os.ExpandEnv("$GOPATH")
+		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
+					logfull , _ := core.RunCmdSmart("gos " + r.FormValue("mode") + " " + r.FormValue("c"))
+					response = html.EscapeString(logfull)
+				</end>
+			
+				<end path="/api/create" method="mCreate" type="POST" >
+				//me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+			 
+			if r.FormValue("type") == "0" {
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 gos.Add("var", r.FormValue("is"), r.FormValue("name")) 
+			    // fmt.Println(gos)
+				
+						
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+			} else if r.FormValue("type") == "1" {
+				//import
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 gos.Add("import", "", r.FormValue("src")) 
+			     //fmt.Println(gos)
+			
+						
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+			} else if r.FormValue("type") == "2" {
+				//css
+				apps := getApps()
+				app := net_getApp(getApps(), r.FormValue("pkg"))
+				app.Css = append(app.Css, r.FormValue("src"))
+				apps = net_updateApp(getApps(), r.FormValue("pkg"), app)
+				saveApps(apps)
+				//Users.Update(bson.M{"uid":me.UID}, me)
+			} else if r.FormValue("type") == "3" {
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Name:"name",Type:"text",Text:"Bundle name"})
+
+				response = net_bForm(Forms{Link:"/api/act?type=4&pkg=" + r.FormValue("pkg"),CTA:"Create Bundle",Class:"warning", Inputs:varf})
+
+			} else if r.FormValue("type") == "4" {
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Name:"name",Type:"text",Text:"Template name"})
+
+				response = net_bForm(Forms{Link:"/api/act?type=5&pkg=" + r.FormValue("pkg") + "&bundle=" + r.FormValue("bundle"),CTA:"Create Template file",Class:"warning", Inputs:varf})
+
+			} else if r.FormValue("type") == "5" {
+			 	//prefix pkg 
+			 	varf := []Inputs{}
+				varf = append(varf, Inputs{Type:"text",Name:"path", Text:"Path"})
+				varf = append(varf, Inputs{Type:"hidden",Name:"basesix" })
+				varf = append(varf, Inputs{Type:"hidden",Name:"fmode",Value:"touch" })
+
+				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=6&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Apply",Class:"warning" } })
+			} else if r.FormValue("type") == "50" {
+			 	//prefix pkg 
+			 	varf := []Inputs{}
+				varf = append(varf, Inputs{Type:"text",Name:"path", Text:"Path"})
+				varf = append(varf, Inputs{Type:"hidden",Name:"basesix" })
+				varf = append(varf, Inputs{Type:"hidden",Name:"fmode",Value:"touch" })
+
+				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=60&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Create Go file",Class:"warning" } })
+			} else if r.FormValue("type") == "6" {
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Type:"text",Name:"path",Misc:"required", Text:"New path"})
+
+				response = net_bMV(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=7&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Move",Class:"warning" } })	
+			} else if r.FormValue("type") == "60" {
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Type:"text",Name:"path",Misc:"required", Text:"New path"})
+
+				response = net_bMV(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=70&pkg=" + r.FormValue("pkg") + "&folder=" + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Move",Class:"warning" } })	
+			}
+				</end>
+
+				<end path="/api/delete" method="mDelete" type="POST" >
+				me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+		
+			if r.FormValue("type") == "0" {
+
+				//type pkg id
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				gos.Delete("var", r.FormValue("id"))
+
+					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+			} else if r.FormValue("type") == "1" {
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				gos.Delete("import", r.FormValue("id"))
+
+					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+			} else if r.FormValue("type") == "2" {
+				apps := getApps()
+				app := net_getApp(apps, r.FormValue("pkg"))
+				temp := []string{}
+				for _,v := range app.Css {
+					if v != r.FormValue("id") {
+						temp = append(temp, v)
+					}
+				}
+				app.Css = temp
+				apps = net_updateApp(apps, r.FormValue("pkg"), app)
+				saveApps(apps)
+				//Users.Update(bson.M{"uid":me.UID}, me)
+			} else if r.FormValue("type") == "3" {
+				//pkg
+				if r.FormValue("conf") != "do" {
+					response = net_bDelete(DForm{Text:"Are you sure you want to delete the package " + r.FormValue("pkg") ,Link:"type=3&pkg=" + r.FormValue("pkg")})
+
+
+				} else {
+					//delete
+					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
+
+					newapps := []App{}
+					apps := getApps()
+					for _,v := range apps {
+
+						if v.Name != r.FormValue("pkg") {
+							newapps = append(newapps, v)
+						}
+
+					}
+					saveApps(newapps)
+
+					response = net_bAlert(Alertbs{Type:"success",Text:"Success package " + r.FormValue("pkg") + " was deleted. Please reload page to close all linked resources.",Redirect: "javascript:updateTree()"})
+				}
+
+			} else if r.FormValue("type") == "4" {
+				//pkg
+				if r.FormValue("conf") != "do" {
+					response = net_bDelete(DForm{Text:"Are you sure you want to delete the bundle " + r.FormValue("bundle") + " and all of its sub templates" ,Link:"type=4&bundle=" +  r.FormValue("bundle") + "&pkg=" + r.FormValue("pkg")})
+				} else {
+					//delete bundle
+					apps := getApps()
+					sapp := net_getApp(apps, r.FormValue("pkg"))
+
+					replac := []string{}
+
+					for _,v := range sapp.Groups {
+
+							if r.FormValue("bundle") != v {
+								replac = append(replac, v)
+							}
+
+					}
+					
+					sapp.Groups = replac
+					apps = net_updateApp(apps, sapp.Name,	sapp)
+					saveApps(apps)
+					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+					for _,bchild := range gos.Templates.Templates {
+
+						if bchild.Bundle == r.FormValue("bundle") {
+							core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + bchild.Name + ".tmpl")
+						}
+
+					}
+					gos.Delete("bundle", r.FormValue("bundle"))
+
+					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+
+					response = net_bAlert(Alertbs{Type:"success",Text:"Success bundle was deleted " + r.FormValue("bundle") + " was deleted!",Redirect: "javascript:updateTree()"})
+				}
+
+			} else if r.FormValue("type") == "5" {
+				//pkg
+				if r.FormValue("conf") != "do" {
+					response = net_bDelete(DForm{Text:"Are you sure you want to delete the template " + r.FormValue("tmpl") ,Link:"type=5&tmpl=" + r.FormValue("tmpl") + "&pkg=" + r.FormValue("pkg")})
+				} else {
+					//delete
+
+					core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("tmpl") + ".tmpl")
+
+					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+					gos.Delete("template", r.FormValue("tmpl"))
+
+					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+
+					response = net_bAlert(Alertbs{Type:"success",Text:"Success template " + r.FormValue("tmpl") + " was deleted! Please close any tabs related to this resource to avoid confusion.",Redirect: "javascript:updateTree()"})
+				}
+
+			} else if r.FormValue("type") == "6" {
+				//pkg
+				if r.FormValue("conf") != "do" {
+					response = net_bDelete(DForm{Text:"Are you sure you want to delete the web resource at " + r.FormValue("path") ,Link:"type=6&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")  })
+
+
+				} else {
+					//delete
+					if r.FormValue("isDir") == "Yes" {
+						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
+					} else {
+						core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
+					}
+					response = net_bAlert(Alertbs{Type:"success",Text:"Success resource at " + r.FormValue("path") + " was deleted!",Redirect: "javascript:updateTree()"})
+				}
+
+			}  else if r.FormValue("type") == "60" {
+				//pkg
+				if r.FormValue("conf") != "do" {
+					response = net_bDelete(DForm{Text:"Are you sure you want to delete the resource at " + r.FormValue("path") ,Link:"type=60&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")  })
+
+
+				} else {
+					//delete
+					if r.FormValue("isDir") == "Yes" {
+						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
+					} else {
+						core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
+					}
+					response = net_bAlert(Alertbs{Type:"success",Text:"Success resource at " + r.FormValue("path") + " removed!",Redirect: "javascript:updateTree()"})
+				}
+
+			} else if r.FormValue("type") == "7" {
+				//type pkg path name
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				gos.DeleteEnd( r.FormValue("path") )
+
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+			} else if r.FormValue("type") == "8" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				gos.Delete("timer", r.FormValue("name"))
+
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+			} else if r.FormValue("type") == "9" {
+				//cancel stripe subscription
+				if r.FormValue("confirm") == "delete" {
+
+					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + me.Username)
+					//cancel subscription
+					//Users.Remove(bson.M{"username":me.Username})
+
+					/*
+					stripe.Key = "sk_live_5JVbbpU9f0jMfwlK7cYwYTiS"
+				
+					_,err := customer.Del(me.StripeID)
+
+					if err != nil {
+						response = net_bAlert(Alertbs{Type:"danger",Text:"Error removing subscription, please try again!"})
+					} else {
+					 _,_ = core.RunCmdSmart("docker stop " + me.Docker)
+					  _,_ = core.RunCmdSmart("docker rm " + me.Docker)
+					response = net_bAlert(Alertbs{Type:"success",Text:"Account Deleted one moment",Redirect: "/api/logout"})
+					}
+					*/
+				} else {
+					response = net_bAlert(Alertbs{Type:"danger",Text:"Please enter delete"})
+				}
+
+			}
+
+			if r.FormValue("type") != "9" {
+				//Users.Update(bson.M{"uid":me.UID}, me)
+			} else {
+				//delete mongodb row
+				//Users.Remove(bson.M{"uid":me.UID})
+			}
+				</end>
+				<end path="/api/rename" method="mRename" type="POST" >
+
+				</end>
+				<end path="/api/new" method="mNew" type="POST" >
+						if r.FormValue("type") == "0" {
+	     		inputs := []Inputs{}
+	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Package Name"})
+	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
+	     		response = net_bModal(sModal{Body: "",Title: "New Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Create Package",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
+			}
+				</end>
+				<end path="/api/act" method="mAct" type="POST" >
+				me := &SoftUser{}
+				fmt.Println(me)
+			if r.FormValue("type") == "0" {
+				apps := getApps()
+			    apps = append(apps, App{Type:"webapp",Name: r.FormValue("name")})
+			    //update session on mongo
+			    core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name") )
+			    //Users.Update(bson.M{"uid": me.UID}, me)
+			    saveApps(apps)
+			    response = net_bAlert(Alertbs{Type:"warning",Text:"Success package " + r.FormValue("name") + " was created!",Redirect: "javascript:updateTree()"})
+			} else if r.FormValue("type") == "1" {
+				
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				//update va
+				gos.Update("var", r.FormValue("id"), core.GlobalVariables{Name:r.FormValue("name"),Type: r.FormValue("is")})		
+
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				response = "Variable updated!"
+
+			} else if r.FormValue("type") == "2" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				//update var
+				gos.Update("import", r.FormValue("id"), core.Import{Src: r.FormValue("src")})			
+
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				response = "Variable updated!"
+
+			} else if r.FormValue("type") == "3" {
+				apps := getApps()
+				app := net_getApp(apps, r.FormValue("pkg"))
+				temp := []string{}
+				for _,v := range app.Css {
+					if v != r.FormValue("id") {
+						temp = append(temp, v)
+					} else  {
+						temp = append(temp, r.FormValue("src"))
+					}
+				}
+				app.Css = temp
+				apps = net_updateApp(apps, r.FormValue("pkg"), app)
+				saveApps(apps)
+				//Users.Update(bson.M{"uid":me.UID}, me)
+			} else if r.FormValue("type") == "4" {
+				apps := getApps()
+				app := net_getApp(apps, r.FormValue("pkg"))
+				
+				app.Groups = append(app.Groups, r.FormValue("name"))
+				core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("name")  );		
+				apps = net_updateApp(apps, r.FormValue("pkg"), app)
+				saveApps(apps)
+				//Users.Update(bson.M{"uid":me.UID}, me)	
+			} else if r.FormValue("type") == "5" {
+				//app := net_getApp(me.Apps, r.FormValue("pkg"))
+			  gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				//update var
+				core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") + "/" + r.FormValue("name") + ".tmpl")
+				gos.AddS("template", core.Template{Name:r.FormValue("name"),Bundle: r.FormValue("bundle"),TemplateFile:r.FormValue("bundle") + "/" + r.FormValue("name") } )			
+
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")			
+			} else if r.FormValue("type") == "6" {
+
+				if r.FormValue("fmode") == "touch" {
+
+					core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path") );
+
+				} else if r.FormValue("fmode") == "dir" {
+					core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path") );				
+				} else if r.FormValue("fmode") == "upload" {
+					ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path"), core.Decode64(nil,[]byte(r.FormValue("basesix"))),0777)
+				}
+
+			} else if r.FormValue("type") == "60" {
+
+				if r.FormValue("fmode") == "touch" {
+
+					_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );
+
+					if err != nil {
+						npath := strings.Split(r.FormValue("path"), "/")
+							core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + strings.Join(npath[:len(npath) - 1], "/") );
+							core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );
+
+					}
+
+				} else if r.FormValue("fmode") == "dir" {
+					core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );				
+				} else if r.FormValue("fmode") == "upload" {
+					ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path"), core.Decode64(nil,[]byte(r.FormValue("basesix"))),0777)
+				}
+
+			} else if r.FormValue("type") == "7" {
+					core.RunCmdB("mv " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web/" + r.FormValue("path"))
+					response = net_bAlert(Alertbs{Type:"success",Text:"Operation succeeded"})				
+
+			} else if r.FormValue("type") == "70" {
+					core.RunCmdB("mv " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg")  + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + r.FormValue("path"))
+					response = net_bAlert(Alertbs{Type:"success",Text:"Operation succeeded"})				
+
+			}
+				</end>
+	
+				<end path="/api/put" method="mPut" type="POST" >
+				me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+			 
+
+			if  r.FormValue("type") == "0" {
+			
+				//fmt.Println(m)
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("id") + "/gos.gxml")
+
+				 gos.Set(r.FormValue("put"), r.FormValue("var")) 
+			     fmt.Println(gos)
+			
+						
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("id") + "/gos.gxml")
+
+			
+			} else if r.FormValue("type") == "1" {
+				ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + r.FormValue("target"),[]byte(r.FormValue("data")), 0644)
+				response = net_bAlert(Alertbs{Type:"warning",Text: r.FormValue("target") + " saved!"})	
+			} else if r.FormValue("type") == "2" {
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 gos.Update("template",r.FormValue("id"), r.FormValue("struct")) 
+			     fmt.Println(gos)
+			
+						
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				response = "OK"
+			} else if r.FormValue("type") == "3" {
+				ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("target"),[]byte(r.FormValue("data")), 0777)
+				
+				response = net_bAlert(Alertbs{Type:"warning",Text: r.FormValue("target") + " saved!"})	
+			} else if r.FormValue("type") == "30" {
+				ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") +  r.FormValue("target"),[]byte(r.FormValue("data")), 0777)
+				
+				response = net_bAlert(Alertbs{Type:"warning",Text: r.FormValue("target") + " saved!"})	
+			} else if r.FormValue("type") == "4" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/structs.dsl"
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 ioutil.WriteFile(filep,[]byte(r.FormValue("data")),0644 )
+				 //marhal and add
+				 vgos := core.CreateVGos(filep)
+				 //fmt.Println(vgos,"Gos")
+				 gos.MStructs(vgos.Structs)
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 response = net_bAlert(Alertbs{Type:"warning",Text:"Interfaces saved!"})	
+
+			} else if r.FormValue("type") == "5" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/objects.dsl"
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 ioutil.WriteFile(filep,[]byte(r.FormValue("data")),0644 )
+				 //marhal and add
+				 vgos := core.CreateVGos(filep)
+				 //fmt.Println(vgos,"Gos")
+				 gos.MObjects(vgos.Objects)
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 response = net_bAlert(Alertbs{Type:"warning",Text:"Objects saved!"})	
+
+			} else if r.FormValue("type") == "6" {
+
+				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/methods.dsl"
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 ioutil.WriteFile(filep,[]byte(r.FormValue("data")),0644 )
+				 //marhal and add
+				 vgos := core.CreateVGos(filep)
+				 //fmt.Println(vgos,"Gos")
+				 gos.MMethod(vgos.Methods)
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+
+				 response = net_bAlert(Alertbs{Type:"warning",Text:"Pipelines saved!"})	
+
+			} else if r.FormValue("type") == "7" {
+
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
+				 //write file
+				
+				 gos.Add("end","",r.FormValue("path"))
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")				
+
+			}  else if r.FormValue("type") == "8" {
+
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
+				 //write file
+				
+				 gos.Add("timer","",r.FormValue("name"))
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")				
+			}  else if r.FormValue("type") == "9" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				
+				 gos.Update("end",r.FormValue("id"), core.Endpoint{Path:r.FormValue("path"),Type:r.FormValue("typ")})
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+				response = "OK"
+
+			}  else if r.FormValue("type") == "13r" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				
+				 gos.UpdateMethod(r.FormValue("target"), r.FormValue("data"))
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+				response = "OK"
+
+			}  else if r.FormValue("type") == "10" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				
+				 gos.Update("timer",r.FormValue("id"), core.Timer{Name:r.FormValue("name"),Method: r.FormValue("method"),Unit:r.FormValue("unit"),Interval:r.FormValue("interval")})
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+
+				response = "OK"
+			} else if r.FormValue("type") == "11" {
+
+				hasher := sha512.New512_256()
+
+				if string(hasher.Sum([]byte(r.FormValue("cpassword")))) == string(me.Password) {
+					me.Password = hasher.Sum([]byte(r.FormValue("npassword")))
+					response = net_bAlert(Alertbs{Type:"success",Text:"Password updated"})
+				} else {
+					 response = net_bAlert(Alertbs{Type:"danger",Text:"Error incorrect current password"})
+				}
+
+			} else if r.FormValue("type") == "12" {
+				me.Email = r.FormValue("email")
+				response = net_bAlert(Alertbs{Type:"success",Text:"Email updated"})
+			} else if r.FormValue("type") == "13" {
+				
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 gos.Main = r.FormValue("data")
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+			} else if r.FormValue("type") == "14" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 gos.Init_Func = r.FormValue("data")
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+			} else if r.FormValue("type") == "15" {
+
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 gos.Session = r.FormValue("data")
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
+
+			} else if r.FormValue("type") == "16" {
+
+				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 //write file
+				 gos.Package = r.FormValue("var")
+				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")					
+
+			}
+
+			
+			
+
+		
+			//Users.Update(bson.M{"uid":me.UID}, me)
+				
+				</end>
+
+				<end path="/api/saw" method="Saw" type="star" >
+
+				</end>
+
+
+				<end path="/api/build" method="mBuild" type="GET" >
+				
+			mutex.Lock()
+      		defer mutex.Unlock()
+			gp := os.ExpandEnv("$GOPATH")
+			
+		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
+		    	 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/bindata.go")
+		    	  core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/application.go")
+		    		logBuilt,_ := core.RunCmdSmart("gos --run --buildcheck")
+				//	fmt.Println(logBuilt)
+					passed := false
+
+					if !strings.Contains( logBuilt,"Your build failed,") {
+						passed = true
+						response = net_bAlert(Alertbs{Type:"success",Text:"Your build passed!" })
+		
+					} else {
+					debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
+			fPart := strings.Split(logBuilt,"Full compiler build log :")
+						logs := strings.Split(fPart[1], "\n")
+						
+						for linen, log := range logs {
+							if linen != 0 {
+								linedt := strings.Split( log , ":")
+							//	fmt.Println(len(linedt))
+								dnode := DebugNode{}
+								fmt.Println(linedt)
+								if linedt[0] == "./application.go" {
+									if len(linedt) > 2 {
+									il, _ := strconv.Atoi(linedt[1])
+									actline := FindString("./application.go", il )
+									actline = strings.TrimSpace(actline)
+										//find line
+										inStructs := FindLine("./structs.dsl", actline)
+										if inStructs == -1 {
+
+											inMethods := FindLine("./methods.dsl", actline)
+												if inMethods == -1 {
+
+														gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+													inMain := FindinString(gos.Main, actline)
+
+													if inMain == -1 {
+
+													inInit := FindinString(gos.
+														Init_Func, actline)
+													if inInit == -1 {
+													//	fmt.Println(actline)
+													 for _, v := range gos.Endpoints.Endpoints {
+
+															inEndpoint := FindinString(v.Method, actline)
+															if inEndpoint != -1 {
+																enode := DebugNode{}
+																enode.Action = "service:" + v.Path + " - " + v.Type  + ":" + strconv.Itoa(inEndpoint)
+																	enode.Line = strings.Join(linedt[2:], " - ")
+																enode.CTA = "Update webservice " + v.Path
+																debuglog.Bugs = append(debuglog.Bugs,enode)
+															}
+														}
+													} else {
+														linestring := strconv.Itoa(inInit)
+														dnode.Action = "init:" + linestring
+													dnode.CTA = "Update Init()"
+													dnode.Line = strings.Join(linedt[2:], " - ")
+													debuglog.Bugs = append(debuglog.Bugs,dnode)
+													}
+
+													} else {
+														linestring := strconv.Itoa(inMain)
+														dnode.Action = "main:" + linestring
+													dnode.CTA = "Update main()"
+													dnode.Line = strings.Join(linedt[2:], " - ")
+								debuglog.Bugs = append(debuglog.Bugs,dnode)
+													}
+		
+												} else {
+														linestring := strconv.Itoa(inMethods)
+														dnode.Action = "meth:" + linestring
+														dnode.CTA = "Update pipelines."
+														dnode.Line = strings.Join(linedt[2:], " - ")
+														debuglog.Bugs = append(debuglog.Bugs,dnode)
+												}
+
+										} else {
+											linestring := strconv.Itoa(inStructs)
+											dnode.Action = "structs:" + linestring
+											dnode.CTA = "Update interfaces."
+											dnode.Line = strings.Join(linedt[2:], " - ")
+											debuglog.Bugs = append(debuglog.Bugs,dnode)
+										}
+
+									}
+								} else {
+									//src
+									if len(linedt) > 2 {
+									dnode.Action = "edit:" + linedt[0]
+									dnode.CTA = "Update source code."
+									dnode.Line = strings.Join(linedt[2:], " - ")
+									debuglog.Bugs = append(debuglog.Bugs,dnode)
+									}
+								}
+								
+
+							}
+						}
+
+						AddtoLogs(debuglog)
+			response = net_bAlert(Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
+
+		
+					}
+
+				//DebugLogs.Insert(dObj)
+
+
+
+					apps := getApps()
+					sapp := net_getApp(apps, r.FormValue("pkg"))
+
+					sapp.Passed = passed
+					sapp.LatestBuild = time.Now().String()
+					apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
+					saveApps(apps)	
+					
+			//Users.Update(bson.M{"uid":me.UID}, me)
+				</end>
+
+				<end path="/api/start"  type="GET" >
+				
+			mutex.Lock()
+      		defer mutex.Unlock()
+			gp := os.ExpandEnv("$GOPATH")
+			
+		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
+		    		apps := getApps()
+					sapp := net_getApp(apps, r.FormValue("pkg"))
+		    		
+					if sapp.Passed {
+
+						if sapp.Pid != ""  {
+						core.RunCmdB("kill " + sapp.Pid)
+							response = net_bAlert(Alertbs{Type:"success",Text:"Build stopped." })	
+							}
+
+
+		    			pkSpl := strings.Split(r.FormValue("pkg"), "/")
+
+		    			shscript := `#!/bin/bash  
+cmd="./` + pkSpl[len(pkSpl) - 1] + ` "
+eval "${cmd}" >main.log &disown
+exit 0`
+
+		    			ioutil.WriteFile("runsc", []byte(shscript), 0777)
+		    			go core.RunCmdSmart("sh runsc &>/dev/null")
+		    			time.Sleep(time.Second*5)
+		    			raw, _ := ioutil.ReadFile("main.log")
+		    			lines := strings.Split(string(raw),"\n")
+						sapp.Pid = lines[0]
+						response = net_bAlert(Alertbs{Type:"success",Text:"Your server is up at PID : " + sapp.Pid })
+					} else {
+						response = net_bAlert(Alertbs{Type:"danger",Text:"Your latest build failed." })
+		
+					}
+
+					
+				//DebugLogs.Insert(dObj)
+				apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
+				saveApps(apps)	
+					
+			//Users.Update(bson.M{"uid":me.UID}, me)
+				</end>
+
+					<end path="/api/stop"  type="GET" >
+				
+			mutex.Lock()
+      		defer mutex.Unlock()
+			gp := os.ExpandEnv("$GOPATH")
+			
+		    	os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
+		    	apps := getApps()
+				sapp := net_getApp(apps, r.FormValue("pkg"))
+		    		
+				if sapp.Pid == "" {
+					response = net_bAlert(Alertbs{Type:"danger",Text:"No build running." })
+					} else {
+						core.RunCmdB("kill " + sapp.Pid)
+							response = net_bAlert(Alertbs{Type:"success",Text:"Build stopped." })	
+					}
+
+					
+				//DebugLogs.Insert(dObj)
+				apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
+				saveApps(apps)	
+					
+			//Users.Update(bson.M{"uid":me.UID}, me)
+				</end>
+				<end path="/api/bin" method="mBinDL" type="GET" >
+				
+			 mutex.Lock()
+      		 defer mutex.Unlock()
+			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
+			core.RunCmdB("rm " +  strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip ")
+			bPath := strings.Split(r.FormValue("pkg"), "/")
+			gp := os.ExpandEnv("$GOPATH")
+			//coreTemplate,_ := core.LoadGos(gp + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+			
+			//core.RunCmdB("gos ru " +  r.FormValue("pkg") + " gos.gxml web tmpl")
+			 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/server_out.go")
+
+			
+			//core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "web","tmpl")
+			core.RunCmdB("gos --export")
+			
+			core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip "  + " " + bPath[len(bPath) - 1] )
+
+			time.Sleep(1200 * time.Millisecond)
+			
+			
+			w.Header().Set("Content-Type",  "application/zip")
+			http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip")
+
+				</end>
+
+
+				<end path="/api/export" method="mExport" type="GET" >
+				
+			 mutex.Lock()
+      		defer mutex.Unlock()
+			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/")
+			core.RunCmdB("rm " +  strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip ")
+			core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip " +   r.FormValue("pkg") + "/" )
+
+			time.Sleep(1200 * time.Millisecond)
+			
+			
+			w.Header().Set("Content-Type",  "application/zip")
+			http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip")
+				</end>
+				<!-- Wildcard methods -->
+				<end path="/api/complete" method="mComplete" type="GET" >
+						prefx := r.FormValue("pref")
+			ret := []bson.M{}
+			//return {name: ea.word, value: ea.insert, score: 0, meta: ea.meta}
+			gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+			score := 0
+			for _,v := range gos.Variables {
+
+				if strings.Contains(v.Name, prefx){
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":v.Name,"score":score,"meta":"Global variable | " + v.Type})
+				}
+
+			}
+
+			for _,v := range gos.RootImports {
+
+				if strings.Contains(v.Src, prefx){
+					score = score + 1
+					paths := strings.Split(v.Src,"/")
+					ret = append(ret, bson.M{"name":v.Src,"value":paths[len(paths) - 1],"score":score,"meta":"package"})
+				}
+
+			}
+
+			for _,v := range gos.Header.Structs {
+
+				if strings.Contains(v.Name, prefx){
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":v.Name ,"score":score,"meta":"Interface"})
+				}
+
+			}
+
+			for _,v := range gos.Header.Objects {
+	
+				if strings.Contains(v.Name, prefx){
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":v.Name ,"score":score,"meta":"{{Interface func group}}"})
+				}				
+
+			}
+
+			for _,v := range gos.Methods.Methods {
+
+				if strings.Contains(v.Name, prefx){
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":v.Name + " | ","score":score,"meta":"{{Template pipeline}}"})
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":"net_" + v.Name + "(" + v.Variables +")","score":score,"meta":"Method"})
+				}		
+
+			}
+
+			for _,v := range gos.Templates.Templates {
+
+				if strings.Contains(v.Name, prefx){
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":v.Name + " ","score":score,"meta":"{{Template reference}}"})
+					score = score + 1
+					ret = append(ret, bson.M{"name":v.Name,"value":"net_b" + v.Name + "(" + v.Struct +"{})","score":score,"meta":"Template"})
+				}	
+
+			}
+
+
+
+			response = mResponse(ret)
+				</end>
+				<end path="/roc/server/" method="mPreview" type="star" >
+						me  := session.Values["me"].(*SoftUser)
+			
+			var bjPath string
+			rawquery := r.URL.RawQuery
+
+			bjPath = strings.Replace(r.URL.Path,"/roc/server","",1)
+			bsPath := strings.Split(r.FormValue("pkin"),"/")
+
+			hah,_ := ioutil.ReadAll(r.Body);
+			sbsPath := strings.Split(bjPath, "/")
+		
+
+			if !strings.Contains(sbsPath[len(sbsPath) - 1],".") {
+				w.Header().Set("Content-Type",  "text/html")	
+
+				if bjPath == "/" {
+					bjPath = "/index"
+				}
+				bjPath = bjPath + "?" + rawquery
+				if strings.Contains(bjPath,".tmpl"){
+				fmt.Println("hashit")
+				az := strings.Split(bjPath,".tmpl")
+				bjPath = az[0]
+				fmt.Println(bjPath)
+				}
+				
+				/*response,err := core.RunCmdSmartB("docker exec -i " + me.Docker + " bash -c \" cd " + os.ExpandEnv("$GOPATH")  + "/src/  " + core.DAMP + " " +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah) + "\""  ) */
+
+				response,err := core.RunCmdSmartB("docker exec " + me.Docker + " " + os.ExpandEnv("$GOPATH")  + "/src/" +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah)   )
+				fmt.Println(err,response)
+				if err == nil {
+					w.Write(response)
+				} else {
+					//gofail test
+
+				response,err := core.RunCmdSmartB("sh " + core.GOHOME + "server/gofail.sh " + me.Docker + " "  + os.ExpandEnv("$GOPATH")  + "/src/" +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah) + " " +  core.NewLen(10)  )
+
+				if r.FormValue("nohtml") == "" {
+					if err != nil {
+						w.Write([]byte(net_bCrashedPage(Dex{Text:"Fallback script could not be reached!"}) ))
+					} else {
+						w.Write([]byte(net_bCrashedPage(Dex{Text:string(response)}) ))
+					}
+				} else {
+					if err != nil {
+						w.Write([]byte("Fallback script could not be reached!") )
+					} else {
+						w.Write([]byte(response)) 
+					}
+				}
+					
+				}
+
+			} else {
+
+			 	http.ServeFile(w, r, os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkin") + "/web" + bjPath )
+			
+			}
+		response = ""
+				</end>
+
+				<end path="/api/console" method="mConsole" type="POST">
+		
+			data,err := core.RunCmdSmart(r.FormValue("command") )
+			if err !=  nil {
+				response = fmt.Sprintf("%s",err)
+			} else {
+				response = data
+			}
+			w.Write([]byte(response))
+			
+			
+			response = ""
+
+				</end>  
+				<!-- Auth -->
+	 			
+		</endpoints>
+</gos>

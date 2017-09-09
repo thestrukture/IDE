@@ -1,0 +1,126 @@
+{{ $rin := RandTen }}
+<div class="tabview" id="{{ $rin }}">
+<div class="row">
+	<div class="col-sm-12">
+	    
+		<div class="card card-inverse card-info">
+		  <div class="card-block">
+		 <!--  	<h3>Package Name</h3> -->
+			 <!-- <p>{{bPUT .Name }}</p> -->
+			  <p>Type </p>
+			  <p>{{ bPUT .IType }}</p>
+			  <hr class="m-y-2">
+			  <p>Port </p>
+			  <p>{{ bPUT .Port }}</p>
+			  <p><i class="fa fa-lock"></i> Session storage key</p>
+			  <p>{{ bPUT .Key }}</p>
+			   <p><i class="fa fa-edit"></i> 404 Page path</p>
+			  <p>{{ bPUT .Ffpage }}</p>
+			   <p><i class="fa fa-edit"></i> Server error path (500)</p>
+			  <p>{{ bPUT .Erpage }}</p>
+		  </div>
+		</div>
+		<p class="text-muted">Global Variables</p>
+		<!-- rput -->
+		{{bRPUT .CreateVar }}
+
+	</div>
+
+   <div class="col-md-12">
+   		<div class="card card-inverse card-info">
+		  <div class="card-block">
+				<p style="color:#fff;"><b>Advanced settings</b></p>
+				<p><button class="btn btn-primary adv-trigger">Show advanced settings</button></p>
+				<div class="adv" style="display:none;">
+					<label>Package name</label>
+					{{bPUT .Package}}
+					<p>Main Function {</p>
+						<div id="editorM{{ $rin }}" style="height:60px;" class="defed">{{ .Mainf }}</div>
+						<button class="madv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
+					<p>}</p>
+					<p>Init Function {</p>
+						<div id="editorI{{ $rin }}" style="height:60px;" class="defed">{{ .Initf }}</div>
+						<button class="iadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
+					<p>}</p>
+					<p>Session interface {</p>
+						<div id="editorS{{ $rin }}" style="height:60px;" class="defed">{{ .Sessionf }}</div>
+						<button class="sadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
+					<p>}</p>
+				</div>
+		  </div>
+		</div>
+
+		<div style="display:none;" class="card card-inverse card-danger">
+		  <div class="card-block">
+		   	<p class="text-muted">CSS Libraries</p>
+			 <p>{{bRPUT .Css }}</p>
+		  </div>
+		</div>
+		<p class="text-muted">Imports</p>
+		{{bRPUT .CreateImport }}
+		<!-- rput -->
+	</div>
+</div>
+
+
+<script type="text/javascript">
+
+	$("#" + {{ $rin }} + " .adv-trigger").click(function(){
+		if ( $("#" + {{ $rin }}  + " .adv").css('display') == "none" ){
+			 $("#" + {{ $rin }}  + " .adv").css('display','block');
+		} else {
+			 $("#" + {{ $rin }}  + " .adv").css('display','none'); 
+		}
+		return false;
+	});
+
+	editors["ms" + "{{ $rin }}"] = ace.edit("editorM{{ $rin }}");
+	editors["ms" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+
+    editors["is" + "{{ $rin }}"] = ace.edit("editorI{{ $rin }}");
+	editors["is" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+
+	editors["ss" + "{{ $rin }}"] = ace.edit("editorS{{ $rin }}");
+	editors["ss" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+
+
+	$(".madv").click(function(){
+		var pname = {{ .TName }}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"13",pkg: pname,data:editors["ms" + "{{ $rin }}"].getValue() },success:function(html){
+
+			},error:function(e){
+
+			} 
+		});
+
+		return false;
+	});
+
+
+	$(".iadv").click(function(){
+		var pname = {{ .TName }}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"14",pkg: pname,data:editors["is" + "{{ $rin }}"].getValue() },success:function(html){
+
+			},error:function(e){
+
+			} 
+		});
+
+		return false;
+	});
+
+	$(".sadv").click(function(){
+		var pname = {{ .TName }}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"15",pkg: pname,data:editors["ss" + "{{ $rin }}"].getValue() },success:function(html){
+
+			},error:function(e){
+
+			} 
+		});
+
+		return false;
+	});
+
+	addTab("{{ .TName }}", "{{ $rin }}" );
+</script>
+</div>

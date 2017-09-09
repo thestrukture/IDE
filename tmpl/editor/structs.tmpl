@@ -1,0 +1,43 @@
+{{ $rin := RandTen }}
+<div class="tabview" id="{{ $rin }}" pkg="{{ .PKG }}" style="background-color:#fff;">
+<div  class="row" style="padding-top:20px;">
+	<div class="col-sm-4" style="min-height:50px;">
+	
+	</div>
+	<div class="col-sm-5" >
+		<input class="form-control sti" editor="{{ $rin }}" type="text"  placeholder="Struct name">
+	</div>
+
+	<div class="col-sm-3" style="text-align:right">
+		<button class="btn btn-primary" onclick="SearchEditor('{{ $rin }}')"><i class="fa fa-search"></i></button>
+		<button class="btn btn-primary" onclick="AddtoEd('struct', '{{ $rin }}')"><i class="fa fa-plus"></i></button>
+		<button class="btn btn-warning" onclick="SavePKG('4','{{ .PKG }}', '{{ $rin }}')"><i class="fa fa-save"></i></button>
+	</div>
+</div>
+<div id="editor{{ $rin }}" class="defed">{{printf "%s" .Edata}}</div>
+<script type="text/javascript">
+
+	 editors["{{ $rin }}"] = ace.edit("editor{{ $rin }}");
+	 editors["{{ $rin }}"].getSession().setMode("ace/mode/golang");
+	  editors["{{ $rin }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	  editors["{{ $rin }}"].commands.addCommand({
+	    name: 'myCommand',
+	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+	    exec: function(editor) {
+	        //...
+	    	SavePKG('4','{{ .PKG }}', '{{ $rin }}');
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+	});
+	editors["{{ $rin }}"].commands.addCommand({
+	    name: 'build',
+	    bindKey: {win: 'Ctrl-B',  mac: 'Command-B'},
+	    exec: function(editor) {
+	        //...
+	    		SavePKGAndBuild('4','{{ .PKG }}', '{{ $rin }}');
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+	});
+	 addTab({{ .PKG }} + " - Structs", {{ $rin }} );
+</script>
+</div>

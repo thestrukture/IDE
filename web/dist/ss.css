@@ -1,0 +1,64 @@
+.terminal-side {
+    position: absolute;
+    width: 320px;
+    height: 100%;
+    top: 0px;
+    padding-top: 5px;
+    right: 0;
+    background: #000;
+    padding-right: 5px;
+    display: none;
+    z-index:10000;
+}
+
+.full-height {
+	height:100%;
+}
+
+   @media screen and (max-width: 1048px) {
+         .pop-box {
+            position: absolute;
+            width: 270px;
+            height: 91%;
+            border: 1px dotted rgb(51, 51, 51);
+         }
+
+         .pop-panel {
+            width:100%;
+         }
+    }
+
+.over-flow-fix {
+	overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#editor {
+	height: 100%;
+}
+
+.tabview {
+	height:calc(100% - 42px);
+	overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #efefef;
+    padding: 1px;
+}
+
+.defed {
+	height: calc(100% - 70px)
+}
+
+.vakata-context {
+	z-index: 11 !important;
+}
+
+.term-b {
+	background-color: #fff;
+	border-radius: 12px;
+}
+
+.panel-k-right,.panel-k-left,.terminal-side {
+	 -webkit-transition: width 1s; /* For Safari 3.1 to 6.0 */
+    transition: width 1s;
+}

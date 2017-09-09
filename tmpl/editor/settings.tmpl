@@ -1,0 +1,45 @@
+{{ $rin := RandTen }}
+<div id="{{ $rin }}">
+
+<h4>Update password</h4>
+<div class="marker" path="/api/put?type=11">
+	<label>Current password</label>
+	<p><input class="form-control required xsub" type="password" name="cpassword" placeholder="Current password"></p>
+	<label>New password</label>
+	<p><input class="form-control required xsub" name="npassword" type="password" placeholder="New password"></p>
+	<div class="loader-result"></div>
+	<p><button class="dosub btn btn-warning-outline btn-block btn-lg">Update password</button></p>
+</div>
+
+<h4>Update email</h4>
+<div class="marker" path="/api/put?type=12">
+	<p><input class="form-control required xsub" value="{{ .Email }}" name="email" placeholder="Default email"></p>
+		<div class="loader-result"></div>
+		<p><button class="dosub btn btn-warning-outline btn-block btn-lg">Update email</button></p>
+</div>
+
+<h4>Subscription information</h4>
+{{if .StripeID | neq ""}}
+<h4 style="text-muted">{{ .LastPaid }}</h4>
+{{else}}
+	  <div class="alert alert-warning alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <p>Your account is in trial mode; to claim it, simply add your payment information.</p>
+          {{Stripe}}
+       </div>
+{{end}}
+<h4>Delete account</h4>
+<p>Your subscription will removed instantly and all of your projects will be deleted. Please type in 'delete' in the field below to confirm you are aware of this change.</p>
+<div class="marker" path="/api/delete?type=9">
+<p><input class="form-control xsub required" name="confirm" placeholder="enter delete here"></p>
+	<div class="loader-result"></div>
+		<p><button class="dosub btn btn-danger-outline btn-block btn-lg">Delete account</button></p>
+
+</div>
+
+<script type="text/javascript">
+	$("#" + {{ $rin }}).havok();
+</script>
+</div>

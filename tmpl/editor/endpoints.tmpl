@@ -1,0 +1,31 @@
+{{ $rin := RandTen }}
+<div class="tabview" id="{{ $rin }}" style="background-color:#fff;">
+<div class="row endp-view full-height" style="    height: calc(100% - 12px);">
+	<div class="col-xs-5 card card-inverse card-info full-height over-flow-fix" style="border-right:1px #999 dotted;padding-left:29px;">
+			
+			  <div class="card-block">
+			    <blockquote class="card-blockquote">
+			     <h3 >New web service</h3>
+			  	{{bRPUT .CreateForm}}
+			    </blockquote>
+			  </div>
+			
+	</div>
+		<div class="col-xs-7 full-height over-flow-fix code-bin" >
+
+		</div>
+
+</div>
+
+
+<script type="text/javascript">
+
+
+	 //render view
+	 addTab({{ .PKG }} + " - Web services", {{ $rin }} );
+
+	
+
+	
+</script>
+</div>
