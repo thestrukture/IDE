@@ -6,6 +6,7 @@ Go lang IDE server.
 - $GOPATH set.
 - $GOPATH/bin in execution path.
 - Install GoS [CLI](http://golangserver.com).
+- A unix based OS/CLI.
 
 ## Install
 
