@@ -7305,12 +7305,7 @@ func dummy_timer() {
 func main() {
 	fmt.Printf("%d\n", os.Getpid())
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	dfd = pwd
+	dfd = os.ExpandEnv("$GOPATH")
 	apps := getApps()
 	newapps := []App{}
 	for _, app := range apps {
