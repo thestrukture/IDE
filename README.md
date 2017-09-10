@@ -5,7 +5,7 @@ Go lang IDE server.
 - Go 1.9 and up.
 - $GOPATH set.
 - $GOPATH/bin in execution path.
-- Install GoS [CLI](http://golangserver.com).
+- Install GoS [CLI](http://golangserver.com). ( `go get github.com/cheikhshift/gos` )
 - A unix based OS/CLI.
 
 ## Install
