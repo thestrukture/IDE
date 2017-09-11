@@ -24,6 +24,9 @@ Visit [localhost:8884/home](http://localhost:8884/home). Access the IDE from any
 ## Bug report
 Please create a new issue on Github to report a bug.
 
+## Community
+Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.php?fid=3)
+
 ## Screenshots
 
 ![](tests/1.png)
