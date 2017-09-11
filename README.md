@@ -38,3 +38,4 @@ Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.ph
 ![](tests/5.png)
 ![](tests/6.png)
 ![](tests/7.png)
+
