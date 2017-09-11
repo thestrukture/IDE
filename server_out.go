@@ -12,6 +12,7 @@ import (
 	"github.com/cheikhshift/gos/core"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/fatih/color"
+	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2/bson"
 	"html"
@@ -93,6 +94,12 @@ func net_sessionSet(key string, value string, s *sessions.Session) string {
 func net_sessionSetInt(key string, value interface{}, s *sessions.Session) string {
 	s.Values[key] = value
 	return ""
+}
+
+func dbDummy() {
+	smap := db.O{}
+	smap["key"] = "set"
+	fmt.Println(smap)
 }
 
 func TraceTwo(sec int64) {
@@ -231,7 +238,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 	if strings.Contains(r.URL.Path, "/api/get") {
 
-		me := &SoftUser{Email: "Strukture user", Username: "Strukture user"}
+		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
 		if r.FormValue("type") == "0" {
 
 			mpk := []bson.M{}
@@ -378,6 +385,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			editor.Port = Aput{Link: prefix, Param: "port", Value: gos.Port}
 			editor.Key = Aput{Link: prefix, Param: "key", Value: gos.Key}
+			editor.Domain = Aput{Link: prefix, Param: "domain", Value: gos.Domain}
 			editor.Erpage = Aput{Link: prefix, Param: "erpage", Value: gos.ErrorPage}
 			editor.Ffpage = Aput{Link: prefix, Param: "fpage", Value: gos.NPage}
 			editor.Name = Aput{Link: prefix, Param: "Name", Value: sapp.Name}
@@ -635,12 +643,16 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		}
 		callmet = true
 
+		context.Clear(r)
+
 	}
 
 	if r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET") {
 
 		ClearLogs(r.FormValue("pkg"))
 		response = net_bAlert(Alertbs{Type: "success", Text: "Your build logs are cleared."})
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -651,6 +663,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		os.Chdir(gp + "/src/" + r.FormValue("pkg"))
 		logfull, _ := core.RunCmdSmart("gos " + r.FormValue("mode") + " " + r.FormValue("c"))
 		response = html.EscapeString(logfull)
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -723,12 +737,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			response = net_bMV(FSCs{Path: r.FormValue("path"), Form: Forms{Link: "/api/act?type=70&pkg=" + r.FormValue("pkg") + "&folder=" + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Move", Class: "warning"}})
 		}
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
 	if r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST") {
 
-		me := &SoftUser{Email: "Strukture user", Username: "Strukture user"}
+		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
 
 		if r.FormValue("type") == "0" {
 
@@ -912,10 +928,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			//Users.Remove(bson.M{"uid":me.UID})
 		}
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
 	if r.URL.Path == "/api/rename" && r.Method == strings.ToUpper("POST") {
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -929,13 +949,13 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			response = net_bModal(sModal{Body: "", Title: "New Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Create Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 		}
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
 	if r.URL.Path == "/api/act" && r.Method == strings.ToUpper("POST") {
 
-		me := &SoftUser{}
-		fmt.Println(me)
 		if r.FormValue("type") == "0" {
 			apps := getApps()
 			apps = append(apps, App{Type: "webapp", Name: r.FormValue("name")})
@@ -1038,12 +1058,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		}
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
 	if r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST") {
 
-		me := &SoftUser{Email: "Strukture user", Username: "Strukture user"}
+		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
 
 		if r.FormValue("type") == "0" {
 
@@ -1051,7 +1073,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("id") + "/gos.gxml")
 
 			gos.Set(r.FormValue("put"), r.FormValue("var"))
-			fmt.Println(gos)
+			//   fmt.Println(gos)
 
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("id") + "/gos.gxml")
 
@@ -1086,7 +1108,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos.MStructs(vgos.Structs)
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-			response = net_bAlert(Alertbs{Type: "warning", Text: "Structs saved!"})
+			response = net_bAlert(Alertbs{Type: "warning", Text: "Interfaces saved!"})
 
 		} else if r.FormValue("type") == "5" {
 
@@ -1114,7 +1136,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos.MMethod(vgos.Methods)
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-			response = net_bAlert(Alertbs{Type: "warning", Text: "Methods saved!"})
+			response = net_bAlert(Alertbs{Type: "warning", Text: "Pipelines saved!"})
 
 		} else if r.FormValue("type") == "7" {
 
@@ -1205,6 +1227,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		}
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -1338,6 +1362,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
@@ -1383,6 +1409,8 @@ exit 0`
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
@@ -1408,6 +1436,8 @@ exit 0`
 		saveApps(apps)
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -1435,6 +1465,8 @@ exit 0`
 		w.Header().Set("Content-Type", "application/zip")
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".binary.zip")
 
+		context.Clear(r)
+
 		callmet = true
 	}
 
@@ -1450,6 +1482,8 @@ exit 0`
 
 		w.Header().Set("Content-Type", "application/zip")
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".zip")
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -1521,6 +1555,8 @@ exit 0`
 		}
 
 		response = mResponse(ret)
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -1600,6 +1636,8 @@ exit 0`
 		w.Write([]byte(response))
 
 		response = ""
+
+		context.Clear(r)
 
 		callmet = true
 	}
@@ -1836,13 +1874,14 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 	}
 
 }
-func handler(w http.ResponseWriter, r *http.Request, context string) {
+func handler(w http.ResponseWriter, r *http.Request, contxt string) {
 	// fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-	p, err := loadPage(r.URL.Path, context, r, w)
+	p, err := loadPage(r.URL.Path, contxt, r, w)
 	if err != nil {
 		fmt.Println(err)
 
 		http.Redirect(w, r, "", 307)
+		context.Clear(r)
 		return
 	}
 
@@ -1855,6 +1894,7 @@ func handler(w http.ResponseWriter, r *http.Request, context string) {
 				fmt.Println(n)
 				DebugTemplate(w, r, "web"+r.URL.Path)
 				http.Redirect(w, r, "", 307)
+				context.Clear(r)
 
 			}
 		}()
@@ -1872,6 +1912,8 @@ func handler(w http.ResponseWriter, r *http.Request, context string) {
 
 		w.Write(p.Body)
 	}
+
+	context.Clear(r)
 
 }
 
@@ -2450,15 +2492,15 @@ func net_castsSWAL(args ...interface{}) *sSWAL {
 func net_structsSWAL() *sSWAL { return &sSWAL{} }
 
 type sPackageEdit struct {
-	Type, Mainf, Initf, Sessionf                    string
-	IType, Package, Port, Key, Name, Ffpage, Erpage Aput
-	Css                                             rPut
-	Imports                                         []rPut
-	Variables                                       []rPut
-	CssFiles                                        []rPut
-	CreateVar                                       rPut
-	CreateImport                                    rPut
-	TName                                           string
+	Type, Mainf, Initf, Sessionf                            string
+	IType, Package, Port, Key, Name, Ffpage, Erpage, Domain Aput
+	Css                                                     rPut
+	Imports                                                 []rPut
+	Variables                                               []rPut
+	CssFiles                                                []rPut
+	CreateVar                                               rPut
+	CreateImport                                            rPut
+	TName                                                   string
 }
 
 func net_castsPackageEdit(args ...interface{}) *sPackageEdit {
@@ -7320,6 +7362,13 @@ func main() {
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
 	http.HandleFunc("/", makeHandler(handler))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7,
+		HttpOnly: true,
+		Secure:   true,
+		Domain:   "",
+	}
 	http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "web"}))
 	errgos := http.ListenAndServe(":8884", nil)
 	if errgos != nil {
