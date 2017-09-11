@@ -30,11 +30,11 @@
 	
 	<var type="sync.Mutex">mutex</var>
 	<key>something-secretive-is-what-a-gorrilla-needs</key>
+	<domain></domain>
 	<!-- The <init/> tag is similar to the init function within Go, -->
 	<!-- -->
 	<main>
-	
-    				dfd = os.ExpandEnv("$GOPATH")
+				dfd = os.ExpandEnv("$GOPATH")
 				apps := getApps()
 				newapps := []App{}
 				for _, app := range apps {
@@ -182,7 +182,7 @@
 
 		<struct name="sPackageEdit">
 			Type,Mainf,Initf,Sessionf string
-			IType,Package,Port,Key,Name,Ffpage,Erpage Aput
+			IType,Package,Port,Key,Name,Ffpage,Erpage,Domain Aput
 			Css rPut
 			Imports []rPut
 			Variables []rPut
@@ -771,7 +771,7 @@
 					response = net_bAlert(Alertbs{Type:"success",Text:"Your build logs are cleared." })
 				</end>
 				<end path="/api/get" method="mGet" type="f" >
-					me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+					me := SoftUser{Email:"Strukture user", Username:"Strukture user"}
 			if r.FormValue("type") == "0" {
 				
 			    mpk := []bson.M{}
@@ -935,6 +935,7 @@
 
 				editor.Port =  Aput{ Link:prefix ,Param: "port",Value: gos.Port }
 				editor.Key =  Aput{ Link:prefix ,Param: "key",Value: gos.Key }
+				editor.Domain =  Aput{ Link:prefix ,Param: "domain",Value: gos.Domain }
 				editor.Erpage =  Aput{ Link:prefix ,Param: "erpage",Value: gos.ErrorPage }
 				editor.Ffpage =  Aput{ Link:prefix ,Param: "fpage",Value: gos.NPage }
 				editor.Name =  Aput{ Link:prefix ,Param: "Name",Value: sapp.Name }
@@ -1277,7 +1278,7 @@
 				</end>
 
 				<end path="/api/delete" method="mDelete" type="POST" >
-				me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+				me := SoftUser{Email:"Strukture user", Username:"Strukture user"}
 		
 			if r.FormValue("type") == "0" {
 
@@ -1478,8 +1479,8 @@
 			}
 				</end>
 				<end path="/api/act" method="mAct" type="POST" >
-				me := &SoftUser{}
-				fmt.Println(me)
+			
+				
 			if r.FormValue("type") == "0" {
 				apps := getApps()
 			    apps = append(apps, App{Type:"webapp",Name: r.FormValue("name")})
@@ -1584,7 +1585,7 @@
 				</end>
 	
 				<end path="/api/put" method="mPut" type="POST" >
-				me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
+				me := SoftUser{Email:"Strukture user", Username:"Strukture user"}
 			 
 
 			if  r.FormValue("type") == "0" {
@@ -1593,7 +1594,7 @@
 				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("id") + "/gos.gxml")
 
 				 gos.Set(r.FormValue("put"), r.FormValue("var")) 
-			     fmt.Println(gos)
+			  //   fmt.Println(gos)
 			
 						
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("id") + "/gos.gxml")
