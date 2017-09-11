@@ -263,7 +263,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 						Childtm = append(Childtm, PkgItem{AppID: v.Name, Text: b, Icon: "fa fa-square", CType: "4&bundle=" + b, DType: "4&bundle=" + b, RType: "4&bundle=" + b, Children: tmpls})
 
 					}
-					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
+					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
 
 					var folders []PkgItem
 
@@ -792,7 +792,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				}
 				saveApps(newapps)
 
-				response = net_bAlert(Alertbs{Type: "success", Text: "Success package " + r.FormValue("pkg") + " was deleted. Please reload page to close all linked resources.", Redirect: "javascript:updateTree()"})
+				response = net_bAlert(Alertbs{Type: "success", Text: "Success package " + r.FormValue("pkg") + " was removed. Please reload page to close all linked resources.", Redirect: "javascript:updateTree()"})
 			}
 
 		} else if r.FormValue("type") == "4" {
@@ -830,7 +830,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-				response = net_bAlert(Alertbs{Type: "success", Text: "Success bundle was deleted " + r.FormValue("bundle") + " was deleted!", Redirect: "javascript:updateTree()"})
+				response = net_bAlert(Alertbs{Type: "success", Text: "Success bundle was removed!", Redirect: "javascript:updateTree()"})
 			}
 
 		} else if r.FormValue("type") == "5" {
@@ -847,7 +847,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-				response = net_bAlert(Alertbs{Type: "success", Text: "Success template " + r.FormValue("tmpl") + " was deleted! Please close any tabs related to this resource to avoid confusion.", Redirect: "javascript:updateTree()"})
+				response = net_bAlert(Alertbs{Type: "success", Text: "Success template " + r.FormValue("tmpl") + " was removed! Please close any tabs related to this resource to avoid confusion.", Redirect: "javascript:updateTree()"})
 			}
 
 		} else if r.FormValue("type") == "6" {
@@ -862,7 +862,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				} else {
 					core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
 				}
-				response = net_bAlert(Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " was deleted!", Redirect: "javascript:updateTree()"})
+				response = net_bAlert(Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " was removed!", Redirect: "javascript:updateTree()"})
 			}
 
 		} else if r.FormValue("type") == "60" {
