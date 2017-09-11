@@ -13,7 +13,9 @@
 		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
 	</div>
 </div>
+<p>func DoRequest(r <a href="https://golang.org/pkg/net/http/#Request" target="_blank">http.Request</a>, w <a href="https://golang.org/pkg/net/http/#ResponseWriter" target="_blank">http.ResponseWriter</a>,session.Values <a href="http://www.gorillatoolkit.org/pkg/sessions" target="_blank">map[string]interface{}</a> ) {</p>
 <div id="editor{{ .ID }}" class="col-xs-12 defed">{{printf "%s" .File}}</div>
+<p>}</p>
 <script type="text/javascript">
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
 	 editors["{{ .ID }}"].getSession().setMode("ace/mode/golang")
