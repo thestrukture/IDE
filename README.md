@@ -32,10 +32,13 @@ Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.ph
 
 ![](tests/1.png)
 ![](tests/8.png)
+![](tests/20.png)
 ![](tests/2.png)
+![](tests/24.png)
 ![](tests/3.png)
 ![](tests/4.png)
 ![](tests/5.png)
+![](tests/25.png)
 ![](tests/6.png)
 ![](tests/7.png)
 
