@@ -28,6 +28,10 @@ Please create a new issue on Github to report a bug.
 ## Community
 Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.php?fid=3)
 
+## Wiki : How to use the strukture
+
+Visit https://github.com/thestrukture/IDE/wiki
+
 ## Screenshots
 
 ![](tests/1.png)
