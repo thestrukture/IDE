@@ -1252,6 +1252,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		passed := false
 
 		if !strings.Contains(logBuilt, "Your build failed,") {
+			core.RunCmdSmart("go build")
 			passed = true
 			response = net_bAlert(Alertbs{Type: "success", Text: "Your build passed!"})
 
