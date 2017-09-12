@@ -144,8 +144,14 @@ func GetLogs(pkg string) []DebugObj {
 	}
 
 	c = reverse(c)
+	fSet := []DebugObj{}
+	for _, dobj := range c {
+		if dobj.PKG == pkg {
+			fSet = append(fSet, dobj)
+		}
+	}
 
-	return c
+	return fSet
 }
 
 func ClearLogs(pkg string) {
