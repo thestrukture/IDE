@@ -15,8 +15,8 @@
 		},
 		{
 			"ImportPath": "github.com/cheikhshift/gos/core",
-			"Comment": "0.5.0",
-			"Rev": "42b3f634d6cf6ab2996adfed3fbe297e86a42ab8"
+			"Comment": "v0.5.1",
+			"Rev": "6a59e8a9d6b23bf4ccb1a53c7504bf89922829ad"
 		},
 		{
 			"ImportPath": "github.com/elazarl/go-bindata-assetfs",

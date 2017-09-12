@@ -959,8 +959,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		if r.FormValue("type") == "0" {
 			apps := getApps()
 			apps = append(apps, App{Type: "webapp", Name: r.FormValue("name")})
-			//update session on mongo
 			core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name"))
+
 			//Users.Update(bson.M{"uid": me.UID}, me)
 			saveApps(apps)
 			response = net_bAlert(Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
@@ -972,7 +972,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos.Update("var", r.FormValue("id"), core.GlobalVariables{Name: r.FormValue("name"), Type: r.FormValue("is")})
 
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
-			response = "Variable updated!"
+			response = "Variable saved!"
 
 		} else if r.FormValue("type") == "2" {
 
@@ -982,7 +982,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos.Update("import", r.FormValue("id"), core.Import{Src: r.FormValue("src")})
 
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
-			response = "Variable updated!"
+			response = "Import saved!"
 
 		} else if r.FormValue("type") == "3" {
 			apps := getApps()
@@ -1032,13 +1032,16 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		} else if r.FormValue("type") == "60" {
 
 			if r.FormValue("fmode") == "touch" {
-
-				_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path"))
+				addstr := ""
+				if !strings.Contains(r.FormValue("path"), ".go") {
+					addstr = ".go"
+				}
+				_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
 
 				if err != nil {
 					npath := strings.Split(r.FormValue("path"), "/")
 					core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + strings.Join(npath[:len(npath)-1], "/"))
-					core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path"))
+					core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
 
 				}
 
