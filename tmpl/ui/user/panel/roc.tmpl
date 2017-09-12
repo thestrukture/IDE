@@ -11,10 +11,10 @@
      	<label class="label label-danger">Failed ( {{ .Time }})</label>
      {{end}}</h2>
       <footer><div class="row"><div class="col-sm-4">
-          <a type="button" href="/api/export?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Download project</a>
+          <a type="button" href="/api/export?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Export project</a>
       </div>
       <div class="col-sm-4">
-      	  <a type="button" href="/api/bin?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Download Binary </a>
+      	  <a type="button" href="/api/bin?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Export Binary </a>
       </div>
       <div class="col-sm-4">
           <button type="button" onclick="BuildPKG('{{ .Name }}')" target="_blank" class="btn btn-block btn-danger">Build <i class="fa fa-chevron-circle-right1"></i> </button>
@@ -29,10 +29,10 @@
     {{end}}
     <div class="row">
       <div class="col-sm-4">
-        <p><button class="btn btn-block btn-warning" onclick="StartServer('{{ .Name }}')">Start/Reset server</button></p>
+        <p><button class="btn btn-block btn-warning" onclick="StartServer('{{ .Name }}')">Start/Reset</button></p>
       </div>
        <div class="col-sm-4">
-        <p><button class="btn btn-block btn-danger" onclick="StopServer('{{ .Name }}')">Stop server</button></p>
+        <p><button class="btn btn-block btn-danger" onclick="StopServer('{{ .Name }}')">Stop</button></p>
       </div>
 
     </div>
