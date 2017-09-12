@@ -22,7 +22,7 @@ Go lang IDE server.
 
 Visit [localhost:8884/home](http://localhost:8884/home). Access the IDE from any device on your network as well...
 
-## Bug report
+## Bug reports & questions :
 Please create a new issue on Github to report a bug.
 
 ## Community
