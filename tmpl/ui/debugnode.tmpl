@@ -1,3 +1,5 @@
+{{ $rin  := RandTen }}
+<div id="{{ $rin }}">
 <h5 class="text-muted">Log details</h5>
 
 <div class="list-group">
@@ -8,7 +10,7 @@
 	{{ with .Bugs}}
 			{{range .}}
 			<div class="list-group-item"><p class="text-muted pull-right"><i class="fa fa-warning"></i></p> <p>{{ .Line }}</p>
-				<p class="reference" data-link="{{ .Action }}" ></p>
+				<p class="reference" data-link="{{ .Action }}" >{{ parseLog .Action }}</p>
 				<p ><label class="label label-big label-warning" >{{ .CTA }}</label></p>
 			</div>
 		{{end}}
@@ -19,17 +21,20 @@
 		<pre style="max-height: 800px"><code>{{ printf "%s" .RawLog }}</code></pre>
 	</div>
 </div>
-<script type="text/javascript">
-var maphedg = {"meth":"Pipelines section","structs":"Interface declarations' section","service": "Web service","main" : "your main function","init":"your init function","edit":"Edit Go go source"};
-	$(".reference").each(function(e,i){
+<!-- <script type="text/javascript">
+  $maphedg = {"meth":"Pipelines section","structs":"Interface declarations' section","service": "Web service","main" : "your main function","init":"your init function","edit":"Edit Go go source"};
+setTimeout(function(){
+	$(".reference", "#" + {{ $rin }}).each(function(e,i){
 		if($(this).attr("data-link") != ""){
 			parts = $(this).attr("data-link").split(":")
 			if (  $(this).attr("data-link").includes("service:") ) {
-			$(this).html("The line is located in " + maphedg[parts[0]] + "( " + parts[1] +  ") at line: " + parts[2] + " of package " + {{ .PKG }})	
-			} else {
-				$(this).html("The line is located in " + maphedg[parts[0]] + " at line: " + parts[1] + " of package " + {{ .PKG }})	
+			$(this).html("The line is located in " + $maphedg[parts[0]] + "( " + parts[1] +  ") at line: " + parts[2] + " of package " + {{ .PKG }})	
+			} else if (  !$(this).attr("data-link").includes("edit:") ){
+				$(this).html("The line is located in " + $maphedg[parts[0]] + " at line: " + parts[1] + " of package " + {{ .PKG }})	
 			}
 		}
 		return false;
 	});
-</script>
+}, 400);
+</script> -->
+</div>

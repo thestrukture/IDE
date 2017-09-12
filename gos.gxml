@@ -285,15 +285,35 @@
 		</method>
 
 
-		
+		<method name="parseLog" var="cline" return="string">
+			calls := strings.Split(cline.(string) , ":")
+			actionText := ""
+			if calls[0] == "service" {
+				actionText = "The line is located in  Web service ( " + calls[1] +  ") at line: " + calls[2] 
+			} else if calls[0] == "init" {
+				actionText = "The line is located in your package Init func at line: " + calls[1]
+			} else if calls[0] == "main" {
+				actionText = "The line is located in your package Main func at line: " + calls[1]
+			} else if calls[0] == "structs" {
+				actionText = "The line is located in your package Interfaces at line: " + calls[1]
+			} else if calls[0] == "meth" {
+				actionText = "The line is located in your package template pipelines at line: " + calls[1]
+			} 
+			return actionText
+		</method>
 
 		<method name="anyBugs" var="packge" return="(ajet bool)" >
 
 			ajet = false //,err := DebugLogs.Find(bson.M{"pkg":packge.(string), "username":usernam.(string)}).Count()
 
 			bugs := GetLogs(packge.(string))
+			sapp := net_getApp(getApps(), packge.(string))
 
 			if len(bugs) > 0 {
+				ajet = true
+			}
+
+			if sapp.Pid != "" {
 				ajet = true
 			}
 
@@ -304,6 +324,7 @@
 
 			ajet =  GetLogs(packge.(string))
 			sapp := net_getApp(getApps(), packge.(string))
+
 			if sapp.Pid != "" {
 				activLog := DebugObj{Time:"Server", Bugs:[]DebugNode{} }			
 				ajet = append([]DebugObj{activLog}, ajet...)
@@ -1779,10 +1800,41 @@
 					passed := false
 
 					if !strings.Contains( logBuilt,"Your build failed,") {
-						core.RunCmdSmart("go build")
+						logBuilt, _ = core.RunCmdSmart("go build")
+						if logBuilt != "" {
+
+									debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
+			
+						logs := strings.Split(logBuilt, "\n")
+						
+						for linen, log := range logs {
+							if linen != 0 {
+								linedt := strings.Split( log , ":")
+							//	fmt.Println(len(linedt))
+								dnode := DebugNode{}
+								//fmt.Println(linedt)
+								
+									//src
+								if len(linedt) > 2 {
+									dnode.Action = "edit:" + linedt[0]
+									dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
+									dnode.Line = strings.Join(linedt[2:], " - ")
+									debuglog.Bugs = append(debuglog.Bugs,dnode)
+								}
+								
+								
+
+							}
+						}
+
+						AddtoLogs(debuglog)
+			response = net_bAlert(Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
+
+
+						} else {
 						passed = true
 						response = net_bAlert(Alertbs{Type:"success",Text:"Your build passed!" })
-		
+						}
 					} else {
 					debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
 			fPart := strings.Split(logBuilt,"Full compiler build log :")
@@ -1793,7 +1845,7 @@
 								linedt := strings.Split( log , ":")
 							//	fmt.Println(len(linedt))
 								dnode := DebugNode{}
-								fmt.Println(linedt)
+							//	fmt.Println(linedt)
 								if linedt[0] == "./application.go" {
 									if len(linedt) > 2 {
 									il, _ := strconv.Atoi(linedt[1])
@@ -1864,7 +1916,7 @@
 									//src
 									if len(linedt) > 2 {
 									dnode.Action = "edit:" + linedt[0]
-									dnode.CTA = "Update source code."
+									dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
 									dnode.Line = strings.Join(linedt[2:], " - ")
 									debuglog.Bugs = append(debuglog.Bugs,dnode)
 									}
