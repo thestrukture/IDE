@@ -10,10 +10,12 @@
 		},
 		{
 			"ImportPath": "github.com/cheikhshift/db",
+			"Comment": "0.5.0-beta",
 			"Rev": "85091e3e47fea467cb0e2e4b8e6ab02572fa18d0"
 		},
 		{
 			"ImportPath": "github.com/cheikhshift/gos/core",
+			"Comment": "0.5.0",
 			"Rev": "42b3f634d6cf6ab2996adfed3fbe297e86a42ab8"
 		},
 		{
