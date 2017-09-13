@@ -34,7 +34,39 @@
 	<!-- The <init/> tag is similar to the init function within Go, -->
 	<!-- -->
 	<main>
-				dfd = os.ExpandEnv("$GOPATH")
+			dfd = os.ExpandEnv("$GOPATH")
+
+			if dfd ==  "" {
+				fmt.Println("Using temporary $GOPATH")
+				os.Chdir( os.ExpandEnv("$HOME") )
+				err := os.MkdirAll("workspace/",0777)
+				if err != nil {
+					fmt.Println(err.Error())
+					
+				} else {
+					//download go
+					os.MkdirAll("workspace/src",0777)
+					os.MkdirAll("workspace/bin",0777)
+					cwd, _ := os.Getwd()
+					cwd = cwd + "/workspace"
+			 		os.Setenv("GOPATH", cwd)
+			 		pathbin := os.ExpandEnv("$PATH")
+			 		os.Setenv("PATH", pathbin + ":" +  cwd + "/bin") 
+			 		fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
+			 		dfd = cwd
+			 		
+				}
+			} 
+
+				dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos" 
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
+					fmt.Println("Downloading GoS")
+			 		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
+			 		if err != nil {
+			 			color.Red("Please install GO : https://golang.org/dl/ ")
+			 		}
+			 	}
+				
 				apps := getApps()
 				newapps := []App{}
 				for _, app := range apps {
@@ -43,7 +75,8 @@
 						newapps = append(newapps, app)
 					}
 				} 
-				saveApps(newapps)
+		saveApps(newapps)
+
        fmt.Println("Strukture up")
        core.RunCmd("open http://localhost:8884/home")
 	</main>
@@ -786,6 +819,17 @@
           </templates>
 		<endpoints>
 				<!-- Package methods -->
+				<end path="/api/pkg-bugs" type="GET">
+
+						bugs := GetLogs(r.FormValue("pkg"))
+						//sapp := net_getApp(getApps(), packge.(string))
+						if len(bugs) == 0 {
+							response = "{}"
+						} else {
+						response = mResponse(bugs[0])
+						}
+				</end>
+
 				<end path="/api/empty" type="GET" >
 					
 					ClearLogs(r.FormValue("pkg"))
@@ -1505,8 +1549,8 @@
 			if r.FormValue("type") == "0" {
 				apps := getApps()
 			    apps = append(apps, App{Type:"webapp",Name: r.FormValue("name")})
-			    //update session on mongo
 			    core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name") )
+				
 			    //Users.Update(bson.M{"uid": me.UID}, me)
 			    saveApps(apps)
 			    response = net_bAlert(Alertbs{Type:"warning",Text:"Success package " + r.FormValue("name") + " was created!",Redirect: "javascript:updateTree()"})
@@ -1518,7 +1562,7 @@
 				gos.Update("var", r.FormValue("id"), core.GlobalVariables{Name:r.FormValue("name"),Type: r.FormValue("is")})		
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
-				response = "Variable updated!"
+				response = "Variable saved!"
 
 			} else if r.FormValue("type") == "2" {
 
@@ -1528,7 +1572,7 @@
 				gos.Update("import", r.FormValue("id"), core.Import{Src: r.FormValue("src")})			
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
-				response = "Variable updated!"
+				response = "Import saved!"
 
 			} else if r.FormValue("type") == "3" {
 				apps := getApps()
@@ -1578,13 +1622,16 @@
 			} else if r.FormValue("type") == "60" {
 
 				if r.FormValue("fmode") == "touch" {
-
-					_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );
+					addstr := ""
+					if !strings.Contains(r.FormValue("path"),".go") {
+						addstr = ".go"
+					}
+					_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
 
 					if err != nil {
 						npath := strings.Split(r.FormValue("path"), "/")
 							core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + strings.Join(npath[:len(npath) - 1], "/") );
-							core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );
+							core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
 
 					}
 
@@ -1816,7 +1863,7 @@
 								
 									//src
 								if len(linedt) > 2 {
-									dnode.Action = "edit:" + linedt[0]
+									dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
 									dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
 									dnode.Line = strings.Join(linedt[2:], " - ")
 									debuglog.Bugs = append(debuglog.Bugs,dnode)
@@ -1873,7 +1920,7 @@
 															inEndpoint := FindinString(v.Method, actline)
 															if inEndpoint != -1 {
 																enode := DebugNode{}
-																enode.Action = "service:" + v.Path + " - " + v.Type  + ":" + strconv.Itoa(inEndpoint)
+																enode.Action = "service:" + v.Path + " - " + v.Type  + ":" + strconv.Itoa(inEndpoint) + ":" + v.Id
 																	enode.Line = strings.Join(linedt[2:], " - ")
 																enode.CTA = "Update webservice " + v.Path
 																debuglog.Bugs = append(debuglog.Bugs,enode)
@@ -1915,7 +1962,7 @@
 								} else {
 									//src
 									if len(linedt) > 2 {
-									dnode.Action = "edit:" + linedt[0]
+									dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
 									dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
 									dnode.Line = strings.Join(linedt[2:], " - ")
 									debuglog.Bugs = append(debuglog.Bugs,dnode)

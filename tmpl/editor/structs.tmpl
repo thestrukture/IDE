@@ -38,6 +38,31 @@
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
+
+	   setTimeout(function(){
+
+	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{ .PKG }}, success:function(html){
+	 		//console.log(html)
+	 		if (html.Bugs){
+	 		for (var i = html.Bugs.length - 1; i >= 0; i--) {
+	 			var bug = html.Bugs[i];
+	 			
+	 			var action = bug.Action.split(":")
+	 			if (action[0] == "structs"){
+		 					 				//find line
+		 				$(".ace_gutter-cell",  "#" + {{ $rin }}).each(function(e,i){
+		 					if ($(this).html() == action[1]){
+		 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
+		 						$(this).html( '<i class="fa fa-warning"></i>' + action[1] )
+		 					}
+		 				})
+		 			
+	 			}
+	 		}
+	 		}
+	 	} 
+	 })
+	 },600)
 	 addTab({{ .PKG }} + " - Interfaces", {{ $rin }} );
 </script>
 </div>

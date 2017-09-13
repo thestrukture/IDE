@@ -25,6 +25,32 @@
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
+	    setTimeout(function(){
+	 
+	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{ .PKG }}, success:function(html){
+	 		//console.log(html)
+	 		if (html.Bugs){
+	 		for (var i = html.Bugs.length - 1; i >= 0; i--) {
+	 			var bug = html.Bugs[i];
+	 			
+	 			var action = bug.Action.split(":")
+	 			var id = {{.SavesTo }}.split("/")
+	 			id = id[id.length - 1];
+	 			if (action[0] == "edit" &&  action[1].includes(id) ){
+		 					 				//find line
+		 				$(".ace_gutter-cell",  "#" + {{ .ID }}).each(function(e,i){
+		 					if ($(this).html() == action[2]){
+		 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
+		 						$(this).html( '<i class="fa fa-warning"></i>' + action[2] )
+		 					}
+		 				})
+		 			
+	 			}
+	 		}
+	 		}
+	 	} 
+	 })
+	 },600)
 	 addTab({{ .SavesTo }}, {{ .ID }} );
 </script>
 </div>

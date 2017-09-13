@@ -647,6 +647,21 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 	}
 
+	if r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET") {
+
+		bugs := GetLogs(r.FormValue("pkg"))
+		//sapp := net_getApp(getApps(), packge.(string))
+		if len(bugs) == 0 {
+			response = "{}"
+		} else {
+			response = mResponse(bugs[0])
+		}
+
+		context.Clear(r)
+
+		callmet = true
+	}
+
 	if r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET") {
 
 		ClearLogs(r.FormValue("pkg"))
@@ -1271,7 +1286,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 						//src
 						if len(linedt) > 2 {
-							dnode.Action = "edit:" + linedt[0]
+							dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
 							dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
 							dnode.Line = strings.Join(linedt[2:], " - ")
 							debuglog.Bugs = append(debuglog.Bugs, dnode)
@@ -1325,7 +1340,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 												inEndpoint := FindinString(v.Method, actline)
 												if inEndpoint != -1 {
 													enode := DebugNode{}
-													enode.Action = "service:" + v.Path + " - " + v.Type + ":" + strconv.Itoa(inEndpoint)
+													enode.Action = "service:" + v.Path + " - " + v.Type + ":" + strconv.Itoa(inEndpoint) + ":" + v.Id
 													enode.Line = strings.Join(linedt[2:], " - ")
 													enode.CTA = "Update webservice " + v.Path
 													debuglog.Bugs = append(debuglog.Bugs, enode)
@@ -1367,7 +1382,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 					} else {
 						//src
 						if len(linedt) > 2 {
-							dnode.Action = "edit:" + linedt[0]
+							dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
 							dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
 							dnode.Line = strings.Join(linedt[2:], " - ")
 							debuglog.Bugs = append(debuglog.Bugs, dnode)
@@ -7405,6 +7420,38 @@ func main() {
 	fmt.Printf("%d\n", os.Getpid())
 
 	dfd = os.ExpandEnv("$GOPATH")
+
+	if dfd == "" {
+		fmt.Println("Using temporary $GOPATH")
+		os.Chdir(os.ExpandEnv("$HOME"))
+		err := os.MkdirAll("workspace/", 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+
+		} else {
+			//download go
+			os.MkdirAll("workspace/src", 0777)
+			os.MkdirAll("workspace/bin", 0777)
+			cwd, _ := os.Getwd()
+			cwd = cwd + "/workspace"
+			os.Setenv("GOPATH", cwd)
+			pathbin := os.ExpandEnv("$PATH")
+			os.Setenv("PATH", pathbin+":"+cwd+"/bin")
+			fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
+			dfd = cwd
+
+		}
+	}
+
+	dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos"
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		fmt.Println("Downloading GoS")
+		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
+		if err != nil {
+			color.Red("Please install GO : https://golang.org/dl/ ")
+		}
+	}
+
 	apps := getApps()
 	newapps := []App{}
 	for _, app := range apps {
@@ -7414,6 +7461,7 @@ func main() {
 		}
 	}
 	saveApps(newapps)
+
 	fmt.Println("Strukture up")
 	core.RunCmd("open http://localhost:8884/home")
 
