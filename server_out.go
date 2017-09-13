@@ -1675,11 +1675,18 @@ exit 0`
 
 	if r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST") {
 
-		data, err := core.RunCmdSmart(r.FormValue("command"))
-		if err != nil {
-			response = fmt.Sprintf("%s", err)
+		if strings.Contains(r.FormValue("command"), "cd") {
+			parts := strings.Fields(r.FormValue("command"))
+			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" + parts[1])
+			response = "Changed directory to " + parts[1]
+
 		} else {
-			response = data
+			data, err := core.RunCmdSmart(r.FormValue("command"))
+			if err != nil {
+				response = fmt.Sprintf("%s", err) + "" + data
+			} else {
+				response = data
+			}
 		}
 		w.Write([]byte(response))
 
