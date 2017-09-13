@@ -52,7 +52,11 @@
 			 		os.Setenv("GOPATH", cwd)
 			 		pathbin := os.ExpandEnv("$PATH")
 			 		os.Setenv("PATH", pathbin + ":" +  cwd + "/bin") 
-			 		fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
+			 		_,goinvs := core.RunCmdSmart("go help build")
+			 		if goinvs != nil {
+				 		fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
+				 		
+			 		}
 			 		dfd = cwd
 			 		
 				}
