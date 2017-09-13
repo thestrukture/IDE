@@ -760,8 +760,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 	if r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST") {
 
-		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
-
 		if r.FormValue("type") == "0" {
 
 			//type pkg id
@@ -911,37 +909,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 		} else if r.FormValue("type") == "9" {
-			//cancel stripe subscription
-			if r.FormValue("confirm") == "delete" {
 
-				core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + me.Username)
-				//cancel subscription
-				//Users.Remove(bson.M{"username":me.Username})
-
-				/*
-					stripe.Key = "sk_live_5JVbbpU9f0jMfwlK7cYwYTiS"
-
-					_,err := customer.Del(me.StripeID)
-
-					if err != nil {
-						response = net_bAlert(Alertbs{Type:"danger",Text:"Error removing subscription, please try again!"})
-					} else {
-					 _,_ = core.RunCmdSmart("docker stop " + me.Docker)
-					  _,_ = core.RunCmdSmart("docker rm " + me.Docker)
-					response = net_bAlert(Alertbs{Type:"success",Text:"Account Deleted one moment",Redirect: "/api/logout"})
-					}
-				*/
-			} else {
-				response = net_bAlert(Alertbs{Type: "danger", Text: "Please enter delete"})
-			}
-
-		}
-
-		if r.FormValue("type") != "9" {
-			//Users.Update(bson.M{"uid":me.UID}, me)
-		} else {
-			//delete mongodb row
-			//Users.Remove(bson.M{"uid":me.UID})
 		}
 
 		context.Clear(r)
