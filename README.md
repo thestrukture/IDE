@@ -3,11 +3,10 @@ Go lang IDE server.
 
 ## Requirements
 - Unix based OS/CLI.
-- Go 1.9 and up.
-- $GOPATH set.
-- $GOPATH/bin in execution path.
+- Go 1.9 and up. [Find it here](https://golang.org/dl/).
 - Install GoS [CLI](http://golangserver.com). ( `$ go get github.com/cheikhshift/gos` )
 - Install `GoS` dependencies : `$ gos deps`
+
 
 ## Install
 
