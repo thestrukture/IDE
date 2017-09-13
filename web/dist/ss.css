@@ -14,7 +14,7 @@
 .full-height {
 	height:100%;
 }
-.xtab.active {
+.xtab.active , .xtab.factive {
         color: #55595c;
     background-color: #fff;
     border-color: #ddd #ddd transparent;
