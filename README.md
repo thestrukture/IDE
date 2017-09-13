@@ -35,6 +35,7 @@ Visit https://github.com/thestrukture/IDE/wiki
 
 ![](tests/1.png)
 ![](tests/8.png)
+![](tests/29.png)
 ![](tests/20.png)
 ![](tests/2.png)
 ![](tests/24.png)
