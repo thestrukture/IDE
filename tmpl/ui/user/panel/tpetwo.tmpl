@@ -8,12 +8,12 @@
 		float:left;
 	}
 </style>
-	<div class="col-sm-9">
+	<div class="col-sm-7">
 		
 	</div>
-	<div class="col-sm-3 " style="text-align:right">
+	<div class="col-sm-5 " style="    width: 180px;padding-right: 1px;text-align:right">
 		<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
- Wrap text
+ Wrap
 </button>
 		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
 	</div>
