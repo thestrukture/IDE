@@ -651,8 +651,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 	if r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET") {
 
 		bugs := GetLogs(r.FormValue("pkg"))
-		//sapp := net_getApp(getApps(), packge.(string))
-		if len(bugs) == 0 {
+		sapp := net_getApp(getApps(), r.FormValue("pkg"))
+		if len(bugs) == 0 || sapp.Passed {
 			response = "{}"
 		} else {
 			response = mResponse(bugs[0])
