@@ -1,4 +1,5 @@
 # Strukture IDE Beta
+[![Build Status](https://travis-ci.org/thestrukture/IDE.svg?branch=master)](https://travis-ci.org/thestrukture/IDE)
 Go lang IDE server.
 
 ## About project
