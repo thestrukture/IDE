@@ -9,6 +9,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Server process management.
 - Basic terminal via stateless HTTP.
 - Line tags in relation to failed build logs.
+- Project build scripts.
 
 ## Requirements
 - Unix based OS/CLI.
