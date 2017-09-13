@@ -17,11 +17,6 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Go 1.9 and up. [Find it here](https://golang.org/dl/).
 
 
-## Misc info
-How to install GoS incase the built-in installer fails.
-
-- Install GoS [CLI](http://golangserver.com). ( `$ go get github.com/cheikhshift/gos` )
-- Install `GoS` dependencies : `$ gos deps`
 
 
 ## Install
@@ -46,6 +41,15 @@ Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.ph
 ## Wiki : How to use the strukture
 
 Visit https://github.com/thestrukture/IDE/wiki
+
+## How to automate :
+To build additional functionality use shell scripts. The users of your plugin can simply run the shell script via the HTTP terminal.
+
+## Misc info
+How to install GoS incase the built-in installer fails.
+
+- Install GoS [CLI](http://golangserver.com). ( `$ go get github.com/cheikhshift/gos` )
+- Install `GoS` dependencies : `$ gos deps`
 
 ## Screenshots
 
