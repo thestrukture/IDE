@@ -7449,6 +7449,8 @@ func main() {
 		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
 		if err != nil {
 			color.Red("Please install GO : https://golang.org/dl/ ")
+		} else {
+			core.RunCmdSmart("gos deps")
 		}
 	}
 
