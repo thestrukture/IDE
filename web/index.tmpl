@@ -278,7 +278,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
         working = true;
         if (command !== '') {
           
-          term.echo("[[b;#00FF00;]Sending request to container > ]")
+          term.echo("[[b;#00FF00;]Sending request> ]")
           $.ajax({url:"/api/console",type:"POST",data:{command:command},success:function(html){
               
 
