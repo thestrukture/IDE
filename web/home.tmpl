@@ -181,7 +181,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
     var editors = {};
 
     var termsize = 0;
-  
+    
     function addtermwidth(){
         if (termsize != 2){
           //below limit
@@ -562,6 +562,12 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
           //show tab 
           $(this).parents("li").remove();
           delete tabj[elementid];
+          if (editors[elementid ]){
+          delete editors[elementid];
+          }
+          if (editors[elementid + "c"]){
+            delete editors[elementid + "c"]
+          }
           $("#" + elementid).remove();
           return false;
         });

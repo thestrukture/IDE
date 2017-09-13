@@ -861,7 +861,7 @@
 						
 						for _,tm := range gos.Templates.Templates {
 							if tm.Bundle == b {
-							tmpls = append(tmpls, PkgItem{Type:"5",AppID:v.Name,Icon:"fa fa-page",DType:"5&tmpl=" + b + "/" + tm.Name,Text:tm.Name,ID: b + "/" +tm.Name})
+							tmpls = append(tmpls, PkgItem{Type:"5",AppID:v.Name,Icon:"fa fa-page",DType:"5&tmpl=" + b + "/" + tm.Name,Text:tm.Name,ID: v.Name + "@pkg:" +  b + "/" +tm.Name})
 							}
 						}
 
@@ -891,7 +891,7 @@
 					   		var mjk string
 					   		mjk = strings.Replace(path ,  core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name + "/web","",-1) + "/" + f.Name() 
 
-					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-page",Type:"6",ID:mjk,MType : "6&path=" + mjk,DType:"6&isDir=No&path=" + mjk }) 
+					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-page",Type:"6",ID: v.Name + "@pkg:" + mjk,MType : "6&path=" + mjk,DType:"6&isDir=No&path=" + mjk }) 
 					   	
 					   		}
 					   }
@@ -923,7 +923,7 @@
 					   		var mjk string
 					   		mjk = strings.Replace(path  , core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name,"",-1) + "/" + f.Name()
 
-					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-code",Type:"60",ID: mjk,MType : "60&path=" + mjk,DType:"60&isDir=No&path=" + mjk }) 
+					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-code",Type:"60",ID: v.Name + "@pkg:" +  mjk,MType : "60&path=" + mjk,DType:"60&isDir=No&path=" + mjk }) 
 					   	
 					   		}
 					   	}
@@ -1067,20 +1067,21 @@
 				}
 
 			} else if r.FormValue("type") == "5" {
-				data,_ := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/tmpl/" + r.FormValue("id") + ".tmpl" )
+				id := strings.Split(r.FormValue("id"), "@pkg:")
+				data,_ := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/tmpl/" + id[1] + ".tmpl" )
 				
 				data = []byte(html.EscapeString(string(data)) )				
 				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/gos.gxml")
 
-				 template := net_getTemplate(gos.Templates.Templates, r.FormValue("id"))
+				 template := net_getTemplate(gos.Templates.Templates, id[1])
 
 				varf := []Inputs{}
 				varf = append(varf, Inputs{Type:"text", Value:template.Struct ,Name:"struct",Text:"Interface to use with template" })
 
-				response = net_bTemplateEdit(TemplateEdits{SavesTo:"tmpl/" + r.FormValue("id") + ".tmpl",ID:net_RandTen(),PKG: r.FormValue("space"),Mime:"html", File :  data,Settings: rPut{Link:"/api/put?type=2&id=" + r.FormValue("id") + "&pkg=" + r.FormValue("space"),Inputs:varf, Count:"6"   } })
+				response = net_bTemplateEdit(TemplateEdits{SavesTo:"tmpl/" + id[1] + ".tmpl",ID:net_RandTen(),PKG: r.FormValue("space"),Mime:"html", File :  data,Settings: rPut{Link:"/api/put?type=2&id=" + id[1] + "&pkg=" + r.FormValue("space"),Inputs:varf, Count:"6"   } })
 			} else if r.FormValue("type") == "6" {
-
-				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/web" + r.FormValue("id")
+				id := strings.Split(r.FormValue("id"), "@pkg:")
+				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/web" + id[1]
 				var ftype string
 				if strings.Contains(filep, ".css"){
 					ftype = "css"
@@ -1094,15 +1095,15 @@
 				}
 				data,_ := ioutil.ReadFile(filep)
 				data =  []byte(html.EscapeString(string(data)))
-				response = net_bWebRootEdit(WebRootEdits{SavesTo:r.FormValue("id"),Type:ftype,File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
+				response = net_bWebRootEdit(WebRootEdits{SavesTo:id[1],Type:ftype,File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
 
 			} else if r.FormValue("type") == "60" {
-
-				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space")  + r.FormValue("id")
+				id := strings.Split(r.FormValue("id"), "@pkg:")
+				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space")  + id[1]
 				
 				data,_ := ioutil.ReadFile(filep)
 				data =  []byte(html.EscapeString(string(data)))
-				response = net_bWebRootEdittwo(WebRootEdits{SavesTo:r.FormValue("id"),Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
+				response = net_bWebRootEdittwo(WebRootEdits{SavesTo:id[1],Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
 
 			} else if r.FormValue("type") == "7" {
 				sapp := net_getApp(getApps(), r.FormValue("space"))

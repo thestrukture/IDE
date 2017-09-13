@@ -14,7 +14,11 @@
 .full-height {
 	height:100%;
 }
-
+.xtab.active {
+        color: #55595c;
+    background-color: #fff;
+    border-color: #ddd #ddd transparent;
+}
    @media screen and (max-width: 1048px) {
          .pop-box {
             position: absolute;

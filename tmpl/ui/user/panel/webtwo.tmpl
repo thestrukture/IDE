@@ -2,7 +2,9 @@
 <div class="tabview" id="{{ .ID }}" pkg="{{ .PKG }}">
 <div  class="row">
 	<div class="col-sm-9" style="min-height:50px;">
-	
+	<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+ Wrap text
+</button>
 	</div>
 	<div class="col-sm-2">
 		<!-- <a href="/roc/server{{ Fragmentize .SavesTo }}?pkin={{ .PKG }}" class="btn btn-primary-outline btn-block" target="_blank"><i class="fa fa-eye"></i> Preview</a> -->
@@ -15,6 +17,7 @@
 <script type="text/javascript">
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
 	 editors["{{ .ID }}"].getSession().setMode("ace/mode/" + {{ .Type }})
+	 editors[{{ .ID }} + "c"] = {wrap:false};
 	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	 editors["{{ .ID }}"].commands.addCommand({
 	    name: 'myCommand',

@@ -2,7 +2,9 @@
 <div class="tabview" id="{{ $rin }}" pkg="{{ .PKG }}" style="background-color:#fff;">
 <div  class="row" style="padding-top:20px;">
 	<div class="col-sm-4" style="min-height:50px;">
-	
+				<button type="button" class="btn btn-primary" onclick="editors['{{ $rin }}c'].wrap = editors['{{ $rin }}c'].wrap ? false : true;editors['{{ $rin }}'].getSession().setUseWrapMode( editors['{{ $rin }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+ Wrap text
+</button>
 	</div>
 	<div class="col-sm-5" >
 		<input class="form-control sti" editor="{{ $rin }}" type="text"  placeholder="Pipeline name">
@@ -18,6 +20,7 @@
 <script type="text/javascript">
 	 editors["{{ $rin }}"] = ace.edit("editor{{ $rin }}");
 	 editors["{{ $rin }}"].getSession().setMode("ace/mode/golang");
+	 editors[{{ $rin }} + "c"] = {wrap:false};
 	  editors["{{ $rin }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	  editors["{{ $rin }}"].commands.addCommand({
 	    name: 'myCommand',

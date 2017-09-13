@@ -8,8 +8,13 @@
 		float:left;
 	}
 </style>
-	
+	<div class="col-sm-9">
+		
+	</div>
 	<div class="col-sm-3 " style="text-align:right">
+		<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+ Wrap text
+</button>
 		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
 	</div>
 </div>
@@ -19,6 +24,7 @@
 <script type="text/javascript">
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
 	 editors["{{ .ID }}"].getSession().setMode("ace/mode/golang")
+	 editors[{{ .ID }} + "c"] = {wrap:false};
 	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	 editors["{{ .ID }}"].commands.addCommand({
 	    name: 'myCommand',
