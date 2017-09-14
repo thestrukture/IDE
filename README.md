@@ -24,7 +24,29 @@ The strukture is an open source IDE. It is designed to build web applications, w
 
 		$ go get github.com/thestrukture/IDE
 
+
 ### Install Via APT
+
+#### Ubuntu 14.04
+	
+	wget -qO- https://dl.packager.io/srv/thestrukture/IDE/key | sudo apt-key add -
+	sudo wget -O /etc/apt/sources.list.d/ide.list \
+  	https://default:660f1018d50549e01c9d6f3a6d8f66c8@dl.packager.io/srv/thestrukture/IDE/master/installer/ubuntu/14.04.repo
+	sudo apt-get update
+	sudo apt-get install ide
+
+#### Ubuntu 16.04
+
+	wget -qO- https://dl.packager.io/srv/thestrukture/IDE/key | sudo apt-key add -
+	sudo wget -O /etc/apt/sources.list.d/ide.list \
+  	https://default:660f1018d50549e01c9d6f3a6d8f66c8@dl.packager.io/srv/thestrukture/IDE/master/installer/ubuntu/16.04.repo
+	sudo apt-get update
+	sudo apt-get install ide
+	
+#### How to run
+
+	$ ide
+	
 [Link to packager.io](https://packager.io/gh/thestrukture/IDE)
 
 ## Run
