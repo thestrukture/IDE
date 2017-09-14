@@ -545,15 +545,20 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
     }
 
     function addTab(name, elementid){
-
-      if ( tabj[elementid] ) {
-        //make active
-        $("a[target='" + elementid + "']").click();
+      if(!editors["tabnames"]){
+          editors["tabnames"] = ["tab","map"]
+      }
+      if (editors.tabnames.indexOf(name) != -1){
+          var currentlink = $("a[data-name='" + name + "']")
+ 
+          $("#" + elementid).remove()
+          $(".xnavs").scrollLeft(currentlink.offset().left)
+          currentlink.click()
 
       } else {
         tabj[elementid] = name;
         mready(elementid);
-        $(".xnavs").append('<li class="nav-item"><a class="nav-link xtab factive active" target="' + elementid + '" href="#">' + name +' <button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
+        $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#">' + name +' <button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
         $("a[target='" + elementid + "']").click(function(){
           //show tab 
           mready(elementid);
@@ -563,6 +568,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
           //show tab 
           $(this).parents("li").remove();
           delete tabj[elementid];
+          editors.tabnames.splice(editors.tabnames.indexOf(name),1)
           if (editors[elementid ]){
           delete editors[elementid];
           }
@@ -572,6 +578,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
           $("#" + elementid).remove();
           return false;
         });
+        editors.tabnames.push(name)
       }
     }
 

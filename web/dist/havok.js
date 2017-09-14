@@ -251,3 +251,5 @@ function getJsonFromUrl(query) {
 $(".marker[init='yes']").parent().havok();
 
 $(".auto-marker").havok();
+
+
