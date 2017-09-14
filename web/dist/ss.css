@@ -31,7 +31,11 @@
             width:100%;
          }
     }
-
+.btn {
+    color: #fff !important;
+    background-color: #0275d8 !important;
+    border-color: #0275d8 !important;
+}
 .over-flow-fix {
 	overflow-y: auto;
     overflow-x: hidden;
