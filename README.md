@@ -24,7 +24,11 @@ The strukture is an open source IDE. It is designed to build web applications, w
 
 		$ go get github.com/thestrukture/IDE
 
+#### How to run
 
+		$ IDE
+	
+	
 ### Install Via APT
 
 #### Ubuntu 14.04
@@ -49,9 +53,6 @@ The strukture is an open source IDE. It is designed to build web applications, w
 	
 [Link to packager.io](https://packager.io/gh/thestrukture/IDE)
 
-## Run
-
-		$ IDE
 
 ## Access
 
