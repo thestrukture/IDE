@@ -24,6 +24,8 @@ The strukture is an open source IDE. It is designed to build web applications, w
 
 		$ go get github.com/thestrukture/IDE
 
+### Install Via APT
+[Link to packager.io](https://packager.io/gh/thestrukture/IDE)
 
 ## Run
 
