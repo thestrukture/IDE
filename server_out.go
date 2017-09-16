@@ -857,11 +857,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/tmpl/" + r.FormValue("tmpl") + ".tmpl")
 
 				gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
-				gos.Delete("template", r.FormValue("tmpl"))
+				parsedStr := strings.Split(r.FormValue("tmpl"), "/")
+				gos.Delete("template", parsedStr[len(parsedStr)-1])
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-				response = net_bAlert(Alertbs{Type: "success", Text: "Success template " + r.FormValue("tmpl") + " was removed! Please close any tabs related to this resource to avoid confusion.", Redirect: "javascript:updateTree()"})
+				response = net_bAlert(Alertbs{Type: "success", Text: "Success template " + r.FormValue("tmpl") + " was removed!", Redirect: "javascript:updateTree()"})
 			}
 
 		} else if r.FormValue("type") == "6" {
@@ -874,7 +875,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				if r.FormValue("isDir") == "Yes" {
 					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
 				} else {
-					core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
+					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
 				}
 				response = net_bAlert(Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " was removed!", Redirect: "javascript:updateTree()"})
 			}
@@ -889,7 +890,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				if r.FormValue("isDir") == "Yes" {
 					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
 				} else {
-					core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
 				}
 				response = net_bAlert(Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " removed!", Redirect: "javascript:updateTree()"})
 			}
@@ -1036,13 +1037,21 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			}
 
 		} else if r.FormValue("type") == "7" {
-			core.RunCmdB("mv " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web/" + r.FormValue("path"))
-			response = net_bAlert(Alertbs{Type: "success", Text: "Operation succeeded"})
+			_, err := core.RunCmdSmart("mv " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web/" + r.FormValue("path"))
+
+			if err != nil {
+				response = net_bAlert(Alertbs{Type: "danger", Text: "Failed to move resource : " + err.Error()})
+			} else {
+				response = net_bAlert(Alertbs{Type: "success", Text: "Operation succeeded"})
+			}
 
 		} else if r.FormValue("type") == "70" {
-			core.RunCmdB("mv " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
-			response = net_bAlert(Alertbs{Type: "success", Text: "Operation succeeded"})
-
+			_, err := core.RunCmdSmart("mv " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+			if err != nil {
+				response = net_bAlert(Alertbs{Type: "danger", Text: "Failed to move resource : " + err.Error()})
+			} else {
+				response = net_bAlert(Alertbs{Type: "success", Text: "Operation succeeded"})
+			}
 		}
 
 		context.Clear(r)
@@ -1071,10 +1080,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
 			gos.Update("template", r.FormValue("id"), r.FormValue("struct"))
-			fmt.Println(gos)
+			// fmt.Println(gos)
 
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
-			response = "OK"
+			response = "Template interface saved!"
 		} else if r.FormValue("type") == "3" {
 			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web"+r.FormValue("target"), []byte(r.FormValue("data")), 0777)
 
@@ -1158,7 +1167,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			gos.UpdateMethod(r.FormValue("target"), r.FormValue("data"))
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-			response = "OK"
+			response = net_bAlert(Alertbs{Type: "warning", Text: "Endpoint code saved!"})
 
 		} else if r.FormValue("type") == "10" {
 

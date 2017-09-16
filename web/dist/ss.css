@@ -32,21 +32,21 @@
          }
     }
 
-.xnavs::-webkit-scrollbar-track
+::-webkit-scrollbar-track
 {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
     border-radius: 10px;
     background-color: #F5F5F5;
 }
 
-.xnavs::-webkit-scrollbar
+::-webkit-scrollbar
 {
     width: 4px;
     height: 7px;
     background-color: #F5F5F5;
 }
 
-.xnavs::-webkit-scrollbar-thumb
+::-webkit-scrollbar-thumb
 {
     border-radius: 4px;
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
@@ -99,9 +99,6 @@
 	border-radius: 12px;
 }
 
-.panel-k-right,.panel-k-left,.terminal-side {
-	 -webkit-transition: width 1s; /* For Safari 3.1 to 6.0 */
-    transition: width 1s;
-}
+
 
 

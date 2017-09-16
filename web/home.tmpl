@@ -56,6 +56,13 @@
 
    }
 
+   .right-bay {
+    position: fixed;
+    z-index: 3000;
+    right:10px;
+    top:10px;
+   }
+
 
 
      
@@ -71,6 +78,7 @@
   <button class="btn btn-info-outline" onclick="CollapseGloj()" style="padding:5px;font-size:14px;"><i class="fa fa-arrow-right"></i> Show</button>
    <button onclick="toggleTerm()" class="btn btn-info-outline" style="padding:5px;font-size:14px;"><i class="fa fa-terminal"></i></button>
 </div>
+<div class="right-bay"></div>
     <div class="container-fluid full-height" id="panel">        
       <div class="row full-height " style="margin-bottom:15px;">
       <div class="col-sm-3 pop-box panel-k-left full-height over-flow-fix" style="-webkit-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
@@ -78,7 +86,7 @@
 box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
   <div class="">
         <nav class="navbar bg-faded">
-  <a class="navbar-brand" href="/home" style="font-size:1.0rem"><img class="hidden-md-down" src="/img/logo.png" style="display:inline;width:35px"> Strukture</a>
+  <a class="navbar-brand" href="/home" style="font-size:1.0rem"><img class="" src="/img/logo.png" style="display:inline;width:35px"></a>
   
   <div class="form-inline pull-xs-right ">
       <button class="btn cps-side" onclick="CollapseGloj()" style="background:none;"><i class="fa fa-compress"></i> <span class="hidden-md-down">Collapse</span></button>
@@ -107,9 +115,9 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
 
       
         <p class="dimisser-btn" style="display:none;"><button class="btn btn-block btn-danger" onclick="ClearSideBay()"><b>Dismiss prompt</b></button></p>
-        <div class="side-bay"></div>
+        <div class="side-bay left-bay"></div>
                <div style="" >
- <p><label class=" "><i class="fa fa-square"></i> Packages</label></p>
+ <p><label class=" "><i class="fa fa-square"></i> Packages</label><br /> <button onclick="updateTree()" class="btn btn-sm">REFRESH TREE</button></p>
           <div id="jstree"></div>
     </div>
    </div>
@@ -190,7 +198,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
           }
            else if(termsize == 1){
             termsize = 2;
-              $(".terminal-side").css("width","90" + percentagetext)
+              $(".terminal-side").css("width","95" + percentagetext)
           }
         }
     }
@@ -198,13 +206,15 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
     function CollapseGloj(){
         if($(".panel-k-left").css('display') == "none"){
 
-          setTimeout(function(){
-             $(".panel-k-left").css('display',"block");
-           }, 10);
+          $(".right-bay").removeClass("side-bay")
+          $(".left-bay").addClass("side-bay")
+          $(".panel-k-left").css('display',"block");
           $(".panel-k-right").addClass("col-sm-9");
           $(".panel-k-right").removeClass("col-sm-12");
           $(".recop").css("display","none");
         } else {
+          $(".left-bay").removeClass("side-bay")
+          $(".right-bay").addClass("side-bay")
           $(".panel-k-left").css('display',"none");
           $(".panel-k-right").removeClass("col-sm-9");
           $(".panel-k-right").addClass("col-sm-12");
@@ -457,6 +467,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
           },
           "plugins" : [ "contextmenu","state" ],
           "contextmenu": {
+                 "select_node" : false ,
                   "items": function ($node) {
                       var menu = {};
 
