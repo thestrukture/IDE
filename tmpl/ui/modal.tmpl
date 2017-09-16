@@ -25,7 +25,11 @@
        {{end}}
       </div>
       {{end}}
-
+    
+      {{ if .Title | eq "PLUGINS" }}
+          {{ PluginList }}
+      {{end}}
+    
     </div>
   </div>
 </div>

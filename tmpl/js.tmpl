@@ -7,3 +7,524 @@
     <script type="text/javascript">
     	var __loading = $.loading()
     </script>
+    <script type="text/javascript" src="dist/jquery.terminal-0.10.8.min.js"></script>
+ 	<script type="text/javascript" src="dist/unix_formatting.js"></script>
+	<script src="/dist/src/ace.js"></script>
+	<script src="/dist/src/ext-language_tools.js"></script>
+	<script src="dist/sweetalert.min.js"></script>
+	<script type="text/javascript" src="/dist/hotkeys.js"></script>
+	<script type="text/javascript" src="/dist/jquery.ui.position.js"></script>
+    <script type="text/javascript" src="/dist/jquery.contextMenu.js"></script>
+	<script type="text/javascript">
+    var working = false;
+    var tabj = {};
+    var editors = {};
+
+    var termsize = 0;
+
+
+
+        /*
+		Plugin format :
+		name : "Name"
+		location : "spring||toolbar"
+		show: function(code)
+		exec : function(code,editor)
+        */
+      $trukture = {
+      addPlugin:function(plugin){
+      	$trukture.plugins.push(plugin)
+      },
+      exec: function(cmd,callback){
+      		//console call here
+      		$.ajax({url:"/api/console",type:"POST",data:{command:cmd},success:function(html){
+      			if (html.includes("Error::")){
+      				callback(false, html)
+      			} else {
+         	   callback(html)
+         		}
+          },error:function(e){
+               callback(false, e.responseText);
+           }})
+      },
+      FindPlugin : function(name){
+      	for (var i = $trukture.plugins.length - 1; i >= 0; i--) {
+     		var plugin = $trukture.plugins[i];
+     		if ( plugin.name == name ) {
+     			return plugin;
+     		}
+     	}
+      },
+      plugins:[]
+  	}
+
+  	function handleClickStruk(plugin,txt,editorid,pkg){
+  		//console.log(plugin,txt,editorid)
+  		$trukture.exec("cd " + pkg,function(dud){})
+  		var plugin = $trukture.FindPlugin(plugin)
+  		var edt = editors[editorid];
+  		var execution = plugin.exec(txt, edt.getSession())
+
+  		if (typeof(execution) == "string") {
+  				edt.insert( execution)	
+  		} 
+
+  	}
+
+     function getItems(code){
+     	var codeedit = {
+            "sep1": "---------",
+            "quit": {name: "Close", icon: 'context-menu-icon context-menu-icon-quit' }
+     	}
+
+     	for (var i = $trukture.plugins.length - 1; i >= 0; i--) {
+     		var plugin = $trukture.plugins[i];
+     		if ( plugin.show(code) ) {
+     			codeedit[plugin.name] = {name: plugin.name}
+     		}
+     	}
+
+     	return codeedit
+     }
+
+
+     //add plugin go get github dep
+
+   
+
+    
+    function addtermwidth(){
+        if (termsize != 2){
+          //below limit
+          if(termsize == 0){
+            termsize = 1;
+              $(".terminal-side").css("width","50" + percentagetext)
+          }
+           else if(termsize == 1){
+            termsize = 2;
+              $(".terminal-side").css("width","95" + percentagetext)
+          }
+        }
+    }
+
+    function removePlugin(path){
+    	//
+    	$.ajax({url:"/api/delete", type:"POST", data:{type: "101",pkg:path} ,success:function(html){
+    		$("[data-plugin='" + path +"']").remove()
+    	},error:function(e){
+    		$(".plugin-list").html(e.responseText)
+
+    	} })
+    }
+
+    function GetPlugins(){
+    	//plugin-list
+    	$.ajax({url:"/api/new", type:"POST", data:{type: "101"} ,error:function(e){
+    		$(".plugin-list").html(e.responseText)
+    	} })
+    }
+
+    function CollapseGloj(){
+        if($(".panel-k-left").css('display') == "none"){
+
+          $(".right-bay").removeClass("side-bay")
+          $(".left-bay").addClass("side-bay")
+          $(".panel-k-left").css('display',"block");
+          $(".panel-k-right").addClass("col-sm-9");
+          $(".panel-k-right").removeClass("col-sm-12");
+          $(".recop").css("display","none");
+        } else {
+          $(".left-bay").removeClass("side-bay")
+          $(".right-bay").addClass("side-bay")
+          $(".panel-k-left").css('display',"none");
+          $(".panel-k-right").removeClass("col-sm-9");
+          $(".panel-k-right").addClass("col-sm-12");
+          $(".recop").css("display","block");
+        }
+    }
+
+    function redtermwidth(){
+         if (termsize != 0){
+          //below limit
+          if(termsize == 1){
+            termsize = 0;
+              $(".terminal-side").css("width","320px")
+          }
+           else if(termsize == 2){
+            termsize = 1;
+              $(".terminal-side").css("width","50" + percentagetext)
+          }
+        }
+    }
+
+      var langTools = ace.require("ace/ext/language_tools");
+
+        var rhymeCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+            if (prefix.length === 0) { callback(null, []); return }
+            $.getJSON(
+                "/api/complete?pref=" + prefix + "&pkg=" + $(".tabview.active").attr("pkg"),
+                function(wordList) {
+                    // wordList like [{"word":"flow","freq":24,"score":300,"flags":"bc","syllables":"1"}]
+                    callback(null, wordList.map(function(ea) {
+                        return {name: ea.word, value: ea.value, score: ea.score, meta: ea.meta}
+                    }));
+                })
+        }
+    }
+    langTools.addCompleter(rhymeCompleter);
+
+    function ClearSideBay(){
+      $(".side-bay").html("");
+    }
+
+    $('.side-bay').bind("DOMSubtreeModified",function(){
+     if ($(".side-bay").height() == 0){
+        $(".dimisser-btn").css('display','none')
+     } else   $(".dimisser-btn").css('display','block');
+    return false;
+    });
+
+    function toggleTerm(){
+        if($(".terminal-side").hasClass('active')){
+            $(".terminal-side").removeClass('active');
+            $(".terminal-side").css('display','none');
+        } else {
+            $(".terminal-side").addClass('active');
+            $(".terminal-side").css('display','block');
+        }
+    }
+    $(document).bind("ajaxSend", function(){
+    if($(".terminal-side").hasClass('active') && termx != null){
+            termx("[[b;#00FF00;]Request sent > ]",{flush:false})
+    }
+ });
+
+    $(document).bind('keydown', 'ctrl+s', function(){}); 
+    $(document).bind('keydown', 'ctrl+i', toggleTerm); 
+    $(document).bind('keydown', 'ctrl+m', CollapseGloj);
+     $(document).bind('keydown', 'ctrl+n', function(){
+     	$(".footer-bay .modal").modal("hide")
+     	$(".new-package").click();
+      });
+
+    var working = false;
+    var termx = null;
+    jQuery(function($, undefined) {
+    $('#terminaldefault').terminal(function(command, term) {
+      termx = term.echo;
+       if (!working){
+        working = true;
+        if (command !== '') {
+          
+          term.echo("[[b;#00FF00;]Sending request> ]")
+          $.ajax({url:"/api/console",type:"POST",data:{command:command},success:function(html){
+              
+
+              term.echo(html);
+              console.log(html)       
+              term.echo("[[b;#00FF00;]Done]");
+              working= false;  
+          },error:function(m,e){
+                working = false;
+                 term.echo("[[b;#B0171F;]Error]")
+           }})
+        } else {
+            working = false;
+           term.echo('');
+        }
+        }
+    }, {
+        greetings: 'Welcome to the Strukture v1',
+        name: 'struk_term',
+        height: ($(".terminal-side").height() - 55),
+        prompt: (working ? "":'user@Strutkure $')
+    });
+});
+
+
+
+    function SaveFile(editor, link,pkv){
+      
+        var payload = {type:"1",target:link,pkg:pkv};
+        if ( link.includes("gosforceasapi/") ) {
+            link_final = link.split("++()/")
+            payload.target = link_final[0].replace("gosforceasapi/", "")
+            payload.type = "13r";
+        }
+        payload["data"] = editors[editor].getValue();
+      $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
+        $(".side-bay").html(html);
+      },error:function(e){
+        $(".side-bay").html(e.responseText);
+      }
+    });
+   }
+
+  function SavePKG(typ, pkv,editor){
+      
+      var payload = {type:typ,pkg:pkv};
+        payload["data"] = editors[editor].getValue();
+      $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
+        $(".side-bay").html(html);
+      },error:function(e){
+        $(".side-bay").html(e.responseText);
+      }
+    });
+    }
+
+      function BuildPKG( pkv){
+        $(".side-bay").html("<h1 style='text-align:center;'><i class='fa fa-cog fa-spin'/></h1>")
+        $(".side-bay").load("/api/build?pkg=" + pkv);
+      }
+
+      function ClearLogs( pkv){
+        $(".side-bay").html("<h1 style='text-align:center;'><i class='fa fa-cog fa-spin'/></h1>")
+        $(".side-bay").load("/api/empty?pkg=" + pkv);
+      }
+
+      function StartServer( pkv){
+           $(".side-bay").html("<h1 style='text-align:center;'><i class='fa fa-cog fa-spin'/></h1>")
+        $(".side-bay").load("/api/start?pkg=" + pkv);
+      }
+
+      function StopServer( pkv){
+           $(".side-bay").html("<h1 style='text-align:center;'><i class='fa fa-cog fa-spin'/></h1>")
+        $(".side-bay").load("/api/stop?pkg=" + pkv);
+      }
+
+      function SavePKGAndBuild(typ, pkv,editor){
+      
+      var payload = {type:typ,pkg:pkv};
+        payload["data"] = editors[editor].getValue();
+      $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
+        $(".side-bay").load("/api/build?pkg=" + pkv);
+      },error:function(e){
+        $(".side-bay").load("/api/build?pkg=" + pkv);
+      }
+    });
+    }
+
+    function removeWelcome(){
+      $.ajax({url:"/api/saw"})
+      $(".welcome-card").remove();
+    }
+    function SearchEditor(editor){
+       editors[editor].find("name=\"" + $(".sti[editor='" + editor + "']").val() + "\"",{
+            backwards: true,
+            wrap: false,
+            caseSensitive: false,
+            wholeWord: false,
+            regExp: false
+        });
+        editors[editor].findNext();
+        
+    }
+
+    function AddtoEd(typ, editor){
+      if (typ == "struct"){
+       editors[editor].gotoLine(editors[editor].session.getLength() );
+       editors[editor].insert("&lt;struct name=\"" +  $(".sti[editor='" + editor + "']").val() + "\" &gt;\n//Add some attrs\n\n&lt;/struct&gt;\n\n");
+
+       $(".sti[editor='" + editor + "']").val("");
+      } else if (typ == "object") {
+         editors[editor].gotoLine(editors[editor].session.getLength() );
+       editors[editor].insert("&lt;object name=\"" +  $(".sti[editor='" + editor + "']").val() + "\" struct=\"\" &gt;\n\n&lt;/object&gt;\n\n");
+
+       $(".sti[editor='" + editor + "']").val("");
+      } else {
+         editors[editor].gotoLine(editors[editor].session.getLength() );
+       editors[editor].insert("&lt;method name=\"" +  $(".sti[editor='" + editor + "']").val() + "\" var=\"\" return=\"\"  &gt;\n\n&lt;/method&gt;\n\n");
+
+       $(".sti[editor='" + editor + "']").val("");
+      }
+     
+    }
+
+
+       function SaveFileWeb(editor, link,pkv){
+      
+        var payload = {type:"3",target:link,pkg:pkv};
+        payload["data"] = editors[editor].getValue();
+      $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
+        $(".side-bay").html(html);
+      },error:function(e){
+        $(".side-bay").html(e.responseText);
+      }
+    });
+    }
+      function SaveFileSrc(editor, link,pkv){
+      
+        var payload = {type:"30",target:link,pkg:pkv};
+        payload["data"] = editors[editor].getValue();
+      $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
+        $(".side-bay").html(html);
+      },error:function(e){
+        $(".side-bay").html(e.responseText);
+      }
+    });
+    }
+
+    $(function () { 
+      $('#jstree').on('changed.jstree', function (e, data) {
+        var node = data.instance.get_node(data.selected[0]).original;
+        if(node){
+        if(!working && node.type != "" ){
+          working = true;
+    $(".loader-prog").css("display","block");
+          $.ajax({url:"/api/get",type:"POST",data:{space:node.appid,type:node.type,id:node.id}, error:function(e){
+              working = false;
+              $(".loader-prog").css("display","none");
+              $(".ready-three").append($(e.responseText) );
+            
+          } 
+        });
+        }
+              //attempt request
+          }
+        }).jstree({
+          'core' : {
+            'data' : {
+              'url' : function (node) {
+                return '/api/get';
+              },
+              'type' : 'POST'
+              ,
+              'data' : function (node) {
+                return node.id == "#" ? {'type' : '0'} : { 'id' : node.id, 'type' : node.type };
+              }
+            }
+          },
+          "plugins" : [ "contextmenu","state" ],
+          "contextmenu": {
+                 "select_node" : false ,
+                  "items": function ($node) {
+                      var menu = {};
+
+                      if ($node.original.ctype){
+                          menu["Create"] = {
+                              "label": "Create",
+                              "action": function (obj) {
+                                 havop("/api/create?type=" + $node.original.ctype + "&pkg=" + $node.original.appid,".side-bay");
+                              }
+                          };
+                        }
+
+                      if ($node.original.btype){
+                         menu["Build"] = {
+                              "label": "Build",
+                              "action": function (obj) {
+                                BuildPKG($node.original.appid);
+                              }
+                          };
+                      }
+
+                      if ($node.original.mtype){
+                          menu["Move"] = {
+                              "label": "Move",
+                              "action": function (obj) {
+                                 havop("/api/create?type=" + $node.original.mtype + "&pkg=" + $node.original.appid,".side-bay");
+                              }
+                          };
+                        }
+                        if ($node.original.dtype){
+                          menu["Delete"] = {
+                              "label": "Delete",
+                              "action": function (obj) {
+                                 havop("/api/delete?type=" + $node.original.dtype + "&pkg=" + $node.original.appid,".side-bay");
+                              }
+                          };
+                        }
+                        /*  "Rename": {
+                              "label": "Rename an employee",
+                              "action": function (obj) {
+                                  this.rename(obj);
+                              }
+                          },
+                          "Delete": {
+                              "label": "Delete an employee",
+                              "action": function (obj) {
+                                  this.remove(obj);
+                              }
+                          }
+                      }; */
+
+              
+
+                      return menu;
+                  }
+              }
+          });
+    });
+
+      function makeid()
+      {
+          var text = "";
+          var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+          for( var i=0; i < 10; i++ )
+              text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+          return text;
+      }
+
+    function hideAll(){
+      $(".cbn").css('display','none');
+    }
+
+    function rmGroup(id){
+      $("#" + id).remove();
+    }
+
+    function mready(id){
+  
+       $(".xtab").removeClass("active");
+       $(".tabview").removeClass("active");
+       $(".nav-link.xtab").removeClass("factive");
+       $("a[target='" + id + "']").addClass("factive")
+       $("#" + id).addClass("active");
+    }
+
+    function addTab(name, elementid){
+      if(!editors["tabnames"]){
+          editors["tabnames"] = ["tab","map"]
+      }
+      if (editors.tabnames.indexOf(name) != -1){
+          var currentlink = $("a[data-name='" + name + "']")
+ 
+          $("#" + elementid).remove()
+          $(".xnavs").scrollLeft(currentlink.offset().left)
+          currentlink.click()
+
+      } else {
+        tabj[elementid] = name;
+        mready(elementid);
+        $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#">' + name +' <button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
+        $("a[target='" + elementid + "']").click(function(){
+          //show tab 
+          mready(elementid);
+          return false;
+        });
+        $("a[target='" + elementid + "'] .close").click(function(){
+          //show tab 
+          $(this).parents("li").remove();
+          delete tabj[elementid];
+          editors.tabnames.splice(editors.tabnames.indexOf(name),1)
+          if (editors[elementid ]){
+          delete editors[elementid];
+          }
+          if (editors[elementid + "c"]){
+            delete editors[elementid + "c"]
+          }
+          $("#" + elementid).remove();
+          return false;
+        });
+        editors.tabnames.push(name)
+      }
+    }
+
+    function updateTree(){
+      $("#jstree").jstree('refresh')
+    }
+    </script>
+        {{ PluginJS }}

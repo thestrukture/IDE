@@ -295,6 +295,10 @@
 				return Nav
 		</method>
 
+		<method name="ListPlugins" var="" return="[]string">
+			return getPlugins()	
+		</method>
+
 		<method name="BindID" var="id,nav" return="Dex">
 				Nav := nav.(Dex)
 				Nav.Misc = id.(string)
@@ -357,6 +361,20 @@
 			}
 
 			return
+		</method>
+
+		<method name="PluginJS" var="" return="string">
+			plugins := getPlugins()
+			jsstring := ""
+			for _, v := range plugins {
+				data, err := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" + v + "/index.js")
+				if err != nil {
+					fmt.Println("Error loading " , v)
+				} else {
+					jsstring = jsstring + "\n" + string(data)
+				}
+			}
+			return "<script>" + jsstring + "</script>"
 		</method>
 
 		<method name="FindmyBugs" var="packge" return="(ajet []DebugObj)">
@@ -746,7 +764,7 @@
 	     	   <template name="JS" tmpl="js" struct="Dex" desc="JS End tag" />
 
 	     	   <template name="FA" tmpl="ui/fa" struct="Dex" desc="JS End tag" />
-
+	     	   <template name="PluginList" tmpl="ui/pluginlist" struct="" /> 
 
 	     	   <!-- Dialogs -->
 	     	   <template name="Login" tmpl="ui/login" struct="Dex" desc="Login Prompt" />
@@ -1359,6 +1377,22 @@
 
 					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 
+			} else if r.FormValue("type") == "101" {
+
+				//type pkg id
+				plugins := getPlugins()
+				newset := []string{}
+
+				for _,v := range plugins {
+					if v != r.FormValue("pkg") {
+						newset = append(newset, v)
+					}
+				}
+
+				plugins = newset
+
+				savePlugins(plugins)
+
 			} else if r.FormValue("type") == "1" {
 				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 				gos.Delete("import", r.FormValue("id"))
@@ -1519,6 +1553,14 @@
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Package Name"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
 	     		response = net_bModal(sModal{Body: "",Title: "New Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Create Package",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
+			} else if r.FormValue("type") == "100" {
+	     		inputs := []Inputs{}
+	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Plugin install path"})
+	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "100"})
+	     		response = net_bModal(sModal{Body: "",Title: "PLUGINS",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"ADD",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
+			} else if r.FormValue("type") == "101" {
+	     		
+	     		response = bPluginList(NoStruct{})
 			}
 				</end>
 				<end path="/api/act" method="mAct" type="POST" >
@@ -1532,6 +1574,20 @@
 			    //Users.Update(bson.M{"uid": me.UID}, me)
 			    saveApps(apps)
 			    response = net_bAlert(Alertbs{Type:"warning",Text:"Success package " + r.FormValue("name") + " was created!",Redirect: "javascript:updateTree()"})
+			} else 	if r.FormValue("type") == "100" {
+				plugins := getPlugins()
+			    plugins = append(plugins, r.FormValue("name") )
+			   
+				
+			    //Users.Update(bson.M{"uid": me.UID}, me)
+			   
+			    _,err :=  core.RunCmdSmart("go get " + r.FormValue("name") )
+			    if err != nil {
+			    	   response = net_bAlert(Alertbs{Type:"warning",Text:"Error, could not find plugin.",Redirect: "#"})
+			    } else {
+			    savePlugins(plugins)
+			    response = net_bAlert(Alertbs{Type:"success",Text:"Success plugin " + r.FormValue("name") + " installed! Reload the page to activate plugin.",Redirect: "javascript:GetPlugins()"})
+				}
 			} else if r.FormValue("type") == "1" {
 				
 				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
@@ -2233,7 +2289,7 @@ exit 0`
 			} else {
 				data,err := core.RunCmdSmart(r.FormValue("command") )
 				if err !=  nil {
-					response = fmt.Sprintf("%s",err) + "" + data
+					response = fmt.Sprintf("Error:: %s",err) + "" + data
 				} else {
 					response = data
 				}

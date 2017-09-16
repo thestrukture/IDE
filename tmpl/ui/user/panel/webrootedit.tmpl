@@ -18,7 +18,7 @@
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
 	 editors[{{ .ID }} + "c"] = {wrap:false};
 	 editors["{{ .ID }}"].getSession().setMode("ace/mode/" + {{ .Type }})
-	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	 editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	 editors["{{ .ID }}"].commands.addCommand({
 	    name: 'myCommand',
 	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},

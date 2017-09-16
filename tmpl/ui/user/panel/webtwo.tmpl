@@ -16,10 +16,13 @@
 <div id="editor{{ .ID }}" class="defed">{{printf "%s" .File}}</div>
 <script type="text/javascript">
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
-	 editors["{{ .ID }}"].getSession().setMode("ace/mode/" + {{ .Type }})
+	 editors["{{ .ID }}"].getSession().setMode("ace/mode/" + {{ .Type }});
 	 editors[{{ .ID }} + "c"] = {wrap:false};
-	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
-	 editors["{{ .ID }}"].commands.addCommand({
+
+
+	    editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	
+	 	editors["{{ .ID }}"].commands.addCommand({
 	    name: 'myCommand',
 	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
 	    exec: function(editor) {
@@ -27,7 +30,61 @@
 	    	 SaveFileSrc('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}');
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
-	});
+		});
+
+			editors["{{ .ID }}"].commands.addCommand({
+	    name: 'oterm',
+	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
+	    exec: function(editor) {
+	        //...
+	    	toggleTerm()
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+		});
+
+				editors["{{ .ID }}"].commands.addCommand({
+	    name: 'collapse',
+	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
+	    exec: function(editor) {
+	        //...
+	    	CollapseGloj()
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+		});
+
+
+
+
+
+
+		editors["{{ .ID }}"].container.addEventListener("contextmenu", function(e) {
+		  
+		    	var edt = editors["{{ .ID }}"]
+			   		var cursor = edt.selection.getCursor()
+			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
+			   		
+			   		
+			   	$('.tabview.active').contextMenu("destroy");
+			   		if (txt.length > 0 ){
+			   			  e.preventDefault();
+			   			 $.contextMenu({
+					        selector: 'body', 
+					        trigger: 'none',
+					        animation: {duration: 0, show: 'fadeIn', hide: 'fadeOut'},
+					        callback: function(key, options) {
+					          handleClickStruk(key, txt, {{.ID}}, {{ .PKG }})
+					        },
+					        items: getItems(txt)
+					    });
+			   		  $('.tabview.active').contextMenu();
+			   		  return false;
+			   		}
+		    
+		}, false);
+
+
+
+	  	
 	    setTimeout(function(){
 	 
 	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{ .PKG }}, success:function(html){

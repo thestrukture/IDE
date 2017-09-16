@@ -69,6 +69,19 @@ func getApps() []App {
 	return c
 }
 
+func getPlugins() []string {
+
+	raw, err := ioutil.ReadFile(dfd + "/plugins.json")
+	if err != nil {
+		fmt.Println(err.Error())
+		// os.Exit(1)
+	}
+
+	var c []string
+	json.Unmarshal(raw, &c)
+	return c
+}
+
 func FindinString(data string, match string) int {
 
 	lines := strings.Split(data, "\n")
@@ -209,5 +222,23 @@ func saveApps(app interface{}) {
 
 	}
 	ioutil.WriteFile(dfd+"/apps.json", bytes, 0777)
+
+}
+
+func savePlugins(plugins []string) {
+
+	filtss := []string{}
+	for _, v := range plugins {
+		if v != "" {
+			filtss = append(filtss, v)
+		}
+	}
+	bytes, err := json.Marshal(filtss)
+	if err != nil {
+		fmt.Println(err.Error())
+
+	}
+
+	ioutil.WriteFile(dfd+"/plugins.json", bytes, 0777)
 
 }
