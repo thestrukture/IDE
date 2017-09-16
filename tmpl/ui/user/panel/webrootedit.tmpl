@@ -29,7 +29,7 @@
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
 
-	 
+
 			editors["{{ .ID }}"].commands.addCommand({
 	    name: 'oterm',
 	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
@@ -63,7 +63,7 @@
 			   		
 			   		
 			   	$('body').contextMenu("destroy");
-			   		if (txt.length > 0 ){
+			   
 			   			  e.preventDefault();
 			   			 $.contextMenu({
 					        selector: 'body', 
@@ -76,7 +76,7 @@
 					    });
 			   		  $('body').contextMenu();
 			   		  return false;
-			   		}
+			   		
 		    
 		}, false);
 
