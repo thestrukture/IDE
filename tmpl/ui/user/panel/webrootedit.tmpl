@@ -28,6 +28,58 @@
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
+
+	 
+			editors["{{ .ID }}"].commands.addCommand({
+	    name: 'oterm',
+	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
+	    exec: function(editor) {
+	        //...
+	    	toggleTerm()
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+		});
+
+				editors["{{ .ID }}"].commands.addCommand({
+	    name: 'collapse',
+	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
+	    exec: function(editor) {
+	        //...
+	    	CollapseGloj()
+	    },
+	    readOnly: true // false if this command should not apply in readOnly mode
+		});
+
+
+
+
+
+
+		editors["{{ .ID }}"].container.addEventListener("contextmenu", function(e) {
+		  
+		    	var edt = editors["{{ .ID }}"]
+			   		var cursor = edt.selection.getCursor()
+			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
+			   		
+			   		
+			   	$('body').contextMenu("destroy");
+			   		if (txt.length > 0 ){
+			   			  e.preventDefault();
+			   			 $.contextMenu({
+					        selector: 'body', 
+					        trigger: 'none',
+					        animation: {duration: 0, show: 'fadeIn', hide: 'fadeOut'},
+					        callback: function(key, options) {
+					          handleClickStruk(key, txt, {{.ID}}, {{ .PKG }})
+					        },
+					        items: getItems(txt)
+					    });
+			   		  $('body').contextMenu();
+			   		  return false;
+			   		}
+		    
+		}, false);
+
 	 addTab('{{ .PKG }} - ' + {{ .SavesTo }}, {{ .ID }} );
 </script>
 </div>

@@ -64,7 +64,7 @@
 			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
 			   		
 			   		
-			   	$('.tabview.active').contextMenu("destroy");
+			   	$('body').contextMenu("destroy");
 			   		if (txt.length > 0 ){
 			   			  e.preventDefault();
 			   			 $.contextMenu({
@@ -76,7 +76,7 @@
 					        },
 					        items: getItems(txt)
 					    });
-			   		  $('.tabview.active').contextMenu();
+			   		  $('body').contextMenu();
 			   		  return false;
 			   		}
 		    
