@@ -416,6 +416,19 @@
                                 BuildPKG($node.original.appid);
                               }
                           };
+
+                          menu["Start"] = {
+                              "label": "Start/Reset",
+                              "action": function (obj) {
+                                StartServer($node.original.appid);
+                              }
+                          };
+                           menu["Stop"] = {
+                              "label": "Stop",
+                              "action": function (obj) {
+                                StopServer($node.original.appid);
+                              }
+                          };
                       }
 
                       if ($node.original.mtype){
