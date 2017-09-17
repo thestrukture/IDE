@@ -63,7 +63,7 @@
   		$trukture.exec("cd " + pkg,function(dud){})
   		var plugin = $trukture.FindPlugin(plugin)
   		var edt = editors[editorid];
-  		var execution = plugin.exec(txt)
+  		var execution = plugin.exec(txt,edt)
 
   		if (typeof(execution) == "string") {
   				edt.insert( execution)	
