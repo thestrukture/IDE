@@ -82,9 +82,10 @@ Good :
 	
 Bad for debug logger :
 
-	var name := Struct{ Property:"val"
+	var name := Struct{ 
+			    Property:"val",
 			    FieldTwo: 2
-			   }
+		  }
 
 #### How to recreate data for test
 Use the `test` section within each package tree on the Strukture. Within this panel you may test pipelines, services as well as templates. 
