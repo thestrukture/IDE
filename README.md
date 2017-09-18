@@ -68,6 +68,10 @@ Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.ph
 
 Visit https://github.com/thestrukture/IDE/wiki
 
+## Debugging
+
+A debugger is still in development. Please use current golang command line tools as a fallback. The final result of each [Go server](http://golangserver.com) webapp is go code.
+
 ## How to automate :
 To build additional functionality use shell scripts. The users of your plugin can simply run the shell script via the HTTP terminal.
 
