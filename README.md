@@ -73,7 +73,7 @@ Visit https://github.com/thestrukture/IDE/wiki
 A debugger is still in development. Please use current golang command line tools as a fallback. The final result of each [Go server](http://golangserver.com) webapp is go code.
 
 ### Go Server apps
-If you're writing a webapp, Go Server attempts to use logging to find bugs. This process works by recovering from a runtime panic and stating the default line including the reason it crashed. This logger is only supported within the web service code, template pipeline code and templates. Due ot this feature limit your code within the scope of one line.
+If you're writing a webapp, Go Server attempts to use logging to find bugs. This process works by recovering from a runtime panic and stating the default line including the reason it crashed. This logger is only supported within the web service code, template pipeline code and templates. Due to this feature limit your code within the scope of one line.
 
 Good :
 
