@@ -85,7 +85,10 @@ Bad for debug logger :
 	var name := Struct{ Property:"val"
 			    FieldTwo: 2
 			   }
-	
+
+#### How to recreate data for test
+Use the `test` section within each package tree on the Strukture. Within this panel you may test pipelines, services as well as templates. 
+
 ## How to automate :
 To build additional functionality use shell scripts. The users of your plugin can simply run the shell script via the HTTP terminal.
 
