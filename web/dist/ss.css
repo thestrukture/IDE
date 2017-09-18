@@ -14,13 +14,16 @@
 .full-height {
 	height:100%;
 }
+.full-height40 {
+    height: calc(100% - 40px);
+}
 .xtab.active , .xtab.factive {
         color: #55595c;
     background-color: #fff;
     border-color: #ddd #ddd transparent;
 }
 .context-menu-list {
-    z-index: 3000 !important;
+    z-index: 8000 !important;
     right: 0px !important;
     left: initial !important;
 }

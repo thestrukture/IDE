@@ -435,7 +435,7 @@ import (`
 			//fmt.Println(imp)
 			if !strings.Contains(imp.Src, ".gxml") {
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + imp.Src
-				if _, err := os.Stat(dir); os.IsNotExist(err) {
+				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 					color.Red("Package not found")
 					fmt.Println("∑ Downloading Package " + imp.Src)
 
@@ -449,7 +449,7 @@ import (`
 				gosName := pathsplit[len(pathsplit)-1]
 				pathsplit = pathsplit[:len(pathsplit)-1]
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit, "/")
-				if _, err := os.Stat(dir); os.IsNotExist(err) {
+				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 					color.Red("Package not found")
 					fmt.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
 					RunCmdSmart("go get " + strings.Join(pathsplit, "/"))
@@ -1147,7 +1147,7 @@ import (`
 		for _, imp := range template.RootImports {
 			if !strings.Contains(imp.Src, ".gxml") {
 				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + imp.Src); os.IsNotExist(err) {
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + imp.Src); os.IsNotExist(err) && strings.Contains(imp.Src,"."){
 					color.Red("Package not found")
 					fmt.Println("∑ Downloading Package " + imp.Src)
 					RunCmdSmart("go get " + imp.Src)
@@ -3133,7 +3133,7 @@ func RunCmdSmart(cmd string) (string, error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	fmt.Println(BytesToString(our.Bytes()))
+	//fmt.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
 		//	fmt.Println("%v", err.Error())
@@ -3713,14 +3713,14 @@ func VLoadGos(path string) (gos, *Error) {
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
-			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmdSmart("go get " + dir)
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmdSmart("go get " + imp.Src)
@@ -3765,14 +3765,14 @@ func LoadGos(path string) (*gos, *Error) {
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
-			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmdSmart("go get " + dir)
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmdSmart("go get " + imp.Src)
@@ -3845,14 +3845,14 @@ func (d *gos) MergeWith(target string) {
 			if strings.Contains(im.Src, ".gxml") {
 				srcP := strings.Split(im.Src, "/")
 				dir := strings.Join(srcP[:len(srcP)-1], "/")
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
 					// path/to/whatever does not exist
 					//fmt.Println("")
 					RunCmdSmart("go get " + dir)
 				}
 			} else {
 				dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(im.Src, "/")
-				if _, err := os.Stat(dir); os.IsNotExist(err) {
+				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
 					// path/to/whatever does not exist
 					//fmt.Println("")
 					RunCmdSmart("go get " + im.Src)

@@ -1,26 +1,45 @@
 <div class="full-height" id="{{ .ID }}" pkg="{{ .PKG }}" >
-<div style="float: right;
-    height: 10px;
-    position: relative;
-    z-index: 20;" class="row">
+<div  class="row inf-x">
 <style type="text/css">
 	.spl-col .dosub {
 		float:left;
 	}
 </style>
-	<div class="col-sm-7">
-		
-	</div>
-	<div class="col-sm-5 " style="    width: 180px;padding-right: 1px;text-align:right">
+	<div class="col-sm-12">
+	<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
 		<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap
 </button>
-		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
+		
+		<button onclick="$('#{{ .ID }}myModal').modal('show')" class="btn">About service code box</button>
 	</div>
+	
 </div>
-<p>func DoRequest(r <a href="https://golang.org/pkg/net/http/#Request" target="_blank">http.Request</a>, w <a href="https://golang.org/pkg/net/http/#ResponseWriter" target="_blank">http.ResponseWriter</a>,session.Values <a href="http://www.gorillatoolkit.org/pkg/sessions" target="_blank">map[string]interface{}</a> ) {</p>
+
 <div id="editor{{ .ID }}" class="col-xs-12 defed">{{printf "%s" .File}}</div>
-<p>}</p>
+
+<div class="modal fade" id="{{ .ID }}myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">About service code box.</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <p> In theory picture your code being wrapped around this func : </p>
+      <p>func DoRequest(r <a href="https://golang.org/pkg/net/http/#Request" target="_blank">http.Request</a>, w <a href="https://golang.org/pkg/net/http/#ResponseWriter" target="_blank">http.ResponseWriter</a>,session.Values <a href="http://www.gorillatoolkit.org/pkg/sessions" target="_blank">map[string]interface{}</a> ) {</p>
+      <p><code>Service code here</code></p>
+      <p>}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
+       
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript">
 	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
 	 editors["{{ .ID }}"].getSession().setMode("ace/mode/golang")

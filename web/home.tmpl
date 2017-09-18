@@ -44,7 +44,7 @@
   <style type="text/css">
    body,html {
     padding-top: 0;
-    background: #333;
+    background: #ededed;
     overflow: hidden;
    }
 
@@ -68,44 +68,22 @@
      
   </style>
 
-  <div class="recop" style="    display:none;position: absolute;
-    z-index: 10;
-    background: rgba(51, 51, 51, 0.62);
-    padding: 10px;
-    bottom: -5px;
-    border-radius: 8px;
-    left: -6px;">
-  <button class="btn btn-info-outline" onclick="CollapseGloj()" style="padding:5px;font-size:14px;"><i class="fa fa-arrow-right"></i> Show</button>
-   <button onclick="toggleTerm()" class="btn btn-info-outline" style="padding:5px;font-size:14px;"><i class="fa fa-terminal"></i></button>
-</div>
+  
 <div class="right-bay"></div>
-    <div class="container-fluid full-height" id="panel">        
+<div class="list-group list-group-item" style="    padding: 2px;">
+<p class="auto-marker" style="line-height: 35px;margin:0px"> <button class="btn btn-sm cps-side" onclick="CollapseGloj()" style="background:none;"><i class="fa fa-compress"></i> <span class="hidden-md-down">Hide</span></button>  <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=0">New <span class="">Package</span> </button> <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>  <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button>  </p>
+</div>
+    <div class="container-fluid full-height40" style="" id="panel">        
       <div class="row full-height " style="margin-bottom:15px;">
       <div class="col-sm-3 pop-box panel-k-left full-height over-flow-fix" style="-webkit-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
 -moz-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
 box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
   <div class="">
-        <nav class="navbar bg-faded">
-  <a class="navbar-brand" href="/home" style="font-size:1.0rem"><img class="" src="/img/logo.png" style="display:inline;width:35px"></a>
-  
-  <div class="form-inline pull-xs-right ">
-      <button class="btn cps-side" onclick="CollapseGloj()" style="background:none;"><i class="fa fa-compress"></i> <span class="hidden-md-down">Collapse</span></button>
-  </div>
-
- <!-- <div class="form-inline pull-xs-right auto-marker">
-    <button class="btn btn-primary-outline xtrigger" path="/api/new?type=0">New Package</button>
-   <button class="btn btn-warning-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> Terminal</button>
-    <a class="btn btn-warning-outline xtrigger" path="/api/get?type=15">Settings</a>
-     <a class="btn btn-danger-outline" href="/api/logout">Logout</a>
-  </div> -->
-</nav>
+ 
 
             <div class="text-center loader-prog"><h1><b><i class="fa fa-sun-o fa-spin"></i> </b></h1></div>
 
-            <div class="row auto-marker">
-          <div class="col-md-12"> <p>  <button class="btn btn-sm new-package btn-primary-outline xtrigger" path="/api/new?type=0">New <span class="hidden-md-down">Package</span> </button>  <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>  <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button></p></div>
-  
-</div>
+
 
  
 
@@ -113,11 +91,11 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
    
   
 
-      
+    
         <p class="dimisser-btn" style="display:none;"><button class="btn btn-block btn-danger" onclick="ClearSideBay()"><b>Dismiss prompt</b></button></p>
         <div class="side-bay left-bay"></div>
                <div style="" >
- <p><label class=" "><i class="fa fa-square"></i> Packages</label><br /> <button onclick="updateTree()" class="btn btn-sm">REFRESH TREE</button>  </p>
+ <p><label class=" "><i class="fa fa-square"></i> Packages</label> <button onclick="updateTree()" class="btn btn-sm"><i class="fa fa-refresh"></i></button> </p>
           <div id="jstree"></div>
     </div>
    </div>
@@ -173,6 +151,8 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
     </div>
     {{JS}}
    
+
+
   
  
   </body>

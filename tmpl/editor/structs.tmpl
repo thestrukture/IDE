@@ -1,20 +1,20 @@
 {{ $rin := RandTen }}
 <div class="tabview" id="{{ $rin }}" pkg="{{ .PKG }}" style="background-color:#fff;">
-<div  class="row" style="padding-top:20px;">
-	<div class="col-sm-4" style="min-height:50px;">
+<div  class="row inf-x" style="padding-top:20px;">
+	<div class="col-sm-12" style="min-height:50px;">
+			<button class="btn btn-warning" onclick="SavePKG('4','{{ .PKG }}', '{{ $rin }}')"><i class="fa fa-save"></i></button>
+			<input  style="display: inline;
+    width: 200px;" class="form-control sti" editor="{{ $rin }}" type="text"  placeholder="Struct name">
+    <button class="btn btn-primary" onclick="SearchEditor('{{ $rin }}')"><i class="fa fa-search"></i></button>
+		<button class="btn btn-primary" onclick="AddtoEd('struct', '{{ $rin }}')"><i class="fa fa-plus"></i></button>
+		
 			<button type="button" class="btn btn-primary" onclick="editors['{{ $rin }}c'].wrap = editors['{{ $rin }}c'].wrap ? false : true;editors['{{ $rin }}'].getSession().setUseWrapMode( editors['{{ $rin }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap text
 </button>
 	</div>
-	<div class="col-sm-5" >
-		<input class="form-control sti" editor="{{ $rin }}" type="text"  placeholder="Struct name">
-	</div>
+	
 
-	<div class="col-sm-3" style="text-align:right">
-		<button class="btn btn-primary" onclick="SearchEditor('{{ $rin }}')"><i class="fa fa-search"></i></button>
-		<button class="btn btn-primary" onclick="AddtoEd('struct', '{{ $rin }}')"><i class="fa fa-plus"></i></button>
-		<button class="btn btn-warning" onclick="SavePKG('4','{{ .PKG }}', '{{ $rin }}')"><i class="fa fa-save"></i></button>
-	</div>
+	
 </div>
 <div id="editor{{ $rin }}" class="defed">{{printf "%s" .Edata}}</div>
 <script type="text/javascript">

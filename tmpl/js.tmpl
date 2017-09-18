@@ -131,14 +131,17 @@
           $(".panel-k-left").css('display',"block");
           $(".panel-k-right").addClass("col-sm-9");
           $(".panel-k-right").removeClass("col-sm-12");
-          $(".recop").css("display","none");
+         $(".cps-side").html('<i class="fa fa-compress"></i> Hide')        
+         // $(".recop").css("display","none");
         } else {
           $(".left-bay").removeClass("side-bay")
           $(".right-bay").addClass("side-bay")
           $(".panel-k-left").css('display',"none");
           $(".panel-k-right").removeClass("col-sm-9");
           $(".panel-k-right").addClass("col-sm-12");
-          $(".recop").css("display","block");
+         // $(".recop").css("display","block");
+           $(".cps-side").html('<i class="fa fa-arrow-right"></i> Show')
+
         }
     }
 
