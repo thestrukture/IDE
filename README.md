@@ -68,11 +68,12 @@ Access the Strukture forums [here](http://forum.golangserver.com/forumdisplay.ph
 
 Visit https://github.com/thestrukture/IDE/wiki
 
-## Debugging
 
-A debugger is still in development. Please use current golang command line tools as a fallback. The final result of each [Go server](http://golangserver.com) webapp is go code.
+## Debugging
+Please use current golang command line tools as a fallback. The final result of each [Go server](http://golangserver.com) webapp is go code.
 
 ### Go Server apps
+- [x] Find bugs by reading your web application's output.
 If you're writing a webapp, Go Server attempts to use logging to find bugs. This process works by recovering from a runtime panic and stating the default line including the reason it crashed. This logger is only supported within the web service code, template pipeline code and templates. Due to this feature limit your code within the scope of one line.
 
 Good :
