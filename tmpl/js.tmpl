@@ -17,7 +17,6 @@
     <script type="text/javascript" src="/dist/jquery.contextMenu.js"></script>
 	<script type="text/javascript">
     var working = false;
-    var tabj = {};
     var editors = {};
 
     var termsize = 0;
@@ -27,7 +26,6 @@
         /*
 		Plugin format :
 		name : "Name"
-		location : "spring||toolbar"
 		show: function(code)
 		exec : function(code,editor)
         */
@@ -505,33 +503,43 @@
           editors["tabnames"] = ["tab","map"]
       }
       if (editors.tabnames.indexOf(name) != -1){
-          var currentlink = $("a[data-name='" + name + "']")
- 
-          $("#" + elementid).remove()
+          var currentlink = $("a[data-name='" + name + "']");
+          var currentid =  currentlink.attr("target");
+           if (editors[currentid ]){
+          delete editors[currentid];
+          }
+          if (editors[currentid + "c"]){
+            delete editors[currentid + "c"]
+          }
+           $("#" + currentid ).remove()
+          currentlink.attr("target", elementid)
+         
+         
           $(".xnavs").scrollLeft(currentlink.offset().left)
           currentlink.click()
+           mready(elementid)
 
       } else {
-        tabj[elementid] = name;
         mready(elementid);
         $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#">' + name +' <button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
         $("a[target='" + elementid + "']").click(function(){
           //show tab 
-          mready(elementid);
+          mready($(this).attr("target"));
           return false;
         });
         $("a[target='" + elementid + "'] .close").click(function(){
           //show tab 
+          var elemid = $(this).parent().attr("target");
+          var elemname = $(this).parent().attr("data-name");
           $(this).parents("li").remove();
-          delete tabj[elementid];
-          editors.tabnames.splice(editors.tabnames.indexOf(name),1)
-          if (editors[elementid ]){
-          delete editors[elementid];
+          editors.tabnames.splice(editors.tabnames.indexOf(elemname),1)
+          if (editors[elemid ]){
+          delete editors[elemid];
           }
-          if (editors[elementid + "c"]){
-            delete editors[elementid + "c"]
+          if (editors[elemid + "c"]){
+            delete editors[elemid + "c"]
           }
-          $("#" + elementid).remove();
+          $("#" + elemid).remove();
           return false;
         });
         editors.tabnames.push(name)

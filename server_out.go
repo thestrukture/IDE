@@ -1442,7 +1442,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		if sapp.Passed {
 
 			if sapp.Pid != "" {
-				core.RunCmdB("kill " + sapp.Pid)
+				core.RunCmdB("kill -3 " + sapp.Pid)
 				response = net_bAlert(Alertbs{Type: "success", Text: "Build stopped."})
 			}
 
@@ -1489,7 +1489,7 @@ exit 0`
 		if sapp.Pid == "" {
 			response = net_bAlert(Alertbs{Type: "danger", Text: "No build running."})
 		} else {
-			core.RunCmdB("kill " + sapp.Pid)
+			core.RunCmdB("kill -3 " + sapp.Pid)
 			response = net_bAlert(Alertbs{Type: "success", Text: "Build stopped."})
 		}
 
