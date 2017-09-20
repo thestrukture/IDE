@@ -107,9 +107,14 @@
 	border-radius: 12px;
 }
 
-.clear-btn .btn {
-    
+.clear-btn .btn , .clear-btn .btn:focus {
+        background: none !important;
+    border: none !important;
+    color: #999 !important;
+    padding-bottom: 0px;
+    outline:none !important;
 }
+
 
 
 
