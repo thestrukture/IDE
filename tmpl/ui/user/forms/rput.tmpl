@@ -12,11 +12,13 @@
 			</div>
 		{{end}}
 	{{ end }}
-	<div class="col-xs-{{ $count }}" style="text-align:right;">
+	<div class="col-xs-{{ $count }}" style="">
+		{{$blockClass := "" }}
 		{{ if .DLink | neq ""}}
 		<button class=" btn btn-danger" path="{{ .DLink }}"><i class="fa fa-trash"></i></button>
+		{{ $blockClass := "btn-block"}}
 		{{end}}
-		<button class="dosub btn btn-success"><i class="hidden-aspect fa fa-spinner fa-spin"></i> <i class="fa fa-save"></i></button>
+		<button class="dosub {{ $blockClass }} btn btn-success"><i class="hidden-aspect fa fa-spinner fa-spin"></i> <i class="fa fa-save"></i></button>
 	</div>
 	<div class="loader-result col-xs-12">
 

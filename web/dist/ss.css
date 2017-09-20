@@ -95,7 +95,7 @@
 }
 
 .defed {
-	height: calc(100% - 70px)
+    height: calc(100% - 35px);
 }
 
 .vakata-context {

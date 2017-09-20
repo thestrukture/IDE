@@ -1,7 +1,7 @@
 
 <div class="tabview" id="{{ .ID }}" pkg="{{ .PKG }}">
 <div  class="row">
-	<div class="col-sm-9" style="min-height:50px;">
+	<div class="col-sm-9 clear-btn" style="min-height:32px;">
 	<button class="btn  btn-warning" onclick="SaveFileWeb('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
 	<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap text
