@@ -12,7 +12,7 @@ GOSOUTPUT=server_out.go
 all: test build
 build: 
 		$(GOS) --export
-		$(GOBUILD) -o $(BINARY_NAME)        
+		$(GOBUILD) -o $(BINARY_NAME) -v       
 test: 
 		$(GOTEST) -bench=. -benchmem
 clean: 
@@ -22,7 +22,7 @@ clean:
 		rm -f $(BINARY_NAME)
 run:
 		$(GOS) --export
-		$(GOBUILD) -o $(BINARY_NAME)
+		$(GOBUILD) -o $(BINARY_NAME) -v
 		./$(BINARY_NAME)
 deps:
 		$(GOGET) github.com/cheikhshift/gos
