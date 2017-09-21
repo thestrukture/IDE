@@ -115,6 +115,10 @@
     outline:none !important;
 }
 
+.clear-btn .btn:hover {
+    color:#333 !important;
+}
+
 
 
 

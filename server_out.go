@@ -7606,7 +7606,7 @@ func main() {
 	saveApps(newapps)
 
 	fmt.Println("Strukture up")
-	core.RunCmd("open http://localhost:8884/home")
+	core.RunCmd("open http://localhost:8884/index")
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
 	http.HandleFunc("/", makeHandler(handler))
