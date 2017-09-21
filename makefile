@@ -9,7 +9,7 @@ BINARY_NAME=IDE
 GOSOUTPUT=server_out.go
 
 
-all: test build
+all: deps test build
 build: 
 		$(GOS) --export
 		$(GOBUILD) -o $(BINARY_NAME) -v       
