@@ -60,7 +60,7 @@ func getApps() []App {
 
 	raw, err := ioutil.ReadFile(dfd + "/apps.json")
 	if err != nil {
-		fmt.Println(err.Error())
+		return []App{}
 		// os.Exit(1)
 	}
 
@@ -70,14 +70,12 @@ func getApps() []App {
 }
 
 func getPlugins() []string {
-
+	var c []string
 	raw, err := ioutil.ReadFile(dfd + "/plugins.json")
 	if err != nil {
-		fmt.Println(err.Error())
-		// os.Exit(1)
+		return []string{}
 	}
 
-	var c []string
 	json.Unmarshal(raw, &c)
 	return c
 }
