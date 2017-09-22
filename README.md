@@ -99,4 +99,5 @@ How to install GoS incase the built-in installer fails.
 - Install GoS [CLI](http://golangserver.com). ( `$ go get github.com/cheikhshift/gos` )
 - Install `GoS` dependencies : `$ gos deps`
 
-
+# Contributions
+Improvements to the codebase and pull requests are encouraged.
