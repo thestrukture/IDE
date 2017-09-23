@@ -28,5 +28,4 @@ deps:
 		$(GOS) deps
 uiview:
 		npm install
-		npm start
 

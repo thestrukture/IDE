@@ -27,6 +27,13 @@ The strukture is an open source IDE. It is designed to build web applications, w
 #### How to run
 
 		$ IDE
+
+#### Launch with GUI
+	
+		$ make uiview
+		$ IDE --headless & npm start
+
+Take note of the pid ID to stop server process. Once your server is up feel free to use `npm start` directly.
 	
 	
 ### Install Via APT
