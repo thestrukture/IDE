@@ -119,8 +119,8 @@
 		var marker = $(this);
 		var path = $(this).attr("path");
 		//smarker = marker
-		
-		if(marker.attr("data-link") != "") {
+	
+		if(marker.attr("data-link")) {
 			$(".loader-result",marker).load(marker.attr("data-link"));
 					
 		}
@@ -165,7 +165,7 @@
 			$.ajax({url: vpath[0], data: req, type:"POST", error:function(e) { 
 				//for some reason it goes here
 				
-				if ( $(smarker).attr("data-link") != ""){
+				if ( marker.attr("data-link") ){
 					$('.hidden-aspect').removeAttr('style');
 				//	$(".xsub", smarker).val("");
 					$(".loader-result",smarker).load(smarker.attr("data-link"));

@@ -968,8 +968,11 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		if r.FormValue("type") == "0" {
 			apps := getApps()
 			apps = append(apps, App{Type: "webapp", Name: r.FormValue("name")})
-			core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name"))
 
+			dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name") + "/gos.gxml"
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name"))
+			}
 			//Users.Update(bson.M{"uid": me.UID}, me)
 			saveApps(apps)
 			response = net_bAlert(Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
