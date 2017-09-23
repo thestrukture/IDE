@@ -25,7 +25,8 @@
     <import src="strings" />
     <import src="sync" />
     <import src="path/filepath" />
-	<!-- Go File output name -->
+	
+
 	<output>server_out.go</output>
 	
 	<var type="sync.Mutex">mutex</var>
@@ -83,8 +84,10 @@
 				} 
 		saveApps(newapps)
 
-       fmt.Println("Strukture up")
-       core.RunCmd("open http://localhost:8884/index")
+       log.Println("Strukture up on port 8884")
+      	if len(os.Args) == 1 {
+      		core.RunCmd("open http://localhost:8884/index")
+    	}
 	</main>
 
 	<init>

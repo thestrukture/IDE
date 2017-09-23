@@ -8,8 +8,7 @@ GOGET=$(GOCMD) get
 BINARY_NAME=IDE
 GOSOUTPUT=server_out.go
 
-
-all: deps test build
+all: test build
 build: 
 		$(GOS) --export
 		$(GOBUILD) -o $(BINARY_NAME) -v       
@@ -27,3 +26,7 @@ run:
 deps:
 		$(GOGET) github.com/cheikhshift/gos
 		$(GOS) deps
+uiview:
+		npm install
+		npm start
+

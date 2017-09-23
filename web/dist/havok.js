@@ -1,3 +1,4 @@
+
 	var smarker;
 	var percentagetext = "%";
 	function havop(url,target){

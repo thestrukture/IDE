@@ -1,0 +1,26 @@
+{
+  "name": "strukture-ui",
+  "version": "1.0.0",
+  "description": "Localview for the strukture",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "build": {
+  "appId": "strukture.ide"
+  },
+  "repository": "https://github.com/electron/electron-quick-start",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo"
+  ],
+  "postinstall": "electron-builder install-app-deps" ,
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "~1.6.2"
+  }
+}

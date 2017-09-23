@@ -7605,8 +7605,10 @@ func main() {
 	}
 	saveApps(newapps)
 
-	fmt.Println("Strukture up")
-	core.RunCmd("open http://localhost:8884/index")
+	log.Println("Strukture up on port 8884")
+	if len(os.Args) == 1 {
+		core.RunCmd("open http://localhost:8884/index")
+	}
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
 	http.HandleFunc("/", makeHandler(handler))
