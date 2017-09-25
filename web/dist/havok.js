@@ -189,7 +189,7 @@
 				
 				//console.log(html);
 						//console.log(smarker)
-			if (smarker.attr("data-link") != ""){
+			if ( marker.attr("data-link") ){
 					$('.hidden-aspect').removeAttr('style');
 					$(".xsub", smarker).val("");
 					$(".loader-result",smarker).load(smarker.attr("data-link"));
