@@ -25,10 +25,9 @@
     <import src="strings" />
     <import src="sync" />
     <import src="path/filepath" />
-	
-
+	<import src="runtime"/>
 	<output>server_out.go</output>
-	
+	<var type="bool">Windows</var>
 	<var type="sync.Mutex">mutex</var>
 	<key>something-secretive-is-what-a-gorrilla-needs</key>
 	<domain></domain>
@@ -36,10 +35,16 @@
 	<!-- -->
 	<main>
 			dfd = os.ExpandEnv("$GOPATH")
-
+			 Windows = strings.Contains(runtime.GOOS, "windows") 
+			   
 			if dfd ==  "" {
 				fmt.Println("Using temporary $GOPATH")
-				os.Chdir( os.ExpandEnv("$HOME") )
+				if  Windows {
+						os.Chdir( os.ExpandEnv("$USERPROFILE") )
+					} else {
+						os.Chdir( os.ExpandEnv("$HOME") )
+					}
+				
 				err := os.MkdirAll("workspace/",0777)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -52,7 +57,11 @@
 					cwd = cwd + "/workspace"
 			 		os.Setenv("GOPATH", cwd)
 			 		pathbin := os.ExpandEnv("$PATH")
-			 		os.Setenv("PATH", pathbin + ":" +  cwd + "/bin") 
+			 		if Windows {
+			 			os.Setenv("PATH", pathbin + ":" +  strings.Replace(cwd + "/bin", "/" , "\\", -1 ) ) 
+			 		} else {
+			 			os.Setenv("PATH", pathbin + ":" +  cwd + "/bin") 
+			 		}
 			 		_,goinvs := core.RunCmdSmart("go help build")
 			 		if goinvs != nil {
 				 		fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
@@ -458,308 +467,6 @@
 
 			return App{}
 		</method>
-
-		
-
-	     <method name="mNew">
-	     
-		</method>
-
-		<method name="mDelete">
-			
-		</method>
-
-		<method name="mRename">
-
-		</method>
-
-		<method name="mAct">
-			
-		</method>
-
-		<method name="mCopy">
-
-		</method>
-
-		<!--<method name="mBuild">
-			me  := session.Values["me"].(*SoftUser)
-			mutex.Lock()
-      		defer mutex.Unlock()
-			gp := os.ExpandEnv("$GOPATH")
-		
-
-			 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/gobu$
-
-                        pathS := strings.Split(r.FormValue("pkg"), "/")
-                        core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/" + $
-                        coreTemplate,err := core.LoadGos(gp + "/src/" +  r.FormValue("p$
-                        coreTemplate.Type = "locale"
-                        //fmt.Println(coreTemplate)
-                        core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "$
-                        os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"$
-                        core.RunCmdB( os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug web/... tmpl/...")
-                        core.RunCmdB("go build")
-
-			if err != nil {
-				response = net_bAlert(Alertbs{Type:"warning",Text:"Error with your XML markup"})
-			} else {
-				_,erg := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + pathS[len(pathS) - 1])
-				if erg == nil {
-					sapp := net_getApp(me.Apps, r.FormValue("pkg"))
-					sapp.Passed = true
-					me.Apps = net_updateApp(me.Apps, r.FormValue("pkg"), sapp)
-					response = net_bAlert(Alertbs{Type:"success",Text:"Your build passed"})
-				} else {
-
-				sapp := net_getApp(me.Apps, r.FormValue("pkg"))
-				sapp.Passed = false
-				me.Apps = net_updateApp(me.Apps, r.FormValue("pkg"), sapp)	
-				response = net_bAlert(Alertbs{Type:"danger",Text:"Your build failed " })
-				}
-			}
-			//Users.Update(bson.M{"uid":me.UID}, me)
-		</method> -->
-
-	
-
-		<method name="mBuild">
-			
-		</method>
-
-		<method name="LineProcess" keep-local="true" var="lineinOut,packag,filee" return="(file,line string)">
-			//UYR can be used to find the support file line and file perf
-		
-			if strings.Contains(filee.(string),"/server_out.go") {
-	
-
-			servout,err := core.ReadLines(core.GOHOME + packag.(string) + "/server_out.go")
-		
-			i,err := strconv.Atoi(lineinOut.(string))
-			qry :=   servout[i - 1] 
-			if err != nil {
-				file = "NA"
-				line = "NA"
-				return
-			} else {
-
-				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
-				/*	i,err = strconv.Atoi(lineinOut)
-
-				qry :=   servout[i] */
-
-				for _,ho := range gossupfiles {
-
-					if ho == "main" || ho == "init" || ho == "session"  {
-						//support file load gos
-						pgos,err := core.PLoadGos(core.GOHOME + packag.(string) + "/gos.gxml")
-						if err != nil {
-							file = "NA"
-							line = "NA"
-							return
-						} else {
-
-							var supfile []string
-
-							if ho == "main" {
-								supfile = strings.Split(pgos.Main, "\n")
-							} else if ho == "init" {
-								supfile = strings.Split(pgos.Init_Func, "\n")
-							} else {
-								supfile = strings.Split(pgos.Session, "\n")
-							}
-
-							for t,mline := range supfile {
-								if(strings.Contains(mline,qry)){
-									file = ho
-									line = fmt.Sprintf("%v", (t + 1 ) )
-									return
-								}
-							}
-
-						}
-
-					} else {
-
-						supfile, err := core.ReadLines(core.GOHOME  + packag.(string) + "/" + ho)
-							if err == nil {
-						for t,mline := range supfile {
-							if(strings.Contains(mline,qry)){
-								file = ho
-								line = fmt.Sprintf("%v", (t +1 ) )
-								return
-							}
-						}
-						}
-
-					}
-
-				}
-
-
-
-			}
-			} else {
-				file = "VENDOR"
-				line = "VENDOR"
-				return
-			}
-
-			return
-		</method>
-
-		<method name="UYRProcess" keep-local="true" var="packag,unfound" return="(file,line string)">
-
-			_,err := core.ReadLines(core.GOHOME + packag.(string) + "/server_out.go")
-
-			if err != nil {
-				file = "NA"
-				line = "NA"
-				return
-			} else {
-
-				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
-			
-				for _,ho := range gossupfiles {
-
-					if ho == "main" || ho == "init" || ho == "session"  {
-						//support file load gos
-						pgos,err := core.PLoadGos(core.GOHOME + packag.(string) + "/gos.gxml")
-						if err != nil {
-							file = "NA"
-							line = "NA"
-							return
-						} else {
-
-							var supfile []string
-
-							if ho == "main" {
-								supfile = strings.Split(pgos.Main, "\n")
-							} else if ho == "init" {
-								supfile = strings.Split(pgos.Init_Func, "\n")
-							} else {
-								supfile = strings.Split(pgos.Session, "\n")
-							}
-
-							for t,mline := range supfile {
-								if(strings.Contains(mline,unfound.(string))){
-									file = ho
-									line = fmt.Sprintf("%v", (t + 1) )
-									return
-								}
-							}
-
-						}
-
-					} else {
-
-						supfile, err := core.ReadLines(core.GOHOME + packag.(string) + "/" + ho)
-
-						if err == nil {
-						for t,mline := range supfile {
-							if(strings.Contains(mline,unfound.(string))){
-								file = ho
-								line = fmt.Sprintf("%v", (t + 1) )
-								return
-							}
-						}
-						}
-
-					}
-
-				}
-
-
-
-			}
-
-			return
-		</method>
-
-		<method name="LineProcessLe" keep-local="true" var="lineinOut,packag,filee" return="(file,line string)">
-			//UYR can be used to find the support file line and file perf
-			
-
-			if strings.Contains(filee.(string),"/server_out.go") {
-			servout,err := core.ReadLines(core.GOHOME  + packag.(string) + "/server_out.go")
-			i,err := strconv.Atoi(lineinOut.(string))
-			i = i - 1
-			qry :=   servout[i] 
-		
-			if err != nil {
-				file = "NA"
-				line = "NA"
-				return
-			} else {
-
-				gossupfiles := []string{"methods.dsl","structs.dsl","objects.dsl","main","init","session"}
-			
-
-				for _,ho := range gossupfiles {
-
-					if ho == "main" || ho == "init" || ho == "session"  {
-						//support file load gos
-						pgos,err := core.PLoadGos(core.GOHOME  + packag.(string) + "/gos.gxml")
-						if err != nil {
-							file = "NA"
-							line = "NA"
-							return
-						} else {
-
-							var supfile []string
-
-							if ho == "main" {
-								supfile = strings.Split(pgos.Main, "\n")
-							} else if ho == "init" {
-								supfile = strings.Split(pgos.Init_Func, "\n")
-							} else {
-								supfile = strings.Split(pgos.Session, "\n")
-							}
-
-							for t,mline := range supfile {
-								if(strings.Contains(mline,qry)){
-									file = ho
-									line = fmt.Sprintf("%v", (t + 1) )
-									return
-									
-								
-								}
-							}
-
-						}
-
-					} else {
-
-						supfile, err := core.ReadLines(core.GOHOME + packag.(string) + "/" + ho)
-							if err == nil {
-						for t,mline := range supfile {
-							if(strings.Contains(mline,qry)){
-								file = ho
-								line = fmt.Sprintf("%v", (t + 1 ) )
-								return
-							
-							}
-						}
-					}
-
-					}
-
-				}
-
-
-
-			}
-			} else {
-				file = "VENDOR"
-				line = "VENDOR"
-				return
-			}
-
-			return
-		</method>
-
-
-		
-
 	</methods>
 
 		<templates>
@@ -938,15 +645,14 @@
 						hasgo := false
 						files,_ := ioutil.ReadDir(path)
 					for _,f := range files {
-					   	if !f.IsDir(){
-					   		if strings.Contains(f.Name(), ".go") {
-					   			hasgo = true
+					   	if !f.IsDir() && strings.Contains(f.Name(), ".go"){
+					   			
 					   		var mjk string
 					   		mjk = strings.Replace(path  , core.TrimSuffix( os.ExpandEnv("$GOPATH"), "/" ) + "/src/" +  v.Name,"",-1) + "/" + f.Name()
-
+					   		hasgo = true
 					   		loca.Children = append(loca.Children, PkgItem{AppID:v.Name,Text:f.Name(),Icon:"fa fa-code",Type:"60",ID: v.Name + "@pkg:" +  mjk,MType : "60&path=" + mjk,DType:"60&isDir=No&path=" + mjk }) 
 					   	
-					   		}
+					   		
 					   	}
 					   }
 
@@ -960,9 +666,10 @@
 					   
 
 					
-					   if hasgo {
+					   	if hasgo {
 					 	  goFiles = append(goFiles,loca)
-						}
+					   	}
+						
 						}	
 					   //fmt.Println(file,path,file.Name,file.IsDir())
 					//   var loca PkgItem = PkgItem{AppID:v.Name,Text: file.Name(),Icon: "fa fa-folder"}
@@ -1348,7 +1055,7 @@
 				varf = append(varf, Inputs{Type:"hidden",Name:"basesix" })
 				varf = append(varf, Inputs{Type:"hidden",Name:"fmode",Value:"touch" })
 
-				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=6&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Apply",Class:"warning" } })
+				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=6&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Create",Class:"warning" } })
 			} else if r.FormValue("type") == "50" {
 			 	//prefix pkg 
 			 	varf := []Inputs{}
@@ -1356,7 +1063,7 @@
 				varf = append(varf, Inputs{Type:"hidden",Name:"basesix" })
 				varf = append(varf, Inputs{Type:"hidden",Name:"fmode",Value:"touch" })
 
-				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=60&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Create Go file",Class:"warning" } })
+				response = net_bFSC(FSCs{Path:r.FormValue("path"), Form: Forms{Link:"/api/act?type=60&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs:varf,CTA:"Create",Class:"warning" } })
 			} else if r.FormValue("type") == "6" {
 				varf := []Inputs{}
 				varf = append(varf, Inputs{Type:"text",Name:"path",Misc:"required", Text:"New path"})
@@ -1422,7 +1129,7 @@
 
 				} else {
 					//delete
-					core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
+					os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
 
 					newapps := []App{}
 					apps := getApps()
@@ -1461,14 +1168,7 @@
 					apps = net_updateApp(apps, sapp.Name,	sapp)
 					saveApps(apps)
 					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
-
-					for _,bchild := range gos.Templates.Templates {
-
-						if bchild.Bundle == r.FormValue("bundle") {
-							core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + bchild.Name + ".tmpl")
-						}
-
-					}
+					os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") )
 					gos.Delete("bundle", r.FormValue("bundle"))
 
 					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
@@ -1484,7 +1184,7 @@
 				} else {
 					//delete
 
-					core.RunCmdB("rm " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("tmpl") + ".tmpl")
+					os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("tmpl") + ".tmpl")
 
 					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 					parsedStr := strings.Split(r.FormValue("tmpl"),"/")
@@ -1505,9 +1205,9 @@
 				} else {
 					//delete
 					if r.FormValue("isDir") == "Yes" {
-						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
+						os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
 					} else {
-						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
+						os.RemoveAll(  os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("path"))
 					}
 					response = net_bAlert(Alertbs{Type:"success",Text:"Success resource at " + r.FormValue("path") + " was removed!",Redirect: "javascript:updateTree()"})
 				}
@@ -1521,9 +1221,9 @@
 				} else {
 					//delete
 					if r.FormValue("isDir") == "Yes" {
-						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
+						os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
 					} else {
-						core.RunCmdB("rm -rf " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
+						os.RemoveAll(  os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path"))
 					}
 					response = net_bAlert(Alertbs{Type:"success",Text:"Success resource at " + r.FormValue("path") + " removed!",Redirect: "javascript:updateTree()"})
 				}
@@ -1634,7 +1334,7 @@
 				app := net_getApp(apps, r.FormValue("pkg"))
 				
 				app.Groups = append(app.Groups, r.FormValue("name"))
-				core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("name")  );		
+				os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("name") ,0777 );		
 				apps = net_updateApp(apps, r.FormValue("pkg"), app)
 				saveApps(apps)
 				//Users.Update(bson.M{"uid":me.UID}, me)	
@@ -1643,7 +1343,7 @@
 			  gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 
 				//update var
-				core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") + "/" + r.FormValue("name") + ".tmpl")
+				os.Create(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") + "/" + r.FormValue("name") + ".tmpl")
 				gos.AddS("template", core.Template{Name:r.FormValue("name"),Bundle: r.FormValue("bundle"),TemplateFile:r.FormValue("bundle") + "/" + r.FormValue("name") } )			
 
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")			
@@ -1651,10 +1351,10 @@
 
 				if r.FormValue("fmode") == "touch" {
 
-					core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path") );
+					os.Create( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path") );
 
 				} else if r.FormValue("fmode") == "dir" {
-					core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path") );				
+					fmt.Println(os.MkdirAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path"), 0777 ));				
 				} else if r.FormValue("fmode") == "upload" {
 					ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path"), core.Decode64(nil,[]byte(r.FormValue("basesix"))),0777)
 				}
@@ -1666,23 +1366,23 @@
 					if !strings.Contains(r.FormValue("path"),".go") {
 						addstr = ".go"
 					}
-					_, err := core.RunCmdSmartB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
+					_, err := os.Create(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
 
 					if err != nil {
 						npath := strings.Split(r.FormValue("path"), "/")
-							core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + strings.Join(npath[:len(npath) - 1], "/") );
-							core.RunCmdB("touch " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
+							os.MkdirAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + strings.Join(npath[:len(npath) - 1], "/"),0777 );
+							os.Create(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr );
 
 					}
 
 				} else if r.FormValue("fmode") == "dir" {
-					core.RunCmdB("mkdir -p " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") );				
+					os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") ,0777);				
 				} else if r.FormValue("fmode") == "upload" {
 					ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path"), core.Decode64(nil,[]byte(r.FormValue("basesix"))),0777)
 				}
 
 			} else if r.FormValue("type") == "7" {
-					_, err := core.RunCmdSmart("mv " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web/" + r.FormValue("path"))
+					 err := os.Rename( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web" + r.FormValue("prefix") , os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/web/" + r.FormValue("path"))
 
 					if err != nil {
 					response = net_bAlert(Alertbs{Type:"danger",Text:"Failed to move resource : " + err.Error()})
@@ -1691,7 +1391,7 @@
 					}			
 
 			} else if r.FormValue("type") == "70" {
-					_, err := core.RunCmdSmart("mv " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg")  + r.FormValue("prefix") + " " + os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + r.FormValue("path"))
+					 err := os.Rename(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg")  + r.FormValue("prefix") , os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + r.FormValue("path"))
 					if err != nil {
 					response = net_bAlert(Alertbs{Type:"danger",Text:"Failed to move resource : " + err.Error()})
 					} else {
@@ -1888,8 +1588,8 @@
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
-		    	 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/bindata.go")
-		    	  core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/application.go")
+		    	 os.RemoveAll( gp + "/src/" +  r.FormValue("pkg") + "/bindata.go")
+		    	   os.RemoveAll( gp + "/src/" +  r.FormValue("pkg") + "/application.go")
 		    		logBuilt,_ := core.RunCmdSmart("gos --run --buildcheck")
 				//	fmt.Println(logBuilt)
 					passed := false
@@ -2055,17 +1755,17 @@
 					if sapp.Passed {
 
 						if sapp.Pid != ""  {
-						core.RunCmdB("kill -3 " + sapp.Pid)
+							core.RunCmdB("kill -3 " + sapp.Pid)
 							response = net_bAlert(Alertbs{Type:"success",Text:"Build stopped." })	
-							}
+						}
 
 
 		    			pkSpl := strings.Split(r.FormValue("pkg"), "/")
 
 		    			shscript := `#!/bin/bash  
-cmd="./` + pkSpl[len(pkSpl) - 1] + ` "
-eval "${cmd}" >main.log &disown
-exit 0`
+						cmd="./` + pkSpl[len(pkSpl) - 1] + ` "
+						eval "${cmd}" >main.log &disown
+						exit 0`
 
 		    			ioutil.WriteFile("runsc", []byte(shscript), 0777)
 		    			go core.RunCmdSmart("sh runsc &>/dev/null")
@@ -2116,18 +1816,21 @@ exit 0`
 			 mutex.Lock()
       		 defer mutex.Unlock()
 			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
-			core.RunCmdB("rm " +  strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip ")
+			os.Remove( strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip ")
 			bPath := strings.Split(r.FormValue("pkg"), "/")
 			gp := os.ExpandEnv("$GOPATH")
 			//coreTemplate,_ := core.LoadGos(gp + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 			
 			//core.RunCmdB("gos ru " +  r.FormValue("pkg") + " gos.gxml web tmpl")
-			 core.RunCmdB("rm " + gp + "/src/" +  r.FormValue("pkg") + "/server_out.go")
+			 os.Remove(gp + "/src/" +  r.FormValue("pkg") + "/server_out.go")
 
 			
 			//core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "web","tmpl")
 			core.RunCmdB("gos --export")
 			
+			if Windows {
+				bPath[len(bPath) - 1]  += ".exe"
+			}
 			core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip "  + " " + bPath[len(bPath) - 1] )
 
 			time.Sleep(1200 * time.Millisecond)
@@ -2143,11 +1846,15 @@ exit 0`
 				
 			 mutex.Lock()
       		defer mutex.Unlock()
-			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/")
+			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" )
 			core.RunCmdB("rm " +  strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip ")
-			core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip " +   r.FormValue("pkg") + "/" )
+			pkgpath :=  r.FormValue("pkg") 
+			if Windows {
+				pkgpath = strings.Replace(pkgpath, "/", "\\", -1)
+			}
+			core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip " +  pkgpath + "/" )
 
-			time.Sleep(1200 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 			
 			
 			w.Header().Set("Content-Type",  "application/zip")
@@ -2223,67 +1930,7 @@ exit 0`
 
 			response = mResponse(ret)
 				</end>
-				<end path="/roc/server/" method="mPreview" type="star" >
-						me  := session.Values["me"].(*SoftUser)
 			
-			var bjPath string
-			rawquery := r.URL.RawQuery
-
-			bjPath = strings.Replace(r.URL.Path,"/roc/server","",1)
-			bsPath := strings.Split(r.FormValue("pkin"),"/")
-
-			hah,_ := ioutil.ReadAll(r.Body);
-			sbsPath := strings.Split(bjPath, "/")
-		
-
-			if !strings.Contains(sbsPath[len(sbsPath) - 1],".") {
-				w.Header().Set("Content-Type",  "text/html")	
-
-				if bjPath == "/" {
-					bjPath = "/index"
-				}
-				bjPath = bjPath + "?" + rawquery
-				if strings.Contains(bjPath,".tmpl"){
-				fmt.Println("hashit")
-				az := strings.Split(bjPath,".tmpl")
-				bjPath = az[0]
-				fmt.Println(bjPath)
-				}
-				
-				/*response,err := core.RunCmdSmartB("docker exec -i " + me.Docker + " bash -c \" cd " + os.ExpandEnv("$GOPATH")  + "/src/  " + core.DAMP + " " +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah) + "\""  ) */
-
-				response,err := core.RunCmdSmartB("docker exec " + me.Docker + " " + os.ExpandEnv("$GOPATH")  + "/src/" +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah)   )
-				fmt.Println(err,response)
-				if err == nil {
-					w.Write(response)
-				} else {
-					//gofail test
-
-				response,err := core.RunCmdSmartB("sh " + core.GOHOME + "server/gofail.sh " + me.Docker + " "  + os.ExpandEnv("$GOPATH")  + "/src/" +  r.FormValue("pkin") + "/" + bsPath[len(bsPath) - 1] + " " + bjPath + " " + r.Method + " " + string(hah) + " " +  core.NewLen(10)  )
-
-				if r.FormValue("nohtml") == "" {
-					if err != nil {
-						w.Write([]byte(net_bCrashedPage(Dex{Text:"Fallback script could not be reached!"}) ))
-					} else {
-						w.Write([]byte(net_bCrashedPage(Dex{Text:string(response)}) ))
-					}
-				} else {
-					if err != nil {
-						w.Write([]byte("Fallback script could not be reached!") )
-					} else {
-						w.Write([]byte(response)) 
-					}
-				}
-					
-				}
-
-			} else {
-
-			 	http.ServeFile(w, r, os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkin") + "/web" + bjPath )
-			
-			}
-		response = ""
-				</end>
 
 				<end path="/api/console" method="mConsole" type="POST">
 			

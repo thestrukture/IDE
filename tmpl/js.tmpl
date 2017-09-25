@@ -180,9 +180,14 @@
     }
 
     $('.side-bay').bind("DOMSubtreeModified",function(){
+
      if ($(".side-bay").height() == 0){
         $(".dimisser-btn").css('display','none')
      } else   $(".dimisser-btn").css('display','block');
+     if($(".pop-box").css("display") != "none" ){
+       $(".pop-box").scrollTop(1)
+      }
+
     return false;
     });
 
