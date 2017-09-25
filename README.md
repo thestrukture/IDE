@@ -30,7 +30,8 @@ The strukture is an open source IDE. It is designed to build web applications, w
 		$ IDE
 
 #### Launch with GUI
-	
+Change to the ui directory within the root of this package. (Moved ui files to build package as go)
+		$ cd ui/
 		$ make uiview
 		$ IDE --headless & npm start
 
