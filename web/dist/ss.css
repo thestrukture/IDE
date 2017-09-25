@@ -33,6 +33,10 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
     right: 0px !important;
     left: initial !important;
 }
+
+.nav-link .close {
+	float:none !important;
+}
    @media screen and (max-width: 1048px) {
          .pop-box {
             position: absolute;

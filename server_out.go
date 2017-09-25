@@ -246,7 +246,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			apps := getApps()
 
-			// //Users.Update(bson.M{"uid":me.UID}, me)
 			for _, v := range apps {
 				if v.Name != "" {
 					gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + v.Name + "/gos.gxml")
@@ -267,11 +266,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
 
 					var folders []PkgItem
-
-					_ = filepath.Walk(core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name+"/web/", func(path string, file os.FileInfo, _ error) error {
+					var pkgpath = core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + v.Name + "/"
+					if Windows {
+						pkgpath = strings.Replace(pkgpath, "/", "\\", -1)
+					}
+					_ = filepath.Walk(pkgpath+"web", func(path string, file os.FileInfo, _ error) error {
 						//fmt.Println(path)
 						if file.IsDir() {
-							lpathj := strings.Replace(path, core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name+"/web", "", -1)
+							lpathj := strings.Replace(path, pkgpath+"web", "", -1)
 
 							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
 
@@ -285,7 +287,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 							for _, f := range files {
 								if !f.IsDir() {
 									var mjk string
-									mjk = strings.Replace(path, core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name+"/web", "", -1) + "/" + f.Name()
+									mjk = strings.Replace(path, pkgpath+"web", "", -1) + "/" + f.Name()
+									if Windows {
+										mjk = strings.Replace(mjk, "/", "\\", -1)
+									}
 
 									loca.Children = append(loca.Children, PkgItem{AppID: v.Name, Text: f.Name(), Icon: "fa fa-page", Type: "6", ID: v.Name + "@pkg:" + mjk, MType: "6&path=" + mjk, DType: "6&isDir=No&path=" + mjk})
 
@@ -302,10 +307,11 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 					})
 					var goFiles []PkgItem
 
-					_ = filepath.Walk(core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name+"/", func(path string, file os.FileInfo, _ error) error {
+					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
 						//fmt.Println(path)
 						if file.IsDir() {
-							lpathj := strings.Replace(path, core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name, "", -1)
+							lpathj := strings.Replace(path, pkgpath, "", -1)
+
 							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-circle", Children: []PkgItem{}}
 							hasgo := false
 							files, _ := ioutil.ReadDir(path)
@@ -313,7 +319,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 								if !f.IsDir() && strings.Contains(f.Name(), ".go") {
 
 									var mjk string
-									mjk = strings.Replace(path, core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/")+"/src/"+v.Name, "", -1) + "/" + f.Name()
+									mjk = strings.Replace(path, pkgpath, "", -1) + "/" + f.Name()
+									if Windows {
+										mjk = strings.Replace(mjk, "/", "\\", -1)
+									}
 									hasgo = true
 									loca.Children = append(loca.Children, PkgItem{AppID: v.Name, Text: f.Name(), Icon: "fa fa-code", Type: "60", ID: v.Name + "@pkg:" + mjk, MType: "60&path=" + mjk, DType: "60&isDir=No&path=" + mjk})
 
@@ -1443,19 +1452,27 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			}
 
 			pkSpl := strings.Split(r.FormValue("pkg"), "/")
+			if Windows {
+				go core.RunCmd("cmd /C start " + pkSpl[len(pkSpl)-1])
+			} else {
+				shscript := `#!/bin/bash  
+									cmd="./` + pkSpl[len(pkSpl)-1] + ` "
+									eval "${cmd}" >main.log &disown
+									exit 0`
 
-			shscript := `#!/bin/bash  
-						cmd="./` + pkSpl[len(pkSpl)-1] + ` "
-						eval "${cmd}" >main.log &disown
-						exit 0`
+				ioutil.WriteFile("runsc", []byte(shscript), 0777)
+				go core.RunCmdSmart("sh runsc &>/dev/null")
+			}
 
-			ioutil.WriteFile("runsc", []byte(shscript), 0777)
-			go core.RunCmdSmart("sh runsc &>/dev/null")
 			time.Sleep(time.Second * 5)
 			raw, _ := ioutil.ReadFile("main.log")
 			lines := strings.Split(string(raw), "\n")
 			sapp.Pid = lines[0]
-			response = net_bAlert(Alertbs{Type: "success", Text: "Your server is up at PID : " + sapp.Pid})
+			if Windows {
+				response = net_bAlert(Alertbs{Type: "success", Text: "Server up"})
+			} else {
+				response = net_bAlert(Alertbs{Type: "success", Text: "Your server is up at PID : " + sapp.Pid})
+			}
 		} else {
 			response = net_bAlert(Alertbs{Type: "danger", Text: "Your latest build failed."})
 
@@ -7237,7 +7254,6 @@ func main() {
 
 	dfd = os.ExpandEnv("$GOPATH")
 	Windows = strings.Contains(runtime.GOOS, "windows")
-
 	if dfd == "" {
 		fmt.Println("Using temporary $GOPATH")
 		if Windows {
@@ -7295,8 +7311,11 @@ func main() {
 	saveApps(newapps)
 
 	log.Println("Strukture up on port 8884")
-	if len(os.Args) == 1 {
+	if len(os.Args) == 1 && !Windows {
 		core.RunCmd("open http://localhost:8884/index")
+	} else if Windows {
+		os.Chdir(os.ExpandEnv("$PROGRAMFILES") + "\\Internet Explorer")
+		go core.RunCmd("iexplore http://localhost:8884/index")
 	}
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
