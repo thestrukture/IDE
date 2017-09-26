@@ -1647,8 +1647,15 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		if strings.Contains(r.FormValue("command"), "cd") {
 			parts := strings.Fields(r.FormValue("command"))
-			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" + parts[1])
-			response = "Changed directory to " + parts[1]
+
+			if len(parts) == 1 {
+				os.Chdir("")
+			} else {
+				os.Chdir(parts[1])
+			}
+			if dir, err := os.Getwd(); err != nil {
+				response = "Changed directory to " + dir
+			}
 
 		} else {
 			data, err := core.RunCmdSmart(r.FormValue("command"))
@@ -1910,7 +1917,6 @@ func handler(w http.ResponseWriter, r *http.Request, contxt string) {
 		return
 	}
 
-	w.Header().Set("Cache-Control", "public")
 	if !p.isResource {
 		w.Header().Set("Content-Type", "text/html")
 		defer func() {
@@ -1927,6 +1933,7 @@ func handler(w http.ResponseWriter, r *http.Request, contxt string) {
 
 		// fmt.Println(w)
 	} else {
+		w.Header().Set("Cache-Control", "public")
 		if strings.Contains(r.URL.Path, ".css") {
 			w.Header().Add("Content-Type", "text/css")
 		} else if strings.Contains(r.URL.Path, ".js") {
