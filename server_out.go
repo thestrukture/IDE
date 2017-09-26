@@ -7313,7 +7313,7 @@ func main() {
 	log.Println("Strukture up on port 8884")
 	if len(os.Args) == 1 && !Windows {
 		core.RunCmd("open http://localhost:8884/index")
-	} else if Windows {
+	} else if len(os.Args) == 1 && Windows {
 		os.Chdir(os.ExpandEnv("$PROGRAMFILES") + "\\Internet Explorer")
 		go core.RunCmd("iexplore http://localhost:8884/index")
 	}
