@@ -1532,16 +1532,18 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "web","tmpl")
 		core.RunCmdB("gos --export")
-
+		zipname := strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".binary.zip"
 		if Windows {
 			bPath[len(bPath)-1] += ".exe"
+			zipit(bPath[len(bPath)-1], zipname)
+		} else {
+			core.RunCmdB("zip -r " + zipname + " " + bPath[len(bPath)-1])
 		}
-		core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".binary.zip " + " " + bPath[len(bPath)-1])
-
-		time.Sleep(1200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 
 		w.Header().Set("Content-Type", "application/zip")
-		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".binary.zip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipname))
+		http.ServeFile(w, r, zipname)
 
 		context.Clear(r)
 
@@ -1553,16 +1555,19 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		os.Chdir(os.ExpandEnv("$GOPATH") + "/src/")
-		core.RunCmdB("rm " + strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip ")
+		os.Remove(strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip ")
 		pkgpath := r.FormValue("pkg")
+		zipname := strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip"
 		if Windows {
 			pkgpath = strings.Replace(pkgpath, "/", "\\", -1)
+			zipit(pkgpath, zipname)
+		} else {
+			core.RunCmdB("zip -r " + zipname + " " + pkgpath + "/")
 		}
-		core.RunCmdB("zip -r " + strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip " + pkgpath + "/")
-
 		time.Sleep(500 * time.Millisecond)
 
 		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipname))
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".zip")
 
 		context.Clear(r)
@@ -7317,12 +7322,12 @@ func main() {
 	}
 	saveApps(newapps)
 
- 	log.Println("Strukture up on port 8884")
-    if len(os.Args) == 1 && !Windows {
-      	core.RunCmd("open http://localhost:8884/index")
-    } else if len(os.Args) == 1 &&  Windows {
+	log.Println("Strukture up on port 8884")
+	if len(os.Args) == 1 && !Windows {
+		core.RunCmd("open http://localhost:8884/index")
+	} else if len(os.Args) == 1 && Windows {
 		core.RunCmd("cmd /C start http://localhost:8884/index")
-    } 
+	}
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
 	http.HandleFunc("/", makeHandler(handler))

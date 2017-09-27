@@ -1,14 +1,14 @@
 package main
 
 import (
-	//	"bufio"
+	"archive/zip"
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	//"sort"
 	"strings"
 )
 
@@ -19,28 +19,67 @@ func visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-/*
-func GetLine(fname string, match string) int {
-	intx := 0
-	file, err := os.Open(fname)
+// http://blog.ralch.com/tutorial/golang-working-with-zip/
+func zipit(source, target string) error {
+	zipfile, err := os.Create(target)
 	if err != nil {
-		fmt.Println("Could not find a source file")
-		return -1
+		return err
 	}
-	defer file.Close()
+	defer zipfile.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		intx = intx + 1
-		if strings.Contains(scanner.Text(), match) {
+	archive := zip.NewWriter(zipfile)
+	defer archive.Close()
 
-			return intx
+	info, err := os.Stat(source)
+	if err != nil {
+		return nil
+	}
+
+	var baseDir string
+	if info.IsDir() {
+		baseDir = filepath.Base(source)
+	}
+
+	filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
 
-	}
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
 
-	return -1
-} */
+		if baseDir != "" {
+			header.Name = filepath.Join(baseDir, strings.TrimPrefix(path, source))
+		}
+
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := archive.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(writer, file)
+		return err
+	})
+
+	return err
+}
 
 func processLog(pkg, buildLog string) DebugObj {
 
