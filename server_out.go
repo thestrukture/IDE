@@ -7317,13 +7317,12 @@ func main() {
 	}
 	saveApps(newapps)
 
-	log.Println("Strukture up on port 8884")
-	if len(os.Args) == 1 && !Windows {
-		core.RunCmd("open http://localhost:8884/index")
-	} else if len(os.Args) == 1 && Windows {
-		os.Chdir(os.ExpandEnv("$PROGRAMFILES") + "\\Internet Explorer")
-		go core.RunCmd("iexplore http://localhost:8884/index")
-	}
+ 	log.Println("Strukture up on port 8884")
+    if len(os.Args) == 1 && !Windows {
+      	core.RunCmd("open http://localhost:8884/index")
+    } else if len(os.Args) == 1 &&  Windows {
+		core.RunCmd("cmd /C start http://localhost:8884/index")
+    } 
 
 	fmt.Printf("Listenning on Port %v\n", "8884")
 	http.HandleFunc("/", makeHandler(handler))

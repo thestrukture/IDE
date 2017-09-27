@@ -76,6 +76,6 @@
 		    
 		}, false);
 
-	 addTab('{{ .PKG }} - ' + {{ .SavesTo }}, {{ .ID }} );
+	 addTab('{{ .PKG }} - {{ .SavesTo }}'.replace("\\", "/"),  {{ .ID }} );
 </script>
 </div>
