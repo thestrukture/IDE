@@ -36,7 +36,9 @@ Change to the ui directory within the root of this package. (Moved ui files to b
 		$ IDE --headless & npm start
 
 Take note of the pid ID to stop server process. Once your server is up feel free to use `npm start` directly.
-	
+
+### IE Fix
+If build commands keep returning the same message, push the `F12` key down to open developer tools and try building again.
 	
 ### Install Via APT
 
