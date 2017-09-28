@@ -94,7 +94,11 @@
 
        log.Println("Strukture up on port 8884")
       	if len(os.Args) == 1 && !Windows {
-      		core.RunCmd("open http://localhost:8884/index")
+      		if isMac := strings.Contains(runtime.GOOS, "arwin"); isMac { 
+      			core.RunCmd("open http://localhost:8884/index")
+      		} else {
+      			core.RunCmd("xdg-open http://localhost:8884/index")
+      		}
     	} else if len(os.Args) == 1 &&  Windows {
 			core.RunCmd("cmd /C start http://localhost:8884/index")
     	} 
