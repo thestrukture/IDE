@@ -1,0 +1,32 @@
+{
+	"ImportPath": "github.com/cheikhshift/db",
+	"GoVersion": "go1.5",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/asaskevich/govalidator",
+			"Comment": "v6-23-g15028e8",
+			"Rev": "15028e809df8c71964e8efa6c11e81d5c0262302"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Comment": "r2015.12.06-2-g03c9f3e",
+			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/bson",
+			"Comment": "r2015.12.06-2-g03c9f3e",
+			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/sasl",
+			"Comment": "r2015.12.06-2-g03c9f3e",
+			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/scram",
+			"Comment": "r2015.12.06-2-g03c9f3e",
+			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		}
+	]
+}

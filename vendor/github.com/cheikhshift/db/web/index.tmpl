@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>DB Example</title>
+    </head>
+    <body>
+		{{ $obj := New Sample }}
+  	    {{ $email := "email@gmail.com" }}
+  	    {{ $obj }}
+  	    {{with $obj }}
+           	{{ .|u "FieldTwo" $email }}
+        {{end}}
+
+  		{{ $obj.FieldTwo }}
+
+        {{ $err := $obj | Add }}
+         	{{ if $err | neq "" }}
+         		<h1>Error {{$err}}</h1>
+        {{end}}
+        
+
+        {{ $query := search }}
+        {{with $query }}
+        	{{ . | k "fieldtwo" $email}}
+        {{end}}
+    	
+    	
+    	<p>Map value</p>
+    	<h1>{{ $query | v "fieldtwo" }}</h1>
+     	{{ with $query | Q Sample}}
+            {{ . | One }}
+            {{ range . | All }}
+                    {{ . | v "fieldtwo" }}
+
+                    {{ . | k "fieldtwo" "newmail" }}
+                    <!-- Cast similar to with $obj -->
+                    {{ with . | isSample }}
+                       FieldTwo : {{ .FieldTwo }}
+                       {{ . | Update }}
+                    {{end }}
+            {{ end }}
+        {{ end }}
+    </body>
+</html>

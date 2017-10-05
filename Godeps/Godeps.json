@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/thestrukture/IDE",
+	"ImportPath": "server/strukture",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Deps": [

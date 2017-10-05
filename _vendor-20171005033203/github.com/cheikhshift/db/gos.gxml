@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gos>
+	<!--Stating the deployment type GoS should compile -->
+	<!-- Curent valid types are webapp,shell and bind -->
+	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
+	<deploy>package</deploy>
+	<port>8080</port>
+	<package>db</package>
+	<not_found>/your-404-page</not_found>
+	<error>/your-500-page</error>
+	<!-- Using import within different tags will have different results -->
+	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
+	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
+	<!-- To be less dramating, GoS will skip packages that it has already imported -->
+	<import src="github.com/cheikhshift/db" />
+	<import src="gopkg.in/mgo.v2" /> 
+	<import src="gopkg.in/mgo.v2/bson" />
+	<import src="errors"/>
+	<!-- Go File output name -->
+	<output>server_out.go</output>
+	<!-- exported session fields available to Session -->
+	<var type="db.DB">dbs</var>
+
+
+	<key>a very very very very secret key</key>
+	<!-- Declare global variables -->
+	<!-- Contains interfaces and structs
+	 that will be used by the GoS application -->
+	<header> 
+			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
+		<struct name="Sample">
+	 		Id bson.ObjectId `bson:"_id,omitempty"`
+			TestField string `valid:"unique"`
+			FieldTwo string `valid:"email,unique,required"`
+			Created time.Time //timestamp local format
+		</struct>
+
+		<!-- Required for Gos To compile \|/-->
+	  	
+	</header>
+	<methods>
+		<!-- Vars are defined as usual except within the var attribute for example :  -->
+		<!-- If there is a basic go function : func hackfmt(data string, data2 string) -->
+		<!-- the attribute names would be called as such var="data string,data2 string" -->
+		<!-- Similar to a go function decleration-->
+		<!--  if a method matches the criteria for an  interface it will be used as an interface method -->
+		<!-- To prevent that use the autoface attribute and set it to "false" By default it is true -->
+		<!-- Use the keep-local="true" attribute to limit a method within a Go file -->	
+		<!-- Sometimes your method will return data  -->
+		<!-- And to do so we will need to add a return var list by using the return attribute  -->
+		<!-- Sometimes the autointerface will reuse the wrong the function, or your interface methods need a bit more distinction -->
+		<!-- Vis a  vis which object types are used in generating these mutating methods -->
+		<!--Use the limit attribute to narrow down the applicable structs for this method -->
+		<!-- Use the object attribute to determine the name of the local variable name to be mutated within the function. By default GoS will assume object is the variable name  -->
+	
+		<method name="Add" var="obj" return="">
+			//empty return assume it is string with return "" appended at end!
+			err := dbs.Add(obj)
+			
+			if err != nil {
+
+				return err.Error()
+			}
+			
+		</method>
+		<method name="New" var="obj" return="interface{}">
+			//empty return assume it is string with return "" appended at end!
+			 return dbs.New(obj)
+			
+			
+		</method>
+		<method name="Update" var="obj" return="">
+			err := dbs.Save(obj)
+			if err != nil {
+				return err.Error()
+			}
+		</method>
+		<method name="Delete" var="obj" return="">
+			err := dbs.Remove(obj)
+			if err != nil {
+				return err.Error()
+			}
+		</method>
+		<method name="u" var="ke,val,obj" return="">
+				//args[0] = act
+				reflect.ValueOf(obj).Elem().FieldByName(ke.(string)).Set(reflect.ValueOf(val))
+		</method>
+
+		<method name="sf" var="" return="">
+				//args[0] = act
+				reflect.ValueOf(&args[1]).Set(reflect.ValueOf(args[0]).Elem())
+		</method>
+
+		<method name="search" var="" return="db.O">
+			return db.O{}	
+		</method>
+
+		<method name="k" var="ke,obj,m" return="">
+			
+			m.(db.O)[ke.(string)] = obj
+		
+		</method>
+
+		<method name="v" var="ke,m" return="interface{}">
+			
+			return m.(db.O)[ke.(string)] 
+		
+		</method>
+
+		<method name="rmk" var="ke,m" return="db.O">
+			_map := m.(db.O)
+			
+			delete(_map, ke.(string))
+			return _map
+		</method>
+
+		<method name="Q" var="obj,req" return="*mgo.Query">
+			return dbs.Q(obj).Find(req.(db.O))
+		</method>
+		<method name="Limit" var="qry,val" return="*mgo.Query">
+			return qry.(*mgo.Query).Limit(val.(int))
+		</method>
+		<method name="Skip" var="qry,val" return="*mgo.Query">
+			return  qry.(*mgo.Query).Skip(val.(int))
+		</method>
+		<method name="Sort" var="qry,val" return="*mgo.Query">
+			return  qry.(*mgo.Query).Sort(val.(string))
+		</method>
+
+
+		<method name="Count" var="qry" return="int">
+//with context is key to better code 
+			cnt,err := qry.(*mgo.Query).Count()
+			if err != nil {
+				fmt.Println(err.Error())
+				return -1
+			}
+			return cnt
+		</method>
+
+
+		<method name="One" var="qry" return="db.O">
+			one := db.O{}
+			err := qry.(*mgo.Query).One(one)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			//fmt.Println(one)
+			return one
+		</method>
+		<method name="All" var="qry" return="[]db.O">
+			one := []db.O{}
+			err := qry.(*mgo.Query).All(&one)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			return one
+		</method>
+			
+
+		<method name="Close" var="" return="">
+			dbs.Close()
+		</method>
+
+	</methods>
+
+	<templates>
+ 		<!-- Template libraries are useful for expediting page creation and reuse common website elements within this GoS application -->
+ 		<!-- Templates are nested and customized with the template function instead of using the normal {{template "Name"}} call you can now use {{Button /{"Color":"#fff"}/ }}
+ 		{{Modal &{Color:"#fff"}& }}  -->
+ 		<!-- *Notice that special braces are used to initialize the parameters of the struct '&{' and '}&' -->
+ 		
+ 		<!-- <template name="Bootstrap_alert" tmpl="bootstrap/alert" struct="Bootstrap_alert" /> -->
+ 		
+	</templates>
+	<endpoints>
+      <!-- Depending on your build type the usage of this tag will vary. -->
+      <!-- For WebServers it will override any request for a given path and run the specified method. No vars or return types are needed for  -->
+      <!-- methods linked to an API call, please keep in mind that you may use w for http.ResponseWriter and r for http.Request . Additional available function variables is params and session. If a function is api listed it will not be used anywhere else.-->
+      <!-- <end /> is the endpoint tag and has the variables path,method, -->
+      <!-- Happy trails!!! -->
+      <!-- <end path="/index/api"  type="POST" >
+      	varr := "data"
+      	fmt.Println(varr)
+      	//response is the string variable sent -> mResponse()
+      	response = varr
+      </end> -->
+	</endpoints>
+</gos>
