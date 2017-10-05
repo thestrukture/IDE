@@ -21,6 +21,10 @@ install:
 build_script:
   - go build -o dist\IDE -i .
 
+artifacts:
+  - path: dist/IDE
+    name: binary
+
 deploy:
   release: IDE-$(appveyor_build_version)
   description: 'Browser accessible IDE'
