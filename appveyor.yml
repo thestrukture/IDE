@@ -22,6 +22,7 @@ build_script:
   - go build -o dist\IDE -i .
 
 on_success:
-  - git commit ...
-  - git push ...
+  - git add
+  - git commit
+  - git push
 
