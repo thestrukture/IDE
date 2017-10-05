@@ -22,7 +22,7 @@ build_script:
   - go build -o dist\IDE -i .
 
 artifacts:
-  - path: dist/IDE
+  - path: dist\IDE.exe
     name: binary
 
 deploy:
@@ -31,7 +31,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: 2TbJMV82B5buGm/k2GN+dhfOsVqt7QQckAS3FaYJAceofkpylFxQixf8JB3TcrDg
-  artifact: binary # This is the name we specified in the artifacts section.
+  artifact: binary 
   draft: false
   prerelease: false
   on:
