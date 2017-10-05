@@ -19,20 +19,9 @@ install:
   - go env
 
 build_script:
-  - go build -o buildOutput\IDE -i .
+  - go build -o dist\IDE -i .
 
-artifacts:
-  - path: buildOutput/IDE
-    name: binary
+on_success:
+  - git commit ...
+  - git push ...
 
-deploy:
-  release: thestrukture-$(appveyor_build_version)
-  description: 'Browser accessible IDE.'
-  provider: Cheikh Seck
-  auth_token:
-    secure: hv97kq0e2gweqy41k4vg
-  artifact: binary # This is the name we specified in the artifacts section.
-  draft: false
-  prerelease: false
-  on:
-    branch: master
