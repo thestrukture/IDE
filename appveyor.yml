@@ -1,0 +1,38 @@
+version: 0.8.3.{build}
+
+platform: x64
+
+branches:
+  only:
+    - master
+
+clone_folder: c:\gopath\src\github.com\thestrukture\IDE
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+
+build_script:
+  - go build -o buildOutput\IDE -i .
+
+artifacts:
+  - path: buildOutput/IDE
+    name: binary
+
+deploy:
+  release: thestrukture-$(appveyor_build_version)
+  description: 'Browser accessible IDE.'
+  provider: Cheikh Seck
+  auth_token:
+    secure: hv97kq0e2gweqy41k4vg
+  artifact: binary # This is the name we specified in the artifacts section.
+  draft: false
+  prerelease: false
+  on:
+    branch: master
