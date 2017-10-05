@@ -19,11 +19,8 @@ install:
   - go env
 
 build_script:
-  - go build -o dist\IDE -i .
+  - go build -o IDE -i .
 
-artifacts:
-  - path: dist\IDE.exe
-    name: binary
 
 deploy:
   release: IDE-$(appveyor_build_version)
@@ -31,7 +28,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: 2TbJMV82B5buGm/k2GN+dhfOsVqt7QQckAS3FaYJAceofkpylFxQixf8JB3TcrDg
-  artifact: binary 
+  artifact: /.*\.exe 
   draft: false
   prerelease: false
   on:
