@@ -8,7 +8,7 @@ GOGET=$(GOCMD) get
 BINARY_NAME=IDE
 GOSOUTPUT=server_out.go
 
-all: deps test build
+all: deps build test
 build: 
 		$(GOS) --export
 		$(GOBUILD) -o $(BINARY_NAME) -v       
