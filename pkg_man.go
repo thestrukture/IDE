@@ -13,6 +13,36 @@ import (
 )
 
 var dfd string
+var addjsstr = ` <script type="text/javascript">
+
+					$(".marker .row",".endp-view").each(function(e,i){
+							var attr = $(this).attr('proc-set');
+
+							
+							if (typeof attr !== typeof undefined && attr !== false) {
+							  // Element has this attribute
+								return;
+							} else {
+								   $(this).attr('proc-set', "can edit")
+							}
+							var tabid = $(this).parents(".tabview").attr("id")
+							$( ".col-xs-12:nth-child(3)",this).css("text-align","left")
+							var mrker = this
+					 		$(".col-xs-12:nth-child(3)",this).prepend($("<button class='btn edt-code btn-success' path='" + $(this).attr("path") + "' tab-id='" + tabid + "'>Edit <span class='hidden-md-down'>code</span></button>").click(function(){
+					 		 
+					 			$.ajax({url: $(this).attr("path").replace("put?type=9", "get?type=13r"),error:function(err){
+					 			
+					 				$(".tabview.active .code-bin").html(err.responseText)
+					 				}
+							 	})
+							 })
+							)
+
+					 	
+
+					 })
+				 	
+				 	</script>`
 
 func visit(path string, f os.FileInfo, err error) error {
 	fmt.Printf("Visited: %s\n", path)

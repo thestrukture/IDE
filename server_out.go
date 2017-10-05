@@ -166,23 +166,31 @@ func formval(s string, r *http.Request) string {
 	return r.FormValue(s)
 }
 
-func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page) bool {
+func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page, session *sessions.Session) bool {
 	defer func() {
 		if n := recover(); n != nil {
-			color.Red("Error loading template in path : web" + r.URL.Path + ".tmpl reason :")
-			fmt.Println(n)
-			DebugTemplate(w, r, "web"+r.URL.Path)
-			http.Redirect(w, r, "", 307)
+			color.Red(fmt.Sprintf("Error loading template in path : web%s.tmpl reason : %s", r.URL.Path, n))
+
+			DebugTemplate(w, r, fmt.Sprintf("web%s", r.URL.Path))
+			w.WriteHeader(http.StatusInternalServerError)
+
+			pag, err := loadPage("")
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			if pag.isResource {
+				w.Write(pag.Body)
+			} else {
+				renderTemplate(w, r, "web", pag, session)
+
+			}
 		}
 	}()
 
-	filename := tmpl + ".tmpl"
+	filename := fmt.Sprintf("%s%s", tmpl, ".tmpl")
 	body, err := Asset(filename)
-	session, er := store.Get(r, "session-")
 
-	if er != nil {
-		session, er = store.New(r, "session-")
-	}
 	p.Session = session
 	p.R = r
 	if err != nil {
@@ -196,8 +204,20 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page
 		error := t.Execute(outp, p)
 		if error != nil {
 			fmt.Println(error.Error())
-			DebugTemplate(w, r, "web"+r.URL.Path)
-			http.Redirect(w, r, "", 301)
+			DebugTemplate(w, r, fmt.Sprintf("web%s", r.URL.Path))
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "text/html")
+			pag, err := loadPage("")
+			if err != nil {
+				fmt.Println(err.Error())
+				return false
+			}
+			if pag.isResource {
+				w.Write(pag.Body)
+			} else {
+				renderTemplate(w, r, "web", pag, session)
+
+			}
 			return false
 		} else {
 			p.Session.Save(r, w)
@@ -209,33 +229,32 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page
 	}
 }
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string, *sessions.Session)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !apiAttempt(w, r) {
-			fn(w, r, "")
+
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, "/index", 302)
+			return
+		}
+		session, er := store.Get(r, "session-")
+		if er != nil {
+			session, _ = store.New(r, "session-")
+		}
+		if !apiAttempt(w, r, session) {
+			fn(w, r, "", session)
 		}
 
+		context.Clear(r)
 	}
 }
 
-func mHandler(w http.ResponseWriter, r *http.Request) {
-
-	if !apiAttempt(w, r) {
-		handler(w, r, "")
-	}
-
-}
 func mResponse(v interface{}) string {
 	data, _ := json.Marshal(&v)
 	return string(data)
 }
-func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
-	session, er := store.Get(r, "session-")
+func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) (callmet bool) {
+
 	response := ""
-	if er != nil {
-		session, _ = store.New(r, "session-")
-	}
-	callmet := false
 
 	if strings.Contains(r.URL.Path, "/api/get") {
 
@@ -499,7 +518,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				b = []byte("<gos&gt; \n \n </gos&gt; ")
 			} else {
 				b = []byte(html.EscapeString(string(b[:len(b)])))
 			}
@@ -511,7 +530,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				b = []byte("<gos&gt; \n \n </gos&gt; ")
 			} else {
 				b = []byte(html.EscapeString(string(b[:len(b)])))
 			}
@@ -523,7 +542,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
+				b = []byte("<gos&gt; \n \n </gos&gt; ")
 			} else {
 				b = []byte(html.EscapeString(string(b[:len(b)])))
 			}
@@ -552,36 +571,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 				//varf = append(varf, Inputs{Name:"method", Type:"text",Text:"Endpoint method",Value:v.Method})
 				varf = append(varf, Inputs{Name: "typ", Type: "text", Text: "Request type : GET,POST,PUT,DELETE,f,star...", Value: v.Type})
 
-				response = response + net_bRPUT(rPut{DLink: "/api/delete?type=7&pkg=" + r.FormValue("space") + "&path=" + v.Id, Link: "/api/put?type=9&id=" + v.Id + "&pkg=" + r.FormValue("space"), Count: "12", Inputs: varf}) + ` <script type="text/javascript">
-
-					$(".marker .row",".endp-view").each(function(e,i){
-							var attr = $(this).attr('proc-set');
-
-							
-							if (typeof attr !== typeof undefined && attr !== false) {
-							  // Element has this attribute
-								return;
-							} else {
-								   $(this).attr('proc-set', "can edit")
-							}
-							var tabid = $(this).parents(".tabview").attr("id")
-							$( ".col-xs-12:nth-child(3)",this).css("text-align","left")
-							var mrker = this
-					 		$(".col-xs-12:nth-child(3)",this).prepend($("<button class='btn edt-code btn-success' path='" + $(this).attr("path") + "' tab-id='" + tabid + "'>Edit <span class='hidden-md-down'>code</span></button>").click(function(){
-					 		 
-					 			$.ajax({url: $(this).attr("path").replace("put?type=9", "get?type=13r"),error:function(err){
-					 			
-					 				$(".tabview.active .code-bin").html(err.responseText)
-					 				}
-							 	})
-							 })
-							)
-
-					 	
-
-					 })
-				 	
-				 	</script>`
+				response = response + net_bRPUT(rPut{DLink: "/api/delete?type=7&pkg=" + r.FormValue("space") + "&path=" + v.Id, Link: "/api/put?type=9&id=" + v.Id + "&pkg=" + r.FormValue("space"), Count: "12", Inputs: varf}) + addjsstr
 
 			}
 
@@ -653,11 +643,11 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		}
 		callmet = true
 
-		context.Clear(r)
+		//context.Clear(r)
 
 	}
 
-	if r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		bugs := GetLogs(r.FormValue("pkg"))
 		sapp := net_getApp(getApps(), r.FormValue("pkg"))
@@ -667,34 +657,34 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			response = mResponse(bugs[0])
 		}
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		ClearLogs(r.FormValue("pkg"))
 		response = net_bAlert(Alertbs{Type: "success", Text: "Your build logs are cleared."})
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/tester/" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/tester/" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		gp := os.ExpandEnv("$GOPATH")
 		os.Chdir(gp + "/src/" + r.FormValue("pkg"))
 		logfull, _ := core.RunCmdSmart("gos " + r.FormValue("mode") + " " + r.FormValue("c"))
 		response = html.EscapeString(logfull)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/create" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/create" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		//me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
 
@@ -762,12 +752,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			response = net_bMV(FSCs{Path: r.FormValue("path"), Form: Forms{Link: "/api/act?type=70&pkg=" + r.FormValue("pkg") + "&folder=" + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Move", Class: "warning"}})
 		}
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		if r.FormValue("type") == "0" {
 
@@ -931,19 +921,19 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		}
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/rename" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/rename" && r.Method == strings.ToUpper("POST") && !callmet {
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/new" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/new" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		if r.FormValue("type") == "0" {
 			inputs := []Inputs{}
@@ -960,12 +950,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			response = bPluginList(NoStruct{})
 		}
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/act" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/act" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		if r.FormValue("type") == "0" {
 			apps := getApps()
@@ -1096,12 +1086,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 			}
 		}
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
 
@@ -1266,17 +1256,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if strings.Contains(r.URL.Path, "/api/saw") {
-
-		callmet = true
-	}
-
-	if r.URL.Path == "/api/build" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/build" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -1429,12 +1414,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/start" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/start" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -1484,12 +1469,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/stop" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/stop" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -1512,12 +1497,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/bin" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/bin" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -1545,12 +1530,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipname))
 		http.ServeFile(w, r, zipname)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/export" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/export" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -1570,12 +1555,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipname))
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".zip")
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/complete" && r.Method == strings.ToUpper("GET") {
+	if r.URL.Path == "/api/complete" && r.Method == strings.ToUpper("GET") && !callmet {
 
 		prefx := r.FormValue("pref")
 		ret := []bson.M{}
@@ -1643,12 +1628,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		response = mResponse(ret)
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
 
-	if r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST") {
+	if r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST") && !callmet {
 
 		if strings.Contains(r.FormValue("command"), "cd") {
 			parts := strings.Fields(r.FormValue("command"))
@@ -1674,7 +1659,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
 
 		response = ""
 
-		context.Clear(r)
+		//context.Clear(r)
 
 		callmet = true
 	}
@@ -1720,12 +1705,12 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 		if n := recover(); n != nil {
 			fmt.Println()
 			// fmt.Println(n)
-			fmt.Println("Error on line :", lastline, ":"+strings.TrimSpace(linestring))
+			fmt.Println("Error on line :", lastline+1, ":"+strings.TrimSpace(linestring))
 			//http.Redirect(w,r,"",307)
 		}
 	}()
 
-	p, err := loadPage(r.URL.Path, "", r, w)
+	p, err := loadPage(r.URL.Path)
 	filename := tmpl + ".tmpl"
 	body, err := Asset(filename)
 	session, er := store.Get(r, "session-")
@@ -1747,34 +1732,16 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 		open := 0
 		for i, line := range lines {
 
-			if waitend {
-				linebuffer += line
-
-				endstr := ""
-				for i := 0; i < open; i++ {
-					endstr += "{{end}}"
-				}
-				//exec
-				outp := new(bytes.Buffer)
-				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
-				t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer+endstr, "/{", "\"{", -1), "}/", "}\"", -1), "`", `\"`, -1))
-				lastline = i
-				linestring = line
-				error := t.Execute(outp, p)
-				if error != nil {
-					fmt.Println("Error on line :", i+1, line, error.Error())
-				}
-
-			}
+			processd := false
 
 			if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
 				linebuffer += line
 				waitend = true
 				open++
 				endstr := ""
+				processd = true
 				for i := 0; i < open; i++ {
-					endstr += "{{end}}"
+					endstr += "\n{{end}}"
 				}
 				//exec
 				outp := new(bytes.Buffer)
@@ -1789,7 +1756,28 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 				}
 			}
 
-			if !waitend {
+			if waitend && !processd && !(strings.Contains(line, "{{end") || strings.Contains(line, "{{ end")) {
+				linebuffer += line
+
+				endstr := ""
+				for i := 0; i < open; i++ {
+					endstr += "\n{{end}}"
+				}
+				//exec
+				outp := new(bytes.Buffer)
+				t := template.New("PageWrapper")
+				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
+				t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer+endstr, "/{", "\"{", -1), "}/", "}\"", -1), "`", `\"`, -1))
+				lastline = i
+				linestring = line
+				error := t.Execute(outp, p)
+				if error != nil {
+					fmt.Println("Error on line :", i+1, line, error.Error())
+				}
+
+			}
+
+			if !waitend && !processd {
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
 				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
@@ -1802,7 +1790,7 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 				}
 			}
 
-			if strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") {
+			if !processd && (strings.Contains(line, "{{end") || strings.Contains(line, "{{ end")) {
 				open--
 
 				if open == 0 {
@@ -1843,26 +1831,7 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 		open := 0
 		for i, line := range lines {
 
-			if waitend {
-				linebuffer += line
-
-				endstr := ""
-				for i := 0; i < open; i++ {
-					endstr += "{{end}}"
-				}
-				//exec
-				outp := new(bytes.Buffer)
-				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
-				t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer+endstr, "/{", "\"{", -1), "}/", "}\"", -1), "`", `\"`, -1))
-				lastline = i
-				linestring = line
-				error := t.Execute(outp, intrf)
-				if error != nil {
-					fmt.Println("Error on line :", i+1, line, error.Error())
-				}
-
-			}
+			processd := false
 
 			if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
 				linebuffer += line
@@ -1870,9 +1839,10 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				open++
 				endstr := ""
 				for i := 0; i < open; i++ {
-					endstr += "{{end}}"
+					endstr += "\n{{end}}"
 				}
 				//exec
+				processd = true
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
 				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
@@ -1885,7 +1855,28 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				}
 			}
 
-			if !waitend {
+			if waitend && !processd && !(strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}")) {
+				linebuffer += line
+
+				endstr := ""
+				for i := 0; i < open; i++ {
+					endstr += "\n{{end}}"
+				}
+				//exec
+				outp := new(bytes.Buffer)
+				t := template.New("PageWrapper")
+				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
+				t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer+endstr, "/{", "\"{", -1), "}/", "}\"", -1), "`", `\"`, -1))
+				lastline = i
+				linestring = line
+				error := t.Execute(outp, intrf)
+				if error != nil {
+					fmt.Println("Error on line :", i+1, line, error.Error())
+				}
+
+			}
+
+			if !waitend && !processd {
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
 				t = t.Funcs(template.FuncMap{"a": net_add, "s": net_subs, "m": net_multiply, "d": net_divided, "js": net_importjs, "css": net_importcss, "sd": net_sessionDelete, "sr": net_sessionRemove, "sc": net_sessionKey, "ss": net_sessionSet, "sso": net_sessionSetInt, "sgo": net_sessionGetInt, "sg": net_sessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": net_BindMisc, "ListPlugins": net_ListPlugins, "BindID": net_BindID, "RandTen": net_RandTen, "Fragmentize": net_Fragmentize, "parseLog": net_parseLog, "anyBugs": net_anyBugs, "PluginJS": net_PluginJS, "FindmyBugs": net_FindmyBugs, "isExpired": net_isExpired, "getTemplate": net_getTemplate, "mConsole": net_mConsole, "mPut": net_mPut, "updateApp": net_updateApp, "getApp": net_getApp, "myDemoObject": net_myDemoObject, "Css": net_Css, "bCss": net_bCss, "cCss": net_cCss, "JS": net_JS, "bJS": net_bJS, "cJS": net_cJS, "FA": net_FA, "bFA": net_bFA, "cFA": net_cFA, "PluginList": net_PluginList, "bPluginList": net_bPluginList, "cPluginList": net_cPluginList, "Login": net_Login, "bLogin": net_bLogin, "cLogin": net_cLogin, "Modal": net_Modal, "bModal": net_bModal, "cModal": net_cModal, "xButton": net_xButton, "bxButton": net_bxButton, "cxButton": net_cxButton, "jButton": net_jButton, "bjButton": net_bjButton, "cjButton": net_cjButton, "PUT": net_PUT, "bPUT": net_bPUT, "cPUT": net_cPUT, "Group": net_Group, "bGroup": net_bGroup, "cGroup": net_cGroup, "Register": net_Register, "bRegister": net_bRegister, "cRegister": net_cRegister, "Alert": net_Alert, "bAlert": net_bAlert, "cAlert": net_cAlert, "StructEditor": net_StructEditor, "bStructEditor": net_bStructEditor, "cStructEditor": net_cStructEditor, "MethodEditor": net_MethodEditor, "bMethodEditor": net_bMethodEditor, "cMethodEditor": net_cMethodEditor, "ObjectEditor": net_ObjectEditor, "bObjectEditor": net_bObjectEditor, "cObjectEditor": net_cObjectEditor, "EndpointEditor": net_EndpointEditor, "bEndpointEditor": net_bEndpointEditor, "cEndpointEditor": net_cEndpointEditor, "TimerEditor": net_TimerEditor, "bTimerEditor": net_bTimerEditor, "cTimerEditor": net_cTimerEditor, "FSC": net_FSC, "bFSC": net_bFSC, "cFSC": net_cFSC, "MV": net_MV, "bMV": net_bMV, "cMV": net_cMV, "RM": net_RM, "bRM": net_bRM, "cRM": net_cRM, "WebRootEdit": net_WebRootEdit, "bWebRootEdit": net_bWebRootEdit, "cWebRootEdit": net_cWebRootEdit, "WebRootEdittwo": net_WebRootEdittwo, "bWebRootEdittwo": net_bWebRootEdittwo, "cWebRootEdittwo": net_cWebRootEdittwo, "uSettings": net_uSettings, "buSettings": net_buSettings, "cuSettings": net_cuSettings, "Form": net_Form, "bForm": net_bForm, "cForm": net_cForm, "SWAL": net_SWAL, "bSWAL": net_bSWAL, "cSWAL": net_cSWAL, "ROC": net_ROC, "bROC": net_bROC, "cROC": net_cROC, "RPUT": net_RPUT, "bRPUT": net_bRPUT, "cRPUT": net_cRPUT, "PackageEdit": net_PackageEdit, "bPackageEdit": net_bPackageEdit, "cPackageEdit": net_cPackageEdit, "Delete": net_Delete, "bDelete": net_bDelete, "cDelete": net_cDelete, "Welcome": net_Welcome, "bWelcome": net_bWelcome, "cWelcome": net_cWelcome, "Stripe": net_Stripe, "bStripe": net_bStripe, "cStripe": net_cStripe, "Debugger": net_Debugger, "bDebugger": net_bDebugger, "cDebugger": net_cDebugger, "TemplateEdit": net_TemplateEdit, "bTemplateEdit": net_bTemplateEdit, "cTemplateEdit": net_cTemplateEdit, "TemplateEditTwo": net_TemplateEditTwo, "bTemplateEditTwo": net_bTemplateEditTwo, "cTemplateEditTwo": net_cTemplateEditTwo, "Input": net_Input, "bInput": net_bInput, "cInput": net_cInput, "DebuggerNode": net_DebuggerNode, "bDebuggerNode": net_bDebuggerNode, "cDebuggerNode": net_cDebuggerNode, "Button": net_Button, "bButton": net_bButton, "cButton": net_cButton, "Submit": net_Submit, "bSubmit": net_bSubmit, "cSubmit": net_cSubmit, "Logo": net_Logo, "bLogo": net_bLogo, "cLogo": net_cLogo, "Navbar": net_Navbar, "bNavbar": net_bNavbar, "cNavbar": net_cNavbar, "NavCustom": net_NavCustom, "bNavCustom": net_bNavCustom, "cNavCustom": net_cNavCustom, "NavMain": net_NavMain, "bNavMain": net_bNavMain, "cNavMain": net_cNavMain, "NavPKG": net_NavPKG, "bNavPKG": net_bNavPKG, "cNavPKG": net_cNavPKG, "CrashedPage": net_CrashedPage, "bCrashedPage": net_bCrashedPage, "cCrashedPage": net_cCrashedPage, "EndpointTesting": net_EndpointTesting, "bEndpointTesting": net_bEndpointTesting, "cEndpointTesting": net_cEndpointTesting, "NavPromo": net_NavPromo, "bNavPromo": net_bNavPromo, "cNavPromo": net_cNavPromo, "FSCs": net_structFSCs, "isFSCs": net_castFSCs, "Dex": net_structDex, "isDex": net_castDex, "SoftUser": net_structSoftUser, "isSoftUser": net_castSoftUser, "USettings": net_structUSettings, "isUSettings": net_castUSettings, "App": net_structApp, "isApp": net_castApp, "TemplateEdits": net_structTemplateEdits, "isTemplateEdits": net_castTemplateEdits, "WebRootEdits": net_structWebRootEdits, "isWebRootEdits": net_castWebRootEdits, "TEditor": net_structTEditor, "isTEditor": net_castTEditor, "Navbars": net_structNavbars, "isNavbars": net_castNavbars, "sModal": net_structsModal, "issModal": net_castsModal, "Forms": net_structForms, "isForms": net_castForms, "sButton": net_structsButton, "issButton": net_castsButton, "sTab": net_structsTab, "issTab": net_castsTab, "DForm": net_structDForm, "isDForm": net_castDForm, "Alertbs": net_structAlertbs, "isAlertbs": net_castAlertbs, "Inputs": net_structInputs, "isInputs": net_castInputs, "Aput": net_structAput, "isAput": net_castAput, "rPut": net_structrPut, "isrPut": net_castrPut, "sSWAL": net_structsSWAL, "issSWAL": net_castsSWAL, "sPackageEdit": net_structsPackageEdit, "issPackageEdit": net_castsPackageEdit, "DebugObj": net_structDebugObj, "isDebugObj": net_castDebugObj, "DebugNode": net_structDebugNode, "isDebugNode": net_castDebugNode, "PkgItem": net_structPkgItem, "isPkgItem": net_castPkgItem, "sROC": net_structsROC, "issROC": net_castsROC, "vHuf": net_structvHuf, "isvHuf": net_castvHuf})
@@ -1898,7 +1889,7 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				}
 			}
 
-			if strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}") {
+			if !processd && (strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}")) {
 				open--
 
 				if open == 0 {
@@ -1911,30 +1902,35 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 	}
 
 }
-func handler(w http.ResponseWriter, r *http.Request, contxt string) {
+func handler(w http.ResponseWriter, r *http.Request, contxt string, session *sessions.Session) {
 	// fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-	p, err := loadPage(r.URL.Path, contxt, r, w)
+	p, err := loadPage(r.URL.Path)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(w.Header())
+		fmt.Println(err.Error())
 
-		http.Redirect(w, r, "", 307)
-		context.Clear(r)
+		w.WriteHeader(http.StatusNotFound)
+
+		pag, err := loadPage("")
+		if err != nil {
+			fmt.Println(err.Error())
+			//context.Clear(r)
+			return
+		}
+		if pag.isResource {
+			w.Write(pag.Body)
+		} else {
+			renderTemplate(w, r, "web", pag, session)
+
+		}
+		//context.Clear(r)
 		return
 	}
 
 	if !p.isResource {
 		w.Header().Set("Content-Type", "text/html")
-		defer func() {
-			if n := recover(); n != nil {
-				color.Red("Error loading template in path : web" + r.URL.Path + ".tmpl reason :")
-				fmt.Println(n)
-				DebugTemplate(w, r, "web"+r.URL.Path)
-				http.Redirect(w, r, "", 307)
-				context.Clear(r)
 
-			}
-		}()
-		renderTemplate(w, r, "web"+r.URL.Path, p)
+		renderTemplate(w, r, fmt.Sprintf("web%s", r.URL.Path), p, session)
 
 		// fmt.Println(w)
 	} else {
@@ -1950,24 +1946,22 @@ func handler(w http.ResponseWriter, r *http.Request, contxt string) {
 		w.Write(p.Body)
 	}
 
-	context.Clear(r)
+	//context.Clear(r)
 
 }
 
-func loadPage(title string, servlet string, r *http.Request, w http.ResponseWriter) (*Page, error) {
-	filename := "web" + title + ".tmpl"
-	if title == "/" {
-		http.Redirect(w, r, "/index", 302)
-	}
+func loadPage(title string) (*Page, error) {
+	filename := fmt.Sprintf("web%s.tmpl", title)
+
 	body, err := Asset(filename)
 	if err != nil {
-		filename = "web" + title + ".html"
+		filename = fmt.Sprintf("web%s.html", title)
 		if title == "/" {
 			filename = "web/index.html"
 		}
 		body, err = Asset(filename)
 		if err != nil {
-			filename = "web" + title
+			filename = fmt.Sprintf("web%s", title)
 			body, err = Asset(filename)
 			if err != nil {
 				return nil, err
@@ -1975,15 +1969,15 @@ func loadPage(title string, servlet string, r *http.Request, w http.ResponseWrit
 				if strings.Contains(title, ".tmpl") || title == "/" {
 					return nil, nil
 				}
-				return &Page{Title: title, Body: body, isResource: true, request: nil}, nil
+				return &Page{Body: body, isResource: true}, nil
 			}
 		} else {
-			return &Page{Title: title, Body: body, isResource: true, request: nil}, nil
+			return &Page{Body: body, isResource: true}, nil
 		}
 	}
 	//load custom struts
 
-	return &Page{Title: title, Body: body, isResource: false, request: r}, nil
+	return &Page{Body: body, isResource: false}, nil
 }
 func BytesToString(b []byte) string {
 	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
@@ -7332,9 +7326,6 @@ func main() {
 	} else if len(os.Args) == 1 && Windows {
 		core.RunCmd("cmd /C start http://localhost:8884/index")
 	}
-
-	fmt.Printf("Listenning on Port %v\n", "8884")
-	http.HandleFunc("/", makeHandler(handler))
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400 * 7,
@@ -7342,6 +7333,10 @@ func main() {
 		Secure:   true,
 		Domain:   "",
 	}
+
+	fmt.Printf("Listenning on Port %v\n", "8884")
+	http.HandleFunc("/", makeHandler(handler))
+
 	http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "web"}))
 	errgos := http.ListenAndServe(":8884", nil)
 	if errgos != nil {
