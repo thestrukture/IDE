@@ -21,6 +21,9 @@ install:
 build_script:
   - go build -o IDE -i .
 
+artifacts:
+  - path: IDE
+    name: binary
 
 deploy:
   release: IDE-$(appveyor_build_version)
@@ -28,7 +31,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: 2TbJMV82B5buGm/k2GN+dhfOsVqt7QQckAS3FaYJAceofkpylFxQixf8JB3TcrDg
-  artifact: /.*\.exe 
+  artifact: binary 
   draft: false
   prerelease: false
   on:
