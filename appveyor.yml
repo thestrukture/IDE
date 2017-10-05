@@ -19,10 +19,10 @@ install:
   - go env
 
 build_script:
-  - go build -o IDE -i .
+  - go build -o IDE.exe -i .
 
 artifacts:
-  - path: IDE
+  - path: IDE.exe
     name: binary
 
 deploy:
