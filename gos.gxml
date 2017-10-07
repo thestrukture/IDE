@@ -1731,7 +1731,7 @@ for _, v := range apps {
 
 		    			pkSpl := strings.Split(r.FormValue("pkg"), "/")
 						if Windows {
-							go core.RunCmd("cmd /C start " + pkSpl[len(pkSpl)-1]  )
+							go core.RunCmd("cmd /C gos --run") //live reload on windows...
 						} else {
 						shscript := `#!/bin/bash  
 									cmd="./` + pkSpl[len(pkSpl)-1] + ` "
