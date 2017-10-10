@@ -23,12 +23,11 @@
     <import src="os" />
     <import src="strconv" />
     <import src="strings" />
-    <import src="sync" />
     <import src="path/filepath" />
 	<import src="runtime"/>
 	<output>server_out.go</output>
 	<var type="bool">Windows</var>
-	<var type="sync.Mutex">mutex</var>
+	
 	<key>something-secretive-is-what-a-gorrilla-needs</key>
 	<domain></domain>
 	<!-- The <init/> tag is similar to the init function within Go, -->
@@ -1552,8 +1551,7 @@ for _, v := range apps {
 				</end>
 				<end path="/api/build" method="mBuild" type="GET" >
 				
-			mutex.Lock()
-      		defer mutex.Unlock()
+		
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
@@ -1713,8 +1711,7 @@ for _, v := range apps {
 
 				<end path="/api/start"  type="GET" >
 				
-			mutex.Lock()
-      		defer mutex.Unlock()
+
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
@@ -1766,8 +1763,7 @@ for _, v := range apps {
 
 					<end path="/api/stop"  type="GET" >
 				
-			mutex.Lock()
-      		defer mutex.Unlock()
+
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    	os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
@@ -1790,8 +1786,7 @@ for _, v := range apps {
 				</end>
 				<end path="/api/bin" method="mBinDL" type="GET" >
 				
-			 mutex.Lock()
-      		 defer mutex.Unlock()
+		
 			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
 			os.Remove( strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip ")
 			bPath := strings.Split(r.FormValue("pkg"), "/")
@@ -1823,8 +1818,7 @@ for _, v := range apps {
 
 				<end path="/api/export" method="mExport" type="GET" >
 				
-			 mutex.Lock()
-      		defer mutex.Unlock()
+	
 			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" )
 			os.Remove(strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip ")
 			pkgpath :=  r.FormValue("pkg") 
