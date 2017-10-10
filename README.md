@@ -32,7 +32,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 Change to the ui directory within the root of this package. (Moved ui files to build package as go)
 
 		$ cd ui/
-		$ make uiview
+		$ npm install
 		$ IDE --headless & npm start
 
 Take note of the pid ID to stop server process. Once your server is up feel free to use `npm start` directly.
