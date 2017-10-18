@@ -1,9 +1,9 @@
 # Strukture IDE Beta
 [![Build Status](https://travis-ci.org/thestrukture/IDE.svg?branch=master)](https://travis-ci.org/thestrukture/IDE)
-Go lang IDE server. Built with [Go Server](http://golangserver.com)
+Go lang IDE server. Built with [Go Server](http://gophersauce.com)
 
 ## About project
-The strukture is an open source IDE. It is designed to build web applications, with the organizational help of [Go-Server](http://golangserver.com). The IDE runs as a server and is accessed via web browser. Being a web server, the IDE is accessible from any device on your network. Compared to Microsoft's VS Code and Eclipse CHE this IDE is very minimal. It features :
+The strukture is an open source IDE. It is designed to build web applications, with the organizational help of [Go-Server](http://gophersauce.com). The IDE runs as a server and is accessed via web browser. Being a web server, the IDE is accessible from any device on your network. Compared to Microsoft's VS Code and Eclipse CHE this IDE is very minimal. It features :
 - Web application resource management.
 - Autocomplete between different files.
 - Syntax correction.
@@ -16,7 +16,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 ## Requirements
 - Go 1.9 and up. [Find it here](https://golang.org/dl/).
 - NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
-- [Golang server](http://golangserver.com) if using `makefile`.
+- [Golang server](http://gophersauce.com) if using `makefile`.
  
 
 
