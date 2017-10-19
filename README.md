@@ -104,7 +104,7 @@ To build additional functionality use shell scripts. The users of your plugin ca
 ## Misc info
 How to install GoS incase the built-in installer fails.
 
-- Install GoS [CLI](http://golangserver.com). ( `$ go get github.com/cheikhshift/gos` )
+- Install GoS [CLI](http://gophersauce.com). ( `$ go get github.com/cheikhshift/gos` )
 - Install `GoS` dependencies : `$ gos deps`
 
 # Contributions
