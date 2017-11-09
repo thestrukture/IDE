@@ -83,7 +83,10 @@ How to install GoS incase the built-in installer fails.
 - Install GoS [CLI](http://gophersauce.com). ( `$ go get github.com/cheikhshift/gos` )
 - Install `GoS` dependencies : `$ gos deps`
 
-# Contributions
+### Extending
+Automate your work flow with just lines of Javascript 🤓. Read the Guide [here](https://github.com/thestrukture/SpringMenu). 
+
+## Contributions
 Improvements to the codebase and pull requests are encouraged.
 
 ## Screenshots
