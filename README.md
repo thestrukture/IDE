@@ -1,5 +1,6 @@
-# Strukture IDE Beta
+# Strukture IDE Beta II
 [![Build Status](https://travis-ci.org/thestrukture/IDE.svg?branch=master)](https://travis-ci.org/thestrukture/IDE)
+
 Go lang IDE server. Built with [GopherSauce](http://gophersauce.com)
 
 ## About project
