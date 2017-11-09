@@ -14,7 +14,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - View web application output.
 
 ## Requirements
-- Go 1.9 and up. [Find it here](https://golang.org/dl/).
+- Any version of Go. 😘
 - [Golang server](http://gophersauce.com) if using `makefile`.
 
 ### If plan on using Electron View. A node JS project :
