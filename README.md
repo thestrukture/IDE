@@ -18,10 +18,6 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Any version of Go. 😘
 - [GopherSauce](http://gophersauce.com) if using `makefile`.
 
-### If plan on using Electron View. A node JS project :
-- NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
-
-
 ## Install
 
 		$ go get github.com/thestrukture/IDE
@@ -31,6 +27,9 @@ The strukture is an open source IDE. It is designed to build web applications, w
 		$ IDE
 
 #### Launch with GUI (Electron View)
+
+###### Requires NodeJS
+- NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
 Change to the ui directory within the root of this package. (Moved ui files to build package as go)
 
 		$ cd ui/
