@@ -65,6 +65,9 @@ Automate your work flow with just lines of Javascript 🤓. Read the Guide [here
 ## Contributions
 Improvements to the codebase and pull requests are encouraged.
 
+###### Reporting
+As a human I can't be everywhere, please help me find problems or unexpected behavior with this piece of software.
+
 ## Screenshots
 
 ![screenshot](tests/1newsc.png)
