@@ -1,14 +1,14 @@
-{{ $rin := RandTen }}
-<div class="tabview" id="{{ $rin }}" style="background-color:#fff;">
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" style="background-color:#fff;">
 
 <div class="row full-height">
 	<div class="col-xs-6 full-height over-flow-fix" style="background: #efefef;border-right:1px #999 dotted;padding-left:29px;">
 	
 		<label style="font-weight:bold;color:#666;"><i class="fa fa-list"></i> Logs</label>
-		{{if anyBugs .PKG .Username }}
+		{{if anyBugs .PKG .Username}}
 			
 			<div class="list-group">
-				{{ with FindmyBugs .PKG .Username }}
+				{{with FindmyBugs .PKG .Username}}
 					{{range .}}
 					 <a href="#" data-time="{{.Time}}" class="list-group-item debug-node">{{.Time}}</a>
 					{{end}}
@@ -27,14 +27,14 @@
 
 <script type="text/javascript">
 	
-	 addTab({{ .PKG }} + " - Logs", {{ $rin }} );
+	 addTab({{.PKG}} + " - Logs", {{$rin}} );
 
 	 $(".debug-node").click(function(){
 	 	$(".debug-node").removeClass("active")
 	 	$(this).addClass("active")
 	 	working = true;
     	$(".loader-prog").css("display","block");
-          $.ajax({url:"/api/get",type:"POST",data:{space:{{ .PKG }},type:"17",id:$(this).attr("data-time")}, error:function(e){
+          $.ajax({url:"/api/get",type:"POST",data:{space:{{.PKG}},type:"17",id:$(this).attr("data-time")}, error:function(e){
               working = false;
               $(".loader-prog").css("display","none");
               $(".log-set").html($(e.responseText) );

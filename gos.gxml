@@ -23,6 +23,7 @@
     <import src="os" />
     <import src="strconv" />
     <import src="strings" />
+    
     <import src="path/filepath" />
 	<import src="runtime"/>
 	<output>server_out.go</output>
@@ -1558,14 +1559,14 @@ for _, v := range apps {
 		    	 os.RemoveAll( gp + "/src/" +  r.FormValue("pkg") + "/bindata.go")
 		    	   os.RemoveAll( gp + "/src/" +  r.FormValue("pkg") + "/application.go")
 		    		logBuilt,_ := core.RunCmdSmart("gos --run --buildcheck")
-				//	fmt.Println(logBuilt)
+					fmt.Println(logBuilt)
 					passed := false
 
 					if !strings.Contains( logBuilt,"Your build failed,") {
 						logBuilt, _ = core.RunCmdSmart("go build")
 						if logBuilt != "" {
 
-									debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
+						debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
 			
 						logs := strings.Split(logBuilt, "\n")
 						
@@ -1599,7 +1600,7 @@ for _, v := range apps {
 						}
 					} else {
 					debuglog := DebugObj{r.FormValue("pkg"), net_RandTen(), "", logBuilt, time.Now().String(), []DebugNode{} }
-			fPart := strings.Split(logBuilt,"Full compiler build log :")
+			         fPart := strings.Split(logBuilt,"Full compiler build log :")
 						logs := strings.Split(fPart[1], "\n")
 						
 						for linen, log := range logs {

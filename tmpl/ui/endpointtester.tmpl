@@ -1,9 +1,9 @@
-{{ $rin := RandTen }}
-<div class="tabview" id="{{ $rin }}" style="background-color:#fff;">
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" style="background-color:#fff;">
 
 <div style="padding-left:20px;height:50%" class="card-info over-flow-fix" >
 	<div style="color:#fff;" class="card card-inset card-info">
-		<label class="label">Testing : {{ .Misc }}</label>
+		<label class="label">Testing : {{.Misc}}</label>
 		<p>Test console</p>
 		<div class="row">
 			<div class="col-sm-12">
@@ -21,7 +21,7 @@
 		<p><label>Mode:</label>
 		<select class="form-control test-mode" ><option value="--test-f">Test</option><option value="--bench-f">Benchmark</option></select>
 		</p>
-		<p><button class="send-xhr btn-block btn-primary-outline btn" parent="{{ $rin }}"> Test <i class="fa fa-arrow-right"></i></button></p>
+		<p><button class="send-xhr btn-block btn-primary-outline btn" parent="{{$rin}}"> Test <i class="fa fa-arrow-right"></i></button></p>
 	</div>
 </div>
 <div style="padding-left:20px;height:50%" class="over-flow-fix" >
@@ -38,7 +38,7 @@
 
 	$(".send-xhr").click(function(){
 		$(".resp-box", "#" +  {{$rin}} ).html("<h1 style='text-align:center;'><i class='fa fa-cog fa-spin'/></h1>");
-		$.ajax({url:"/api/tester/",data:{pkg:{{ .Misc }},c:$(".target-url", "#" + {{$rin}}).val(),mode: $(".test-mode", "#" +  {{$rin}}).val()}, type:"POST", error: function(err){
+		$.ajax({url:"/api/tester/",data:{pkg:{{.Misc}},c:$(".target-url", "#" + {{$rin}}).val(),mode: $(".test-mode", "#" +  {{$rin}}).val()}, type:"POST", error: function(err){
 						$(".resp-box", "#" +  {{$rin}} ).html(err.responseText);
 		}
 
@@ -47,7 +47,7 @@
 		return false;
 	});
 
-	 addTab({{ .Misc }} + " - Testing", {{ $rin }} );
+	 addTab({{.Misc}} + " - Testing", {{$rin}} );
 
 	 </script>
 </div>

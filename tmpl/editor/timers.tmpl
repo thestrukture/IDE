@@ -1,5 +1,5 @@
-{{ $rin := RandTen }}
-<div class="tabview" id="{{ $rin }}" style="background-color:#fff;">
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" style="background-color:#fff;">
 <div class="card card-inverse card-info text-xs-center">
   <div class="card-block">
     <blockquote class="card-blockquote">
@@ -10,6 +10,6 @@
 </div>
 <script type="text/javascript">
 	
-	 addTab({{ .PKG }} + " - Timers", {{ $rin }} );
+	 addTab({{.PKG}} + " - Timers", {{$rin}} );
 </script>
 </div>

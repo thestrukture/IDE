@@ -1,7 +1,7 @@
   <div class="list-group plugin-list">
-{{ range ListPlugins}}
-        <div class="list-group-item" data-plugin="{{ . }}">
-          <button onclick="removePlugin('{{ . }}')" class="pull-xs-right btn">Delete</button>
+{{range ListPlugins}}
+        <div class="list-group-item" data-plugin="{{.}}">
+          <button onclick="removePlugin('{{.}}')" class="pull-xs-right btn">Delete</button>
           <p><code>{{.}}</code></p>
         </div>
   {{end}}

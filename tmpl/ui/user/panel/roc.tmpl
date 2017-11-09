@@ -1,27 +1,27 @@
- {{ $rin := RandTen }}
-<div class="tabview" style="background:#fff;" id="{{ $rin }}">
+ {{$rin := RandTen}}
+<div class="tabview" style="background:#fff;" id="{{$rin}}">
 <div class="card card-inverse card-info text-xs-center">
   <div class="card-block">
     <blockquote  style="text-align: left;" class="card-blockquote">
-     <h1>{{ .Name }}</h1>
+     <h1>{{.Name}}</h1>
      <p>Latest build status :</p>
-    <h2>{{ if .Build }}
-     	<label class="label label-success">Passed ( {{ .Time }})</label>
+    <h2>{{if .Build}}
+     	<label class="label label-success">Passed ( {{.Time}})</label>
      {{else}}
-     	<label class="label label-danger">Failed ( {{ .Time }})</label>
+     	<label class="label label-danger">Failed ( {{.Time}})</label>
      {{end}}</h2>
       <footer><div class="row"><div class="col-sm-12">
-         <p> <a type="button" href="/api/export?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Export project</a></p>
+         <p> <a type="button" href="/api/export?pkg={{.Name}}" target="_blank" class="btn btn-block btn-primary-outline">Export project</a></p>
 
-         <p>  <a type="button" href="/api/bin?pkg={{ .Name }}" target="_blank" class="btn btn-block btn-primary-outline">Export Binary </a></p>
-         <p>  <button type="button" onclick="BuildPKG('{{ .Name }}')" target="_blank" class="btn btn-block btn-danger">Build <i class="fa fa-chevron-circle-right1"></i> </button></p>
+         <p>  <a type="button" href="/api/bin?pkg={{.Name}}" target="_blank" class="btn btn-block btn-primary-outline">Export Binary </a></p>
+         <p>  <button type="button" onclick="BuildPKG('{{.Name}}')" target="_blank" class="btn btn-block btn-danger">Build <i class="fa fa-chevron-circle-right1"></i> </button></p>
            <h3 style="color:#fff;text-align:left;">Process management</h3>
-    {{ if  .Pid | neq "" }}
-        <p><span class="label label-success">Running... Pid : {{ .Pid }}</span></p>
+    {{if .Pid | neq ""}}
+        <p><span class="label label-success">Running... Pid : {{.Pid}}</span></p>
     {{end}}
-       <p><button class="btn btn-block btn-warning" onclick="StartServer('{{ .Name }}')">Start/Reset</button></p>
-         <p><button class="btn btn-block btn-danger" onclick="StopServer('{{ .Name }}')">Stop</button></p>
-           <p><button class="btn btn-block btn-info" onclick="ClearLogs('{{ .Name }}')">Clear logs</button></p>
+       <p><button class="btn btn-block btn-warning" onclick="StartServer('{{.Name}}')">Start/Reset</button></p>
+         <p><button class="btn btn-block btn-danger" onclick="StopServer('{{.Name}}')">Stop</button></p>
+           <p><button class="btn btn-block btn-info" onclick="ClearLogs('{{.Name}}')">Clear logs</button></p>
       </div>
     
    
@@ -36,8 +36,8 @@
 </div>
 
 <script type="text/javascript">
-	 //editors["{{ $rin }}"] = ace.edit("editor{{ $rin }}");
-	 //editors["{{ $rin }}"].getSession().setMode("ace/mode/plain_text")
-	 addTab({{.Name}} + " - Build center", {{ $rin }} );
+	 //editors["{{$rin}}"] = ace.edit("editor{{$rin}}");
+	 //editors["{{$rin}}"].getSession().setMode("ace/mode/plain_text")
+	 addTab({{.Name}} + " - Build center", {{$rin}} );
 </script>
 </div>

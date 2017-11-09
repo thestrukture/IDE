@@ -1,5 +1,5 @@
-{{ $rin := RandTen }}
-<div id="{{ $rin }}">
+{{$rin := RandTen}}
+<div id="{{$rin}}">
 
 <h4>Update password</h4>
 <div class="marker" path="/api/put?type=11">
@@ -13,14 +13,14 @@
 
 <h4>Update email</h4>
 <div class="marker" path="/api/put?type=12">
-	<p><input class="form-control required xsub" value="{{ .Email }}" name="email" placeholder="Default email"></p>
+	<p><input class="form-control required xsub" value="{{.Email}}" name="email" placeholder="Default email"></p>
 		<div class="loader-result"></div>
 		<p><button class="dosub btn btn-warning-outline btn-block btn-lg">Update email</button></p>
 </div>
 
 <h4>Subscription information</h4>
 {{if .StripeID | neq ""}}
-<h4 style="text-muted">{{ .LastPaid }}</h4>
+<h4 style="text-muted">{{.LastPaid}}</h4>
 {{else}}
 	  <div class="alert alert-warning alert-dismissible fade in" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -40,6 +40,6 @@
 </div>
 
 <script type="text/javascript">
-	$("#" + {{ $rin }}).havok();
+	$("#" + {{$rin}}).havok();
 </script>
 </div>

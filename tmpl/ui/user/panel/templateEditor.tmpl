@@ -1,5 +1,5 @@
 
-<div class="tabview" id="{{ .ID }}" pkg="{{ .PKG }}" >
+<div class="tabview" id="{{.ID}}" pkg="{{.PKG}}" >
 <div  class="row inf-x clear-btn">
 <style type="text/css">
 	.spl-col .dosub {
@@ -7,11 +7,11 @@
 	}
 </style>
 	<div class="col-sm-12 spl-col">
-		<button class="btn btn-warning" onclick="SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}')"><i class="fa fa-save"></i></button>
-			<button type="button" class="btn btn-primary" onclick="editors['{{ .ID }}c'].wrap = editors['{{ .ID }}c'].wrap ? false : true;editors['{{ .ID }}'].getSession().setUseWrapMode( editors['{{ .ID }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+		<button class="btn btn-warning" onclick="SaveFile('{{.ID}}', '{{.SavesTo}}','{{.PKG}}')"><i class="fa fa-save"></i></button>
+			<button type="button" class="btn btn-primary" onclick="editors['{{.ID}}c'].wrap = editors['{{.ID}}c'].wrap ? false : true;editors['{{.ID}}'].getSession().setUseWrapMode( editors['{{.ID}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
 		 Wrap text
 		</button>
-		<button onclick="$('#{{ .ID }}myModal').modal('show')" class="btn">Set interface</button>
+		<button onclick="$('#{{.ID}}myModal').modal('show')" class="btn">Set interface</button>
 			
 	</div>
 	<div class="col-sm-2">
@@ -20,7 +20,7 @@
 	
 </div>
 <!-- Modal -->
-<div class="modal fade" id="{{ .ID }}myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="{{.ID}}myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -31,7 +31,7 @@
        
       </div>
       <div class="modal-body">
-      <p> {{bRPUT .Settings }} </p>
+      <p> {{bRPUT .Settings}} </p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -40,24 +40,24 @@
     </div>
   </div>
 </div>
-<div id="editor{{ .ID }}" class="defed">{{printf "%s" .File}}</div>
+<div id="editor{{.ID}}" class="defed">{{printf "%s" .File}}</div>
 <script type="text/javascript">
-	 editors["{{ .ID }}"] = ace.edit("editor{{ .ID }}");
-	 editors["{{ .ID }}"].getSession().setMode("ace/mode/html")
-	 editors[{{ .ID }} + "c"] = {wrap:false};
-	   editors["{{ .ID }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
-	 editors["{{ .ID }}"].commands.addCommand({
+	 editors["{{.ID}}"] = ace.edit("editor{{.ID}}");
+	 editors["{{.ID}}"].getSession().setMode("ace/mode/html")
+	 editors[{{.ID}} + "c"] = {wrap:false};
+	   editors["{{.ID}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	 editors["{{.ID}}"].commands.addCommand({
 	    name: 'myCommand',
 	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
 	    exec: function(editor) {
 	        //...
-	        SaveFile('{{ .ID }}', '{{ .SavesTo }}','{{ .PKG }}');
+	        SaveFile('{{.ID}}', '{{.SavesTo}}','{{.PKG}}');
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
 
 
-			editors["{{ .ID }}"].commands.addCommand({
+			editors["{{.ID}}"].commands.addCommand({
 	    name: 'oterm',
 	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
 	    exec: function(editor) {
@@ -67,7 +67,7 @@
 	    readOnly: true // false if this command should not apply in readOnly mode
 		});
 
-				editors["{{ .ID }}"].commands.addCommand({
+				editors["{{.ID}}"].commands.addCommand({
 	    name: 'collapse',
 	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
 	    exec: function(editor) {
@@ -82,9 +82,9 @@
 
 
 
-		editors["{{ .ID }}"].container.addEventListener("contextmenu", function(e) {
+		editors["{{.ID}}"].container.addEventListener("contextmenu", function(e) {
 		  
-		    	var edt = editors["{{ .ID }}"]
+		    	var edt = editors["{{.ID}}"]
 			   		var cursor = edt.selection.getCursor()
 			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
 			   		
@@ -97,7 +97,7 @@
 					        trigger: 'none',
 					        animation: {duration: 0, show: 'fadeIn', hide: 'fadeOut'},
 					        callback: function(key, options) {
-					          handleClickStruk(key, txt, {{.ID}}, {{ .PKG }})
+					          handleClickStruk(key, txt, {{.ID}}, {{.PKG}})
 					        },
 					        items: getItems(txt)
 					    });
@@ -109,6 +109,6 @@
 
 
 	 
-	 addTab('{{ .PKG }} - ' + "{{ .SavesTo }}", "{{ .ID }}" );
+	 addTab('{{.PKG}} - ' + "{{.SavesTo}}", "{{.ID}}" );
 </script>
 </div>

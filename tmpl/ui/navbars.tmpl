@@ -1,13 +1,13 @@
-{{ if .Mode | eq "home" }}
-{{ $mutable := cNavbar }}
-{{ $navmain := NavMain }}
-{{ $mutable := $mutable | BindMisc $navmain }}
-{{ bNavbar $mutable }}
+{{if .Mode | eq "home"}}
+{{$mutable := cNavbar}}
+{{$navmain := NavMain}}
+{{$mutable := $mutable | BindMisc $navmain}}
+{{bNavbar $mutable}}
 {{else}}
-{{ $mutable := cNavbar }}
-{{ $navpre := cNavPKG }}
-{{ $navpre := $navpre | BindID .ID }}
-{{ $navmain := bNavPKG $navpre }}
-{{ $mutable := $mutable | BindMisc $navmain }}
-{{ bNavbar $mutable }}
+{{$mutable := cNavbar}}
+{{$navpre := cNavPKG}}
+{{$navpre := $navpre | BindID .ID}}
+{{$navmain := bNavPKG $navpre}}
+{{$mutable := $mutable | BindMisc $navmain}}
+{{bNavbar $mutable}}
 {{end}}

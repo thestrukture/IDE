@@ -1,31 +1,30 @@
-{{ $rin := RandTen }}
-<div class="tabview" id="{{ $rin }}">
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}">
 <div class="row">
 	<div class="col-sm-12">
 	    
 		<div class="card card-inverse">
 		  <div class="card-block">
 		 <!--  	<h3>Package Name</h3> -->
-			 <!-- <p>{{bPUT .Name }}</p> -->
+			 <!-- <p>{{bPUT .Name}}</p> -->
 			  <p>Type </p>
-			  <p>{{ bPUT .IType }}</p>
-			  <hr class="m-y-2">
+			  <p>{{bPUT .IType}}</p>
 			  <p>Port </p>
-			  <p>{{ bPUT .Port }}</p>
+			  <p>{{bPUT .Port}}</p>
 			  <p><i class="fa fa-lock"></i> Session storage key</p>
-			  <p>{{ bPUT .Key }}</p>
+			  <p>{{bPUT .Key}}</p>
 			   <p><i class="fa fa-lock"></i> Session domain (Limit cookies to domain host. For example : example.com)</p>
-			  <p>{{ bPUT .Domain }}</p>
+			  <p>{{bPUT .Domain}}</p>
 			   <p><i class="fa fa-edit"></i> 404 Page path</p>
-			  <p>{{ bPUT .Ffpage }}</p>
+			  <p>{{bPUT .Ffpage}}</p>
 			   <p><i class="fa fa-edit"></i> Server error path (500)</p>
-			  <p>{{ bPUT .Erpage }}</p>
+			  <p>{{bPUT .Erpage}}</p>
 
 		  </div>
 		</div>
 		<p class="text-muted">Global Variables</p>
 		<!-- rput -->
-		{{bRPUT .CreateVar }}
+		{{bRPUT .CreateVar}}
 
 	</div>
 
@@ -38,15 +37,15 @@
 					<label>Package name</label>
 					{{bPUT .Package}}
 					<p>Main Function {</p>
-						<div id="editorM{{ $rin }}" style="height:160px;" class="defed maincode">{{ .Mainf }}</div>
+						<div id="editorM{{$rin}}" style="height:160px;" class="defed maincode">{{.Mainf}}</div>
 						<button class="madv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
 					<p>}</p>
 					<p>Init Function {</p>
-						<div id="editorI{{ $rin }}" style="height:160px;" class="defed initcode">{{ .Initf }}</div>
+						<div id="editorI{{$rin}}" style="height:160px;" class="defed initcode">{{.Initf}}</div>
 						<button class="iadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
 					<p>}</p>
 					<p>Session interface {</p>
-						<div id="editorS{{ $rin }}" style="height:160px;" class="defed">{{ .Sessionf }}</div>
+						<div id="editorS{{$rin}}" style="height:160px;" class="defed">{{.Sessionf}}</div>
 						<button class="sadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
 					<p>}</p>
 				</div>
@@ -56,11 +55,11 @@
 		<div style="display:none;" class="card card-inverse card-danger">
 		  <div class="card-block">
 		   	<p class="text-muted">CSS Libraries</p>
-			 <p>{{bRPUT .Css }}</p>
+			 <p>{{bRPUT .Css}}</p>
 		  </div>
 		</div>
 		<p class="text-muted">Imports</p>
-		{{bRPUT .CreateImport }}
+		{{bRPUT .CreateImport}}
 		<!-- rput -->
 		<div style="height:40px;"><!-- scrollfix --></div>
 	</div>
@@ -69,11 +68,11 @@
 
 <script type="text/javascript">
 
-	$("#" + {{ $rin }} + " .adv-trigger").click(function(){
-		if ( $("#" + {{ $rin }}  + " .adv").css('display') == "none" ){
-			 $("#" + {{ $rin }}  + " .adv").css('display','block');
+	$("#" + {{$rin}} + " .adv-trigger").click(function(){
+		if ( $("#" + {{$rin}}  + " .adv").css('display') == "none" ){
+			 $("#" + {{$rin}}  + " .adv").css('display','block');
 			  	setTimeout(function(){
-			 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{ .TName }}, success:function(html){
+			 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{.TName}}, success:function(html){
 			 		//console.log(html)
 			 		if (html.Bugs){
 			 		for (var i = html.Bugs.length - 1; i >= 0; i--) {
@@ -84,7 +83,7 @@
 			 			if (action[0] == "main"){
 				 			
 				 				//find line
-				 				$(".maincode .ace_gutter-cell",  "#" + {{ $rin }}).each(function(e,i){
+				 				$(".maincode .ace_gutter-cell",  "#" + {{$rin}}).each(function(e,i){
 				 					if ($(this).html() == action[1]){
 				 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
 				 						$(this).html( '<i class="fa fa-warning"></i>' + action[1] )
@@ -94,7 +93,7 @@
 			 			} else if (action[0] == "init"){
 				 			
 				 				//find line
-				 				$(".initcode .ace_gutter-cell",  "#" + {{ $rin }}).each(function(e,i){
+				 				$(".initcode .ace_gutter-cell",  "#" + {{$rin}}).each(function(e,i){
 				 					if ($(this).html() == action[1]){
 				 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
 				 						$(this).html( '<i class="fa fa-warning"></i>' + action[1] )
@@ -108,26 +107,26 @@
 			 })
 			 }, 500)
 		} else {
-			 $("#" + {{ $rin }}  + " .adv").css('display','none'); 
+			 $("#" + {{$rin}}  + " .adv").css('display','none'); 
 		}
 		return false;
 	});
 
-	editors["ms" + "{{ $rin }}"] = ace.edit("editorM{{ $rin }}");
-	editors["ms" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+	editors["ms" + "{{$rin}}"] = ace.edit("editorM{{$rin}}");
+	editors["ms" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
-    editors["is" + "{{ $rin }}"] = ace.edit("editorI{{ $rin }}");
-	editors["is" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+    editors["is" + "{{$rin}}"] = ace.edit("editorI{{$rin}}");
+	editors["is" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
-	editors["ss" + "{{ $rin }}"] = ace.edit("editorS{{ $rin }}");
-	editors["ss" + "{{ $rin }}"].getSession().setMode("ace/mode/golang");
+	editors["ss" + "{{$rin}}"] = ace.edit("editorS{{$rin}}");
+	editors["ss" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
 
 		
 
 	$(".madv").click(function(){
-		var pname = {{ .TName }}
-		$.ajax({url:"/api/put",type:"POST",data:{type:"13",pkg: pname,data:editors["ms" + "{{ $rin }}"].getValue() },success:function(html){
+		var pname = {{.TName}}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"13",pkg: pname,data:editors["ms" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
 
@@ -139,8 +138,8 @@
 
 
 	$(".iadv").click(function(){
-		var pname = {{ .TName }}
-		$.ajax({url:"/api/put",type:"POST",data:{type:"14",pkg: pname,data:editors["is" + "{{ $rin }}"].getValue() },success:function(html){
+		var pname = {{.TName}}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"14",pkg: pname,data:editors["is" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
 
@@ -151,8 +150,8 @@
 	});
 
 	$(".sadv").click(function(){
-		var pname = {{ .TName }}
-		$.ajax({url:"/api/put",type:"POST",data:{type:"15",pkg: pname,data:editors["ss" + "{{ $rin }}"].getValue() },success:function(html){
+		var pname = {{.TName}}
+		$.ajax({url:"/api/put",type:"POST",data:{type:"15",pkg: pname,data:editors["ss" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
 
@@ -163,6 +162,6 @@
 	});
 
 
-	addTab("{{ .TName }}", "{{ $rin }}" );
+	addTab("{{.TName}}", "{{$rin}}" );
 </script>
 </div>

@@ -1,6 +1,6 @@
-{{ $rin := RandTen }}
-<div class="{{ $rin }}">
-	<div class="marker" init="yes" path="{{ .Link }}" style="padding:15px;">
+{{$rin := RandTen}}
+<div class="{{$rin}}">
+	<div class="marker" init="yes" path="{{.Link}}" style="padding:15px;">
 		<div class="hidden-aspect alert alert-success text-center"><h3><b><i class="fa fa-spin fa-cog fa-2x"></i> One moment</b></h3></div>
 		<div class="loader-result"></div>
 		{{with .Inputs}}	
@@ -16,13 +16,13 @@
 		{{end}}
 
 
-		<p><button class="btn dosub btn-{{ .Class }}">{{ .CTA }}</button></p>
+		<p><button class="btn dosub btn-{{.Class}}">{{.CTA}}</button></p>
 
 	</div>
 </div>
 
 <script type="text/javascript">
 	if($.fn.havok !== undefined){
-		$(".{{ $rin }}").havok();
+		$(".{{$rin}}").havok();
 	}
 </script>

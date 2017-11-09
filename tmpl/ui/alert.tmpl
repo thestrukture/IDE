@@ -3,9 +3,9 @@
     <span aria-hidden="true">&times;</span>
   </button>
 	<p>{{.Text}}</p>
-	{{if .Redirect | ne "" }}
+	{{if .Redirect | ne ""}}
 	<script type="text/javascript">
-		window.location = "{{ .Redirect }}".replace("\\","");
+		window.location = "{{.Redirect}}".replace("\\","");
 	</script>
 	{{end}}
 </div>

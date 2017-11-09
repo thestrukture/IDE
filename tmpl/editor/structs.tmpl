@@ -1,14 +1,14 @@
-{{ $rin := RandTen }}
-<div class="tabview" id="{{ $rin }}" pkg="{{ .PKG }}" style="background-color:#fff;">
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" pkg="{{.PKG}}" style="background-color:#fff;">
 <div  class="row inf-x clear-btn" style="padding-top:20px;">
 	<div class="col-sm-12" style="min-height:32px;">
-			<button class="btn btn-warning" onclick="SavePKG('4','{{ .PKG }}', '{{ $rin }}')"><i class="fa fa-save"></i></button>
+			<button class="btn btn-warning" onclick="SavePKG('4','{{.PKG}}', '{{$rin}}')"><i class="fa fa-save"></i></button>
 			<input  style="display: inline;
-    width: 200px;" class="form-control sti" editor="{{ $rin }}" type="text"  placeholder="Struct name">
-    <button class="btn btn-primary" onclick="SearchEditor('{{ $rin }}')"><i class="fa fa-search"></i></button>
-		<button class="btn btn-primary" onclick="AddtoEd('struct', '{{ $rin }}')"><i class="fa fa-plus"></i></button>
+    width: 200px;" class="form-control sti" editor="{{$rin}}" type="text"  placeholder="Struct name">
+    <button class="btn btn-primary" onclick="SearchEditor('{{$rin}}')"><i class="fa fa-search"></i></button>
+		<button class="btn btn-primary" onclick="AddtoEd('struct', '{{$rin}}')"><i class="fa fa-plus"></i></button>
 		
-			<button type="button" class="btn btn-primary" onclick="editors['{{ $rin }}c'].wrap = editors['{{ $rin }}c'].wrap ? false : true;editors['{{ $rin }}'].getSession().setUseWrapMode( editors['{{ $rin }}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+			<button type="button" class="btn btn-primary" onclick="editors['{{$rin}}c'].wrap = editors['{{$rin}}c'].wrap ? false : true;editors['{{$rin}}'].getSession().setUseWrapMode( editors['{{$rin}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap text
 </button>
 	</div>
@@ -16,25 +16,25 @@
 
 	
 </div>
-<div id="editor{{ $rin }}" class="defed">{{printf "%s" .Edata}}</div>
+<div id="editor{{$rin}}" class="defed">{{printf "%s" .Edata}}</div>
 <script type="text/javascript">
 
-	 editors["{{ $rin }}"] = ace.edit("editor{{ $rin }}");
-	 editors["{{ $rin }}"].getSession().setMode("ace/mode/golang");
-	 editors[{{ $rin }} + "c"] = {wrap:false};
-	  editors["{{ $rin }}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
-	  editors["{{ $rin }}"].commands.addCommand({
+	 editors["{{$rin}}"] = ace.edit("editor{{$rin}}");
+	 editors["{{$rin}}"].getSession().setMode("ace/mode/golang");
+	 editors[{{$rin}} + "c"] = {wrap:false};
+	  editors["{{$rin}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	  editors["{{$rin}}"].commands.addCommand({
 	    name: 'myCommand',
 	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
 	    exec: function(editor) {
 	        //...
-	    	SavePKG('4','{{ .PKG }}', '{{ $rin }}');
+	    	SavePKG('4','{{.PKG}}', '{{$rin}}');
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
 
 
-			editors["{{ $rin }}"].commands.addCommand({
+			editors["{{$rin}}"].commands.addCommand({
 	    name: 'oterm',
 	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
 	    exec: function(editor) {
@@ -44,7 +44,7 @@
 	    readOnly: true // false if this command should not apply in readOnly mode
 		});
 
-				editors["{{ $rin }}"].commands.addCommand({
+				editors["{{$rin}}"].commands.addCommand({
 	    name: 'collapse',
 	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
 	    exec: function(editor) {
@@ -59,9 +59,9 @@
 
 
 
-		editors["{{ $rin }}"].container.addEventListener("contextmenu", function(e) {
+		editors["{{$rin}}"].container.addEventListener("contextmenu", function(e) {
 		  
-		    	var edt = editors["{{ $rin }}"]
+		    	var edt = editors["{{$rin}}"]
 			   		var cursor = edt.selection.getCursor()
 			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
 			   		
@@ -74,7 +74,7 @@
 					        trigger: 'none',
 					        animation: {duration: 0, show: 'fadeIn', hide: 'fadeOut'},
 					        callback: function(key, options) {
-					          handleClickStruk(key, txt, {{$rin}}, {{ .PKG }})
+					          handleClickStruk(key, txt, {{$rin}}, {{.PKG}})
 					        },
 					        items: getItems(txt)
 					    });
@@ -84,19 +84,19 @@
 		    
 		}, false);
 
-	editors["{{ $rin }}"].commands.addCommand({
+	editors["{{$rin}}"].commands.addCommand({
 	    name: 'build',
 	    bindKey: {win: 'Ctrl-B',  mac: 'Command-B'},
 	    exec: function(editor) {
 	        //...
-	    		SavePKGAndBuild('4','{{ .PKG }}', '{{ $rin }}');
+	    		SavePKGAndBuild('4','{{.PKG}}', '{{$rin}}');
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 	});
 
 	   setTimeout(function(){
 
-	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{ .PKG }}, success:function(html){
+	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{.PKG}}, success:function(html){
 	 		//console.log(html)
 	 		if (html.Bugs){
 	 		for (var i = html.Bugs.length - 1; i >= 0; i--) {
@@ -105,7 +105,7 @@
 	 			var action = bug.Action.split(":")
 	 			if (action[0] == "structs"){
 		 					 				//find line
-		 				$(".ace_gutter-cell",  "#" + {{ $rin }}).each(function(e,i){
+		 				$(".ace_gutter-cell",  "#" + {{$rin}}).each(function(e,i){
 		 					if ($(this).html() == action[1]){
 		 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
 		 						$(this).html( '<i class="fa fa-warning"></i>' + action[1] )
@@ -118,6 +118,6 @@
 	 	} 
 	 })
 	 },600)
-	 addTab({{ .PKG }} + " - Interfaces", {{ $rin }} );
+	 addTab({{.PKG}} + " - Interfaces", {{$rin}} );
 </script>
 </div>
