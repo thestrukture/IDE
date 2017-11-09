@@ -15,9 +15,10 @@ The strukture is an open source IDE. It is designed to build web applications, w
 
 ## Requirements
 - Go 1.9 and up. [Find it here](https://golang.org/dl/).
-- NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
 - [Golang server](http://gophersauce.com) if using `makefile`.
- 
+
+### If plan on using Electron View. A node JS project :
+- NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
 
 
 ## Install
@@ -28,7 +29,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 
 		$ IDE
 
-#### Launch with GUI
+#### Launch with GUI (Electron View)
 Change to the ui directory within the root of this package. (Moved ui files to build package as go)
 
 		$ cd ui/
@@ -76,31 +77,6 @@ Please create a new issue on Github to report a bug.
 
 Visit https://github.com/thestrukture/IDE/wiki
 
-
-## Debugging
-Please use current golang command line tools as a fallback. The final result of each [Go server](http://golangserver.com) webapp is go code.
-
-### Go Server apps
-- [x] Find bugs by reading your web application's output.
-If you're writing a webapp, Go Server attempts to use logging to find bugs. This process works by recovering from a runtime panic and stating the defunct line including the reason it crashed. This logger is only supported within the web service code, template pipeline code and templates. Due to this feature limit your code within the scope of one line.
-
-Good :
-
-	var name := Struct{Property:"val"}
-	
-Bad for debug logger :
-
-	var name := Struct{ 
-			    Property:"val",
-			    FieldTwo: 2
-		  }
-
-#### How to recreate data for test
-Use the `test` section within each package tree on the Strukture. Within this panel you may test pipelines, services as well as templates. 
-
-## How to automate :
-To build additional functionality use shell scripts. The users of your plugin can simply run the shell script via the HTTP terminal.
-
 ## Misc info
 How to install GoS incase the built-in installer fails.
 
@@ -109,3 +85,11 @@ How to install GoS incase the built-in installer fails.
 
 # Contributions
 Improvements to the codebase and pull requests are encouraged.
+
+## Screenshots
+
+![screenshot](tests/1newsc.png)
+![screenshot](tests/2newsc.png)
+![screenshot](tests/3newsc.png)
+![screenshot](tests/4newsc.png)
+![screenshot](tests/5newsc.png)
