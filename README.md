@@ -42,31 +42,6 @@ Take note of the pid ID to stop server process. Once your server is up feel free
 ### IE Fix
 If build commands keep returning the same message, push the `F12` key down to open developer tools and try building again.
 	
-### Install Via APT
-
-#### Ubuntu 14.04
-	
-	wget -qO- https://dl.packager.io/srv/thestrukture/IDE/key | sudo apt-key add -
-	sudo wget -O /etc/apt/sources.list.d/ide.list \
-  	https://dl.packager.io/srv/thestrukture/IDE/master/installer/ubuntu/14.04.repo
-	sudo apt-get update
-	sudo apt-get install ide
-
-#### Ubuntu 16.04
-
-	wget -qO- https://dl.packager.io/srv/thestrukture/IDE/key | sudo apt-key add -
-	sudo wget -O /etc/apt/sources.list.d/ide.list \
-  	https://dl.packager.io/srv/thestrukture/IDE/master/installer/ubuntu/16.04.repo
-	sudo apt-get update
-	sudo apt-get install ide
-	
-#### How to run
-
-	$ ide
-	
-[Link to packager.io](https://packager.io/gh/thestrukture/IDE)
-
-
 ## Access
 
 Visit [localhost:8884/home](http://localhost:8884/home). Access the IDE from any device on your network as well...
