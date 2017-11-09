@@ -29,7 +29,8 @@ The strukture is an open source IDE. It is designed to build web applications, w
 #### Launch with GUI (Electron View)
 
 ###### Requires NodeJS
-- NodeJS. (Build local ui) [Downloads](https://nodejs.org/en/download/)
+- NodeJS [Downloads](https://nodejs.org/en/download/)
+
 Change to the ui directory within the root of this package. (Moved ui files to build package as go)
 
 		$ cd ui/
