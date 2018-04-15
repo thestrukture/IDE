@@ -133,7 +133,7 @@
              TrialEnd int64
              StripeID,FLogin string
 		</struct>
-		<struct name="NoStruct'>
+		<struct name="NoStruct">
 		
 		</struct>
 
