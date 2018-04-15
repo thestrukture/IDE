@@ -10,7 +10,8 @@
 	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
 	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
 	<!-- To be less dramating, GoS will skip packages that it has already imported -->
-
+	
+	<import src="reflect" />
 	<import src="encoding/gob" />
 	<import src="io/ioutil" />
 	<import src="crypto/sha512" />
@@ -132,7 +133,9 @@
              TrialEnd int64
              StripeID,FLogin string
 		</struct>
-
+		<struct name="NoStruct'>
+		
+		</struct>
 
 		<struct name="USettings">
 			LastPaid string
