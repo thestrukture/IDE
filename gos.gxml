@@ -1241,7 +1241,7 @@ for _, v := range apps {
 	     		response = net_bModal(sModal{Body: "",Title: "PLUGINS",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"ADD",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
 			} else if r.FormValue("type") == "101" {
 	     		
-	     		response = bPluginList(NoStruct{})
+	     		response = bPluginList(gosweb.NoStruct{})
 			}
 				</end>
 				<end path="/api/act" method="mAct" type="POST" >
