@@ -882,7 +882,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			response = NetbModal(sModal{Body: "", Title: "PLUGINS", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "ADD", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 		} else if r.FormValue("type") == "101" {
 
-			response = bPluginList(NoStruct{})
+			response = bPluginList(gosweb.NoStruct{})
 		}
 
 		callmet = true
