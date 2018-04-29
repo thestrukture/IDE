@@ -882,7 +882,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			response = NetbModal(sModal{Body: "", Title: "PLUGINS", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "ADD", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 		} else if r.FormValue("type") == "101" {
 
-			response = bPluginList(gosweb.NoStruct{})
+			response = bPluginList(NoStruct{})
 		}
 
 		callmet = true
@@ -1363,7 +1363,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			if Windows {
 				go core.RunCmd("cmd /C gos --run") //live reload on windows...
 			} else {
-				shscript := `#!/bin/bash  
+				shscript := `#!/bin/bash
 									cmd="./` + pkSpl[len(pkSpl)-1] + ` "
 									eval "${cmd}" >main.log &disown
 									exit 0`
