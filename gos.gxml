@@ -240,7 +240,7 @@
 		</struct>
 
 		<struct name="sPackageEdit">
-			Type,Mainf,Initf,Sessionf string
+			Type,Mainf,Shutdown,Initf,Sessionf string
 			IType,Package,Port,Key,Name,Ffpage,Erpage,Domain Aput
 			Css rPut
 			Imports []rPut
