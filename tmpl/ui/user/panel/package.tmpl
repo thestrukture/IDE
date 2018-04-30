@@ -40,6 +40,10 @@
 						<div id="editorM{{$rin}}" style="height:160px;" class="defed maincode">{{.Mainf}}</div>
 						<button class="madv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
 					<p>}</p>
+					<p>On Exit Function {</p>
+						<div id="editorSh{{$rin}}" style="height:160px;" class="defed shcode">{{.Shutdown}}</div>
+						<button class="shadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
+					<p>}</p>
 					<p>Init Function {</p>
 						<div id="editorI{{$rin}}" style="height:160px;" class="defed initcode">{{.Initf}}</div>
 						<button class="iadv btn btn-block btn-danger"><i class="fa fa-save"></i> Save</button>
@@ -115,6 +119,9 @@
 	editors["ms" + "{{$rin}}"] = ace.edit("editorM{{$rin}}");
 	editors["ms" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
+	editors["sh" + "{{$rin}}"] = ace.edit("editorSh{{$rin}}");
+	editors["sh" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
+
     editors["is" + "{{$rin}}"] = ace.edit("editorI{{$rin}}");
 	editors["is" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
@@ -122,11 +129,23 @@
 	editors["ss" + "{{$rin}}"].getSession().setMode("ace/mode/golang");
 
 
-		
+	var pname = {{.TName}}
 
 	$(".madv").click(function(){
-		var pname = {{.TName}}
+
 		$.ajax({url:"/api/put",type:"POST",data:{type:"13",pkg: pname,data:editors["ms" + "{{$rin}}"].getValue() },success:function(html){
+
+			},error:function(e){
+
+			} 
+		});
+
+		return false;
+	});
+
+	$(".shadv").click(function(){
+	
+		$.ajax({url:"/api/put",type:"POST",data:{type:"17",pkg: pname,data:editors["sh" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
 
@@ -138,7 +157,7 @@
 
 
 	$(".iadv").click(function(){
-		var pname = {{.TName}}
+	
 		$.ajax({url:"/api/put",type:"POST",data:{type:"14",pkg: pname,data:editors["is" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
@@ -150,7 +169,7 @@
 	});
 
 	$(".sadv").click(function(){
-		var pname = {{.TName}}
+	
 		$.ajax({url:"/api/put",type:"POST",data:{type:"15",pkg: pname,data:editors["ss" + "{{$rin}}"].getValue() },success:function(html){
 
 			},error:function(e){
