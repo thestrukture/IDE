@@ -1524,7 +1524,7 @@ for _, v := range apps {
 
 			} else if r.FormValue("type") == "14" {
 
-				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 				 //write file
 				 gos.Init_Func = r.FormValue("data")
 				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
@@ -1532,25 +1532,26 @@ for _, v := range apps {
 			} else if r.FormValue("type") == "15" {
 
 
-				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 				 //write file
 				 gos.Session = r.FormValue("data")
 				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")	
 
 			} else if r.FormValue("type") == "16" {
 
-				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
+				 gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 				 //write file
 				 gos.Package = r.FormValue("var")
 				 gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")					
 
+			} else if r.FormValue("type") == "17" {
+
+				gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+				//write file
+				gos.Shutdown = r.FormValue("data")
+				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
 			}
-
-			
-			
-
-		
-			//Users.Update(bson.M{"uid":me.UID}, me)
 				
 				</end>
 				<end path="/api/build" method="mBuild" type="GET" >
