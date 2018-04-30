@@ -368,6 +368,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			editor.Name = Aput{Link: prefix, Param: "Name", Value: sapp.Name}
 			editor.Package = Aput{Link: "/api/put?type=16&pkg=" + sapp.Name, Param: "npk", Value: gos.Package}
 			editor.Mainf = gos.Main
+			editor.Shutdown = gos.Shutdown
 			editor.Initf = gos.Init_Func
 			editor.Sessionf = gos.Session
 
@@ -1181,6 +1182,13 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 			//write file
 			gos.Package = r.FormValue("var")
+			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		} else if r.FormValue("type") == "17" {
+
+			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+			//write file
+			gos.Shutdown = r.FormValue("data")
 			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
 		}
@@ -2466,7 +2474,7 @@ func NetcastsSWAL(args ...interface{}) *sSWAL {
 func NetstructsSWAL() *sSWAL { return &sSWAL{} }
 
 type sPackageEdit struct {
-	Type, Mainf, Initf, Sessionf                            string
+	Type, Mainf,Shutdown, Initf, Sessionf                            string
 	IType, Package, Port, Key, Name, Ffpage, Erpage, Domain Aput
 	Css                                                     rPut
 	Imports                                                 []rPut
