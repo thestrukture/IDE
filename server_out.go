@@ -1,18 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha512"
 	"encoding/gob"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/cheikhshift/db"
 	"github.com/cheikhshift/gos/core"
+	gosweb "github.com/cheikhshift/gos/web"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/fatih/color"
-	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2/bson"
 	"html"
@@ -21,104 +20,32 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 var store = sessions.NewCookieStore([]byte("something-secretive-is-what-a-gorrilla-needs"))
 
-type NoStruct struct {
-	/* emptystruct */
+var Prod = true
+
+var TemplateFuncStore template.FuncMap
+var templateCache = gosweb.NewTemplateCache()
+
+func StoreNetfn() int {
+	TemplateFuncStore = template.FuncMap{"a": gosweb.Netadd, "s": gosweb.Netsubs, "m": gosweb.Netmultiply, "d": gosweb.Netdivided, "js": gosweb.Netimportjs, "css": gosweb.Netimportcss, "sd": gosweb.NetsessionDelete, "sr": gosweb.NetsessionRemove, "sc": gosweb.NetsessionKey, "ss": gosweb.NetsessionSet, "sso": gosweb.NetsessionSetInt, "sgo": gosweb.NetsessionGetInt, "sg": gosweb.NetsessionGet, "form": gosweb.Formval, "eq": gosweb.Equalz, "neq": gosweb.Nequalz, "lte": gosweb.Netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "NoStruct": NetstructNoStruct, "isNoStruct": NetcastNoStruct, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf}
+	return 0
 }
 
-func NetsessionGet(key string, s *sessions.Session) string {
-	return s.Values[key].(string)
-}
+var FuncStored = StoreNetfn()
 
-func UrlAtZ(url, base string) (isURL bool) {
-	isURL = strings.Index(url, base) == 0
-	return
-}
+type dbflf db.O
 
-func NetsessionDelete(s *sessions.Session) string {
-	//keys := make([]string, len(s.Values))
-
-	//i := 0
-	for k := range s.Values {
-		// keys[i] = k.(string)
-		NetsessionRemove(k.(string), s)
-		//i++
-	}
-
-	return ""
-}
-
-func NetsessionRemove(key string, s *sessions.Session) string {
-	delete(s.Values, key)
-	return ""
-}
-func NetsessionKey(key string, s *sessions.Session) bool {
-	if _, ok := s.Values[key]; ok {
-		//do something here
-		return true
-	}
-
-	return false
-}
-
-func Netadd(x, v float64) float64 {
-	return v + x
-}
-
-func Netsubs(x, v float64) float64 {
-	return v - x
-}
-
-func Netmultiply(x, v float64) float64 {
-	return v * x
-}
-
-func Netdivided(x, v float64) float64 {
-	return v / x
-}
-
-func NetsessionGetInt(key string, s *sessions.Session) interface{} {
-	return s.Values[key]
-}
-
-func NetsessionSet(key string, value string, s *sessions.Session) string {
-	s.Values[key] = value
-	return ""
-}
-func NetsessionSetInt(key string, value interface{}, s *sessions.Session) string {
-	s.Values[key] = value
-	return ""
-}
-
-func dbDummy() {
-	smap := db.O{}
-	smap["key"] = "set"
-	log.Println(smap)
-}
-
-func Netimportcss(s string) string {
-	return fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\" /> ", s)
-}
-
-func Netimportjs(s string) string {
-	return fmt.Sprintf("<script type=\"text/javascript\" src=\"%s\" ></script> ", s)
-}
-
-func formval(s string, r *http.Request) string {
-	return r.FormValue(s)
-}
-
-func renderTemplate(w http.ResponseWriter, p *Page) bool {
+func renderTemplate(w http.ResponseWriter, p *gosweb.Page) {
 	defer func() {
 		if n := recover(); n != nil {
 			color.Red(fmt.Sprintf("Error loading template in path : web%s.tmpl reason : %s", p.R.URL.Path, n))
@@ -133,7 +60,7 @@ func renderTemplate(w http.ResponseWriter, p *Page) bool {
 				return
 			}
 
-			if pag.isResource {
+			if pag.IsResource {
 				w.Write(pag.Body)
 			} else {
 				pag.R = p.R
@@ -144,11 +71,19 @@ func renderTemplate(w http.ResponseWriter, p *Page) bool {
 		}
 	}()
 
-	t := template.New("PageWrapper")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(p.Body))
+	// TemplateFuncStore
+
+	if _, ok := templateCache.Get(p.R.URL.Path); !ok || !Prod {
+		var tmpstr = string(p.Body)
+		var localtemplate = template.New(p.R.URL.Path)
+
+		localtemplate.Funcs(TemplateFuncStore)
+		localtemplate.Parse(tmpstr)
+		templateCache.Put(p.R.URL.Path, localtemplate)
+	}
+
 	outp := new(bytes.Buffer)
-	err := t.Execute(outp, p)
+	err := templateCache.JGet(p.R.URL.Path).Execute(outp, p)
 	if err != nil {
 		log.Println(err.Error())
 		DebugTemplate(w, p.R, fmt.Sprintf("web%s", p.R.URL.Path))
@@ -158,40 +93,38 @@ func renderTemplate(w http.ResponseWriter, p *Page) bool {
 
 		if err != nil {
 			log.Println(err.Error())
-			return false
+			return
 		}
 		pag.R = p.R
 		pag.Session = p.Session
-		p = nil
-		if pag.isResource {
+
+		if pag.IsResource {
 			w.Write(pag.Body)
 		} else {
 			renderTemplate(w, pag) // ""
 
 		}
-		return false
+		return
 	}
 
-	p.Session.Save(p.R, w)
+	// p.Session.Save(p.R, w)
 
-	fmt.Fprintf(w, html.UnescapeString(outp.String()))
-
-	return true
+	var outps = outp.String()
+	var outpescaped = html.UnescapeString(outps)
+	outp = nil
+	fmt.Fprintf(w, outpescaped)
 
 }
 
-func MakeHandler(fn func(http.ResponseWriter, *http.Request, string, *sessions.Session)) http.HandlerFunc {
+// Access you .gxml's end tags with
+// this http.HandlerFunc.
+// Use MakeHandler(http.HandlerFunc) to serve your web
+// directory from memory.
+func MakeHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var session *sessions.Session
-		var er error
-		if session, er = store.Get(r, "session-"); er != nil {
-			session, _ = store.New(r, "session-")
-		}
-		if attmpt := apiAttempt(w, r, session); !attmpt {
-			fn(w, r, "", session)
-		} else {
-			context.Clear(r)
+		if attmpt := apiAttempt(w, r); !attmpt {
+			fn(w, r)
 		}
 
 	}
@@ -201,9 +134,14 @@ func mResponse(v interface{}) string {
 	data, _ := json.Marshal(&v)
 	return string(data)
 }
-func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) (callmet bool) {
+func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 	var response string
 	response = ""
+	var session *sessions.Session
+	var er error
+	if session, er = store.Get(r, "session-"); er != nil {
+		session, _ = store.New(r, "session-")
+	}
 
 	if strings.Contains(r.URL.Path, "/api/get") {
 
@@ -368,7 +306,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			editor.Name = Aput{Link: prefix, Param: "Name", Value: sapp.Name}
 			editor.Package = Aput{Link: "/api/put?type=16&pkg=" + sapp.Name, Param: "npk", Value: gos.Package}
 			editor.Mainf = gos.Main
-			editor.Shutdown = gos.Shutdown
 			editor.Initf = gos.Init_Func
 			editor.Sessionf = gos.Session
 
@@ -594,8 +531,9 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		callmet = true
 
 	}
-
-	if isURL := (r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	if r.Method == "RESET" {
+		return true
+	} else if isURL := (r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		bugs := GetLogs(r.FormValue("pkg"))
 		sapp := NetgetApp(getApps(), r.FormValue("pkg"))
@@ -606,17 +544,13 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		}
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/empty" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		ClearLogs(r.FormValue("pkg"))
 		response = NetbAlert(Alertbs{Type: "success", Text: "Your build logs are cleared."})
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/tester/" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/tester/" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		gp := os.ExpandEnv("$GOPATH")
 		os.Chdir(gp + "/src/" + r.FormValue("pkg"))
@@ -624,9 +558,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		response = html.EscapeString(logfull)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/create" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/create" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		//me := &SoftUser{Email:"Strukture user", Username:"Strukture user"}
 
@@ -695,9 +627,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		}
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/delete" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		if r.FormValue("type") == "0" {
 
@@ -862,14 +792,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		}
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/rename" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/rename" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/new" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/new" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		if r.FormValue("type") == "0" {
 			inputs := []Inputs{}
@@ -883,13 +809,11 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			response = NetbModal(sModal{Body: "", Title: "PLUGINS", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "ADD", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 		} else if r.FormValue("type") == "101" {
 
-			response = bPluginList(NoStruct{})
+			response = bPluginList(gosweb.NoStruct{})
 		}
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/act" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/act" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		if r.FormValue("type") == "0" {
 			apps := getApps()
@@ -1021,9 +945,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		}
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		me := SoftUser{Email: "Strukture user", Username: "Strukture user"}
 
@@ -1193,12 +1115,8 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 
 		}
 
-		//Users.Update(bson.M{"uid":me.UID}, me)
-
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/build" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/build" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		gp := os.ExpandEnv("$GOPATH")
 
@@ -1350,9 +1268,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/start" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/start" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		gp := os.ExpandEnv("$GOPATH")
 
@@ -1371,7 +1287,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			if Windows {
 				go core.RunCmd("cmd /C gos --run") //live reload on windows...
 			} else {
-				shscript := `#!/bin/bash
+				shscript := `#!/bin/bash  
 									cmd="./` + pkSpl[len(pkSpl)-1] + ` "
 									eval "${cmd}" >main.log &disown
 									exit 0`
@@ -1401,9 +1317,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/stop" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/stop" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		gp := os.ExpandEnv("$GOPATH")
 
@@ -1425,9 +1339,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		//Users.Update(bson.M{"uid":me.UID}, me)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/bin" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/bin" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg"))
 		os.Remove(strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".binary.zip ")
@@ -1454,9 +1366,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		http.ServeFile(w, r, zipname)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/export" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/export" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		os.Chdir(os.ExpandEnv("$GOPATH") + "/src/")
 		os.Remove(strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip ")
@@ -1475,9 +1385,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".zip")
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/complete" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/complete" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		prefx := r.FormValue("pref")
 		ret := []bson.M{}
@@ -1546,9 +1454,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		response = mResponse(ret)
 
 		callmet = true
-	}
-
-	if isURL := (r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+	} else if isURL := (r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		if strings.Contains(r.FormValue("command"), "cd") {
 			parts := strings.Fields(r.FormValue("command"))
@@ -1579,6 +1485,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 
 	if callmet {
 		session.Save(r, w)
+		session = nil
 		if response != "" {
 			//Unmarshal json
 			//w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -1587,30 +1494,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		}
 		return
 	}
+	session = nil
 	return
 }
-func SetField(obj interface{}, name string, value interface{}) error {
-	structValue := reflect.ValueOf(obj).Elem()
-	structFieldValue := structValue.FieldByName(name)
 
-	if !structFieldValue.IsValid() {
-		return fmt.Errorf("No such field: %s in obj", name)
-	}
-
-	if !structFieldValue.CanSet() {
-		return fmt.Errorf("Cannot set %s field value", name)
-	}
-
-	structFieldType := structFieldValue.Type()
-	val := reflect.ValueOf(value)
-	if structFieldType != val.Type() {
-		invalidTypeError := errors.New("Provided value type didn't match obj field type")
-		return invalidTypeError
-	}
-
-	structFieldValue.Set(val)
-	return nil
-}
 func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 	lastline := 0
 	linestring := ""
@@ -1664,8 +1551,8 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 				//exec
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate(body))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string(body))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, p)
@@ -1684,8 +1571,8 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 				//exec
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate(body))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string(body))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, p)
@@ -1698,8 +1585,8 @@ func DebugTemplate(w http.ResponseWriter, r *http.Request, tmpl string) {
 			if !waitend && !processd {
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate(body))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string(body))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, p)
@@ -1770,8 +1657,8 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				processd = true
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%s%s", linebuffer, endstr))))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string([]byte(fmt.Sprintf("%s%s", linebuffer, endstr))))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, intrf)
@@ -1790,8 +1677,8 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				//exec
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%s%s", linebuffer, endstr))))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string([]byte(fmt.Sprintf("%s%s", linebuffer, endstr))))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, intrf)
@@ -1804,8 +1691,8 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 			if !waitend && !processd {
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
-				t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-				t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%s%s", linebuffer))))
+				t = t.Funcs(TemplateFuncStore)
+				t, _ = t.Parse(string([]byte(fmt.Sprintf("%s%s", linebuffer))))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, intrf)
@@ -1827,9 +1714,14 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 	}
 
 }
-func Handler(w http.ResponseWriter, r *http.Request, contxt string, session *sessions.Session) {
-	var p *Page
+func Handler(w http.ResponseWriter, r *http.Request) {
+	var p *gosweb.Page
 	p, err := loadPage(r.URL.Path)
+	var session *sessions.Session
+	var er error
+	if session, er = store.Get(r, "session-"); er != nil {
+		session, _ = store.New(r, "session-")
+	}
 
 	if err != nil {
 		log.Println(err.Error())
@@ -1840,27 +1732,34 @@ func Handler(w http.ResponseWriter, r *http.Request, contxt string, session *ses
 
 		if err != nil {
 			log.Println(err.Error())
-			//context.Clear(r)
+			//
 			return
 		}
 		pag.R = r
 		pag.Session = session
-		p = nil
-		if pag.isResource {
+		if p != nil {
+			p.Session = nil
+			p.Body = nil
+			p.R = nil
+			p = nil
+		}
+
+		if pag.IsResource {
 			w.Write(pag.Body)
 		} else {
 			renderTemplate(w, pag) //""
 		}
-		context.Clear(r)
+		session = nil
+
 		return
 	}
 
-	if !p.isResource {
+	if !p.IsResource {
 		w.Header().Set("Content-Type", "text/html")
 		p.Session = session
 		p.R = r
 		renderTemplate(w, p) //fmt.Sprintf("web%s", r.URL.Path)
-
+		session.Save(r, w)
 		// log.Println(w)
 	} else {
 		w.Header().Set("Cache-Control", "public")
@@ -1875,15 +1774,24 @@ func Handler(w http.ResponseWriter, r *http.Request, contxt string, session *ses
 		w.Write(p.Body)
 	}
 
-	p.R = nil
 	p.Session = nil
+	p.Body = nil
+	p.R = nil
 	p = nil
-	context.Clear(r)
+	session = nil
+
 	return
 }
 
-func loadPage(title string) (*Page, error) {
+var WebCache = gosweb.NewCache()
 
+func loadPage(title string) (*gosweb.Page, error) {
+
+	if lPage, ok := WebCache.Get(title); ok {
+		return &lPage, nil
+	}
+
+	var nPage = gosweb.Page{}
 	if roottitle := (title == "/"); roottitle {
 		webbase := "web/"
 		fname := fmt.Sprintf("%s%s", webbase, "index.html")
@@ -1894,10 +1802,16 @@ func loadPage(title string) (*Page, error) {
 			if err != nil {
 				return nil, err
 			}
-			return &Page{Body: body, isResource: false}, nil
+			nPage.Body = body
+			WebCache.Put(title, nPage)
+			body = nil
+			return &nPage, nil
 		}
-
-		return &Page{Body: body, isResource: true}, nil
+		nPage.Body = body
+		nPage.IsResource = true
+		WebCache.Put(title, nPage)
+		body = nil
+		return &nPage, nil
 
 	}
 
@@ -1915,93 +1829,26 @@ func loadPage(title string) (*Page, error) {
 				if strings.Contains(title, ".tmpl") {
 					return nil, nil
 				}
-				return &Page{Body: body, isResource: true}, nil
+				nPage.Body = body
+				nPage.IsResource = true
+				WebCache.Put(title, nPage)
+				body = nil
+				return &nPage, nil
 			}
 		} else {
-			return &Page{Body: body, isResource: true}, nil
+			nPage.Body = body
+			nPage.IsResource = true
+			WebCache.Put(title, nPage)
+			body = nil
+			return &nPage, nil
 		}
 	} else {
-		return &Page{Body: body, isResource: false}, nil
+		nPage.Body = body
+		WebCache.Put(title, nPage)
+		body = nil
+		return &nPage, nil
 	}
 
-}
-
-func BytesToString(b []byte) string {
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	sh := reflect.StringHeader{bh.Data, bh.Len}
-	return *(*string)(unsafe.Pointer(&sh))
-}
-func equalz(args ...interface{}) bool {
-	if args[0] == args[1] {
-		return true
-	}
-	return false
-}
-func nequalz(args ...interface{}) bool {
-	if args[0] != args[1] {
-		return true
-	}
-	return false
-}
-
-func netlt(x, v float64) bool {
-	if x < v {
-		return true
-	}
-	return false
-}
-func netgt(x, v float64) bool {
-	if x > v {
-		return true
-	}
-	return false
-}
-func netlte(x, v float64) bool {
-	if x <= v {
-		return true
-	}
-	return false
-}
-
-func GetLine(fname string, match string) int {
-	intx := 0
-	file, err := os.Open(fname)
-	if err != nil {
-		color.Red("Could not find a source file")
-		return -1
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		intx = intx + 1
-		if strings.Contains(scanner.Text(), match) {
-
-			return intx
-		}
-
-	}
-
-	return -1
-}
-func netgte(x, v float64) bool {
-	if x >= v {
-		return true
-	}
-	return false
-}
-
-type Page struct {
-	Title      string
-	Body       []byte
-	request    *http.Request
-	isResource bool
-	R          *http.Request
-	Session    *sessions.Session
-}
-
-func ReadyTemplate(body []byte) string {
-	return strings.Replace(strings.Replace(strings.Replace(string(body), "/{", "\"{", -1), "}/", "}\"", -1), "`", "\"", -1)
 }
 
 var Windows bool
@@ -2086,6 +1933,27 @@ func NetcastSoftUser(args ...interface{}) *SoftUser {
 	return &s
 }
 func NetstructSoftUser() *SoftUser { return &SoftUser{} }
+
+type NoStruct struct {
+}
+
+func NetcastNoStruct(args ...interface{}) *NoStruct {
+
+	s := NoStruct{}
+	mapp := args[0].(db.O)
+	if _, ok := mapp["_id"]; ok {
+		mapp["Id"] = mapp["_id"]
+	}
+	data, _ := json.Marshal(&mapp)
+
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return &s
+}
+func NetstructNoStruct() *NoStruct { return &NoStruct{} }
 
 type USettings struct {
 	LastPaid string
@@ -2474,7 +2342,7 @@ func NetcastsSWAL(args ...interface{}) *sSWAL {
 func NetstructsSWAL() *sSWAL { return &sSWAL{} }
 
 type sPackageEdit struct {
-	Type, Mainf,Shutdown, Initf, Sessionf                            string
+	Type, Mainf, Shutdown, Initf, Sessionf                  string
 	IType, Package, Port, Key, Name, Ffpage, Erpage, Domain Aput
 	Css                                                     rPut
 	Imports                                                 []rPut
@@ -2633,6 +2501,7 @@ func NetstructvHuf() *vHuf { return &vHuf{} }
 
 type myDemoObject Dex
 
+//
 func NetBindMisc(args ...interface{}) Dex {
 	misc := args[0]
 	nav := args[1]
@@ -2642,11 +2511,15 @@ func NetBindMisc(args ...interface{}) Dex {
 	return Nav
 
 }
+
+//
 func NetListPlugins(args ...interface{}) []string {
 
 	return getPlugins()
 
 }
+
+//
 func NetBindID(args ...interface{}) Dex {
 	id := args[0]
 	nav := args[1]
@@ -2656,11 +2529,15 @@ func NetBindID(args ...interface{}) Dex {
 	return Nav
 
 }
+
+//
 func NetRandTen(args ...interface{}) string {
 
 	return core.NewLen(10)
 
 }
+
+//
 func NetFragmentize(args ...interface{}) (finall string) {
 	inn := args[0]
 
@@ -2668,6 +2545,8 @@ func NetFragmentize(args ...interface{}) (finall string) {
 	return
 
 }
+
+//
 func NetparseLog(args ...interface{}) string {
 	cline := args[0]
 
@@ -2687,6 +2566,8 @@ func NetparseLog(args ...interface{}) string {
 	return actionText
 
 }
+
+//
 func NetanyBugs(args ...interface{}) (ajet bool) {
 	packge := args[0]
 
@@ -2706,6 +2587,8 @@ func NetanyBugs(args ...interface{}) (ajet bool) {
 	return
 
 }
+
+//
 func NetPluginJS(args ...interface{}) string {
 
 	plugins := getPlugins()
@@ -2721,6 +2604,8 @@ func NetPluginJS(args ...interface{}) string {
 	return "<script>" + jsstring + "</script>"
 
 }
+
+//
 func NetFindmyBugs(args ...interface{}) (ajet []DebugObj) {
 	packge := args[0]
 
@@ -2734,6 +2619,8 @@ func NetFindmyBugs(args ...interface{}) (ajet []DebugObj) {
 	return
 
 }
+
+//
 func NetisExpired(args ...interface{}) bool {
 	current := args[0]
 	strip := args[1]
@@ -2749,6 +2636,8 @@ func NetisExpired(args ...interface{}) bool {
 	return false
 
 }
+
+//
 func NetgetTemplate(args ...interface{}) core.Template {
 	templates := args[0]
 	name := args[1]
@@ -2766,11 +2655,15 @@ func NetgetTemplate(args ...interface{}) core.Template {
 	return core.Template{}
 
 }
+
+//
 func NetmConsole(args ...interface{}) string {
 
 	return ""
 
 }
+
+//
 func NetmPut(args ...interface{}) string {
 
 	//response = "OK"
@@ -2778,6 +2671,8 @@ func NetmPut(args ...interface{}) string {
 	return ""
 
 }
+
+//
 func NetupdateApp(args ...interface{}) []App {
 	apps := args[0]
 	name := args[1]
@@ -2798,6 +2693,8 @@ func NetupdateApp(args ...interface{}) []App {
 	return n
 
 }
+
+//
 func NetgetApp(args ...interface{}) App {
 	apps := args[0]
 	name := args[1]
@@ -2816,74 +2713,96 @@ func NetgetApp(args ...interface{}) App {
 
 }
 
+func templateFNCss(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (css) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
+}
+
+var templateIDCss = "tmpl/css.tmpl"
+
 func NetCss(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/css.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Css) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDCss
+	var d *Dex
+	defer templateFNCss(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Css")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Css")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bCss(d Dex) string {
 	return NetbCss(d)
 }
 
+//
 func NetbCss(d Dex) string {
-
-	filename := "tmpl/css.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDCss
+	defer templateFNCss(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Css")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Css) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Css")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcCss(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -2901,90 +2820,103 @@ func NetcCss(args ...interface{}) (d Dex) {
 
 func cCss(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcCss(args[0])
 	} else {
-		d = Dex{}
+		d = NetcCss()
 	}
 	return
 }
 
-func BCss(intstr interface{}) string {
-	return NetCss(intstr)
+func templateFNJS(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (js) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDJS = "tmpl/js.tmpl"
 
 func NetJS(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/js.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (JS) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDJS
+	var d *Dex
+	defer templateFNJS(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("JS")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("JS")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bJS(d Dex) string {
 	return NetbJS(d)
 }
 
+//
 func NetbJS(d Dex) string {
-
-	filename := "tmpl/js.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDJS
+	defer templateFNJS(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("JS")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (JS) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("JS")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcJS(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -3002,90 +2934,103 @@ func NetcJS(args ...interface{}) (d Dex) {
 
 func cJS(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcJS(args[0])
 	} else {
-		d = Dex{}
+		d = NetcJS()
 	}
 	return
 }
 
-func BJS(intstr interface{}) string {
-	return NetJS(intstr)
+func templateFNFA(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/fa) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDFA = "tmpl/ui/fa.tmpl"
 
 func NetFA(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/fa.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (FA) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDFA
+	var d *Dex
+	defer templateFNFA(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("FA")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("FA")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bFA(d Dex) string {
 	return NetbFA(d)
 }
 
+//
 func NetbFA(d Dex) string {
-
-	filename := "tmpl/ui/fa.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDFA
+	defer templateFNFA(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("FA")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (FA) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("FA")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcFA(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -3103,92 +3048,105 @@ func NetcFA(args ...interface{}) (d Dex) {
 
 func cFA(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcFA(args[0])
 	} else {
-		d = Dex{}
+		d = NetcFA()
 	}
 	return
 }
 
-func BFA(intstr interface{}) string {
-	return NetFA(intstr)
+func templateFNPluginList(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/pluginlist) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDPluginList = "tmpl/ui/pluginlist.tmpl"
 
 func NetPluginList(args ...interface{}) string {
 
-	var d NoStruct
-	filename := "tmpl/ui/pluginlist.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PluginList) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDPluginList
+	var d *gosweb.NoStruct
+	defer templateFNPluginList(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = NoStruct{}
+		d = &gosweb.NoStruct{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("PluginList")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("PluginList")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
-func bPluginList(d NoStruct) string {
+func bPluginList(d gosweb.NoStruct) string {
 	return NetbPluginList(d)
 }
 
-func NetbPluginList(d NoStruct) string {
-
-	filename := "tmpl/ui/pluginlist.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+//
+func NetbPluginList(d gosweb.NoStruct) string {
+	localid := templateIDPluginList
+	defer templateFNPluginList(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("PluginList")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PluginList) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("PluginList")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = gosweb.NoStruct{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
-func NetcPluginList(args ...interface{}) (d NoStruct) {
+func NetcPluginList(args ...interface{}) (d gosweb.NoStruct) {
 	if len(args) > 0 {
 		var jsonBlob = []byte(args[0].(string))
 		err := json.Unmarshal(jsonBlob, &d)
@@ -3197,97 +3155,110 @@ func NetcPluginList(args ...interface{}) (d NoStruct) {
 			return
 		}
 	} else {
-		d = NoStruct{}
+		d = gosweb.NoStruct{}
 	}
 	return
 }
 
-func cPluginList(args ...interface{}) (d NoStruct) {
+func cPluginList(args ...interface{}) (d gosweb.NoStruct) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcPluginList(args[0])
 	} else {
-		d = NoStruct{}
+		d = NetcPluginList()
 	}
 	return
 }
 
-func BPluginList(intstr interface{}) string {
-	return NetPluginList(intstr)
+func templateFNLogin(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/login) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDLogin = "tmpl/ui/login.tmpl"
 
 func NetLogin(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/login.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Login) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDLogin
+	var d *Dex
+	defer templateFNLogin(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Login")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Login")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bLogin(d Dex) string {
 	return NetbLogin(d)
 }
 
+//
 func NetbLogin(d Dex) string {
-
-	filename := "tmpl/ui/login.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDLogin
+	defer templateFNLogin(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Login")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Login) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Login")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcLogin(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -3305,90 +3276,103 @@ func NetcLogin(args ...interface{}) (d Dex) {
 
 func cLogin(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcLogin(args[0])
 	} else {
-		d = Dex{}
+		d = NetcLogin()
 	}
 	return
 }
 
-func BLogin(intstr interface{}) string {
-	return NetLogin(intstr)
+func templateFNModal(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/modal) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDModal = "tmpl/ui/modal.tmpl"
 
 func NetModal(args ...interface{}) string {
 
-	var d sModal
-	filename := "tmpl/ui/modal.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Modal) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDModal
+	var d *sModal
+	defer templateFNModal(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sModal{}
+		d = &sModal{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Modal")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Modal")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bModal(d sModal) string {
 	return NetbModal(d)
 }
 
+//
 func NetbModal(d sModal) string {
-
-	filename := "tmpl/ui/modal.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDModal
+	defer templateFNModal(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Modal")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Modal) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Modal")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sModal{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcModal(args ...interface{}) (d sModal) {
 	if len(args) > 0 {
@@ -3406,90 +3390,103 @@ func NetcModal(args ...interface{}) (d sModal) {
 
 func cModal(args ...interface{}) (d sModal) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcModal(args[0])
 	} else {
-		d = sModal{}
+		d = NetcModal()
 	}
 	return
 }
 
-func BModal(intstr interface{}) string {
-	return NetModal(intstr)
+func templateFNxButton(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/sbutton) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDxButton = "tmpl/ui/sbutton.tmpl"
 
 func NetxButton(args ...interface{}) string {
 
-	var d sButton
-	filename := "tmpl/ui/sbutton.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (xButton) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDxButton
+	var d *sButton
+	defer templateFNxButton(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sButton{}
+		d = &sButton{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("xButton")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("xButton")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bxButton(d sButton) string {
 	return NetbxButton(d)
 }
 
+//
 func NetbxButton(d sButton) string {
-
-	filename := "tmpl/ui/sbutton.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDxButton
+	defer templateFNxButton(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("xButton")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (xButton) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("xButton")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sButton{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcxButton(args ...interface{}) (d sButton) {
 	if len(args) > 0 {
@@ -3507,90 +3504,103 @@ func NetcxButton(args ...interface{}) (d sButton) {
 
 func cxButton(args ...interface{}) (d sButton) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcxButton(args[0])
 	} else {
-		d = sButton{}
+		d = NetcxButton()
 	}
 	return
 }
 
-func BxButton(intstr interface{}) string {
-	return NetxButton(intstr)
+func templateFNjButton(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/jbutton) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDjButton = "tmpl/ui/user/forms/jbutton.tmpl"
 
 func NetjButton(args ...interface{}) string {
 
-	var d sButton
-	filename := "tmpl/ui/user/forms/jbutton.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (jButton) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDjButton
+	var d *sButton
+	defer templateFNjButton(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sButton{}
+		d = &sButton{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("jButton")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("jButton")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bjButton(d sButton) string {
 	return NetbjButton(d)
 }
 
+//
 func NetbjButton(d sButton) string {
-
-	filename := "tmpl/ui/user/forms/jbutton.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDjButton
+	defer templateFNjButton(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("jButton")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (jButton) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("jButton")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sButton{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcjButton(args ...interface{}) (d sButton) {
 	if len(args) > 0 {
@@ -3608,90 +3618,103 @@ func NetcjButton(args ...interface{}) (d sButton) {
 
 func cjButton(args ...interface{}) (d sButton) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcjButton(args[0])
 	} else {
-		d = sButton{}
+		d = NetcjButton()
 	}
 	return
 }
 
-func BjButton(intstr interface{}) string {
-	return NetjButton(intstr)
+func templateFNPUT(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/aput) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDPUT = "tmpl/ui/user/forms/aput.tmpl"
 
 func NetPUT(args ...interface{}) string {
 
-	var d Aput
-	filename := "tmpl/ui/user/forms/aput.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PUT) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDPUT
+	var d *Aput
+	defer templateFNPUT(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Aput{}
+		d = &Aput{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("PUT")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("PUT")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bPUT(d Aput) string {
 	return NetbPUT(d)
 }
 
+//
 func NetbPUT(d Aput) string {
-
-	filename := "tmpl/ui/user/forms/aput.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDPUT
+	defer templateFNPUT(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("PUT")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PUT) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("PUT")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Aput{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcPUT(args ...interface{}) (d Aput) {
 	if len(args) > 0 {
@@ -3709,90 +3732,103 @@ func NetcPUT(args ...interface{}) (d Aput) {
 
 func cPUT(args ...interface{}) (d Aput) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcPUT(args[0])
 	} else {
-		d = Aput{}
+		d = NetcPUT()
 	}
 	return
 }
 
-func BPUT(intstr interface{}) string {
-	return NetPUT(intstr)
+func templateFNGroup(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/tab) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDGroup = "tmpl/ui/user/forms/tab.tmpl"
 
 func NetGroup(args ...interface{}) string {
 
-	var d sTab
-	filename := "tmpl/ui/user/forms/tab.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Group) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDGroup
+	var d *sTab
+	defer templateFNGroup(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sTab{}
+		d = &sTab{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Group")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Group")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bGroup(d sTab) string {
 	return NetbGroup(d)
 }
 
+//
 func NetbGroup(d sTab) string {
-
-	filename := "tmpl/ui/user/forms/tab.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDGroup
+	defer templateFNGroup(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Group")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Group) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Group")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sTab{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcGroup(args ...interface{}) (d sTab) {
 	if len(args) > 0 {
@@ -3810,90 +3846,103 @@ func NetcGroup(args ...interface{}) (d sTab) {
 
 func cGroup(args ...interface{}) (d sTab) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcGroup(args[0])
 	} else {
-		d = sTab{}
+		d = NetcGroup()
 	}
 	return
 }
 
-func BGroup(intstr interface{}) string {
-	return NetGroup(intstr)
+func templateFNRegister(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/register) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDRegister = "tmpl/ui/register.tmpl"
 
 func NetRegister(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/register.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Register) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDRegister
+	var d *Dex
+	defer templateFNRegister(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Register")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Register")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bRegister(d Dex) string {
 	return NetbRegister(d)
 }
 
+//
 func NetbRegister(d Dex) string {
-
-	filename := "tmpl/ui/register.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDRegister
+	defer templateFNRegister(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Register")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Register) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Register")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcRegister(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -3911,90 +3960,103 @@ func NetcRegister(args ...interface{}) (d Dex) {
 
 func cRegister(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcRegister(args[0])
 	} else {
-		d = Dex{}
+		d = NetcRegister()
 	}
 	return
 }
 
-func BRegister(intstr interface{}) string {
-	return NetRegister(intstr)
+func templateFNAlert(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/alert) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDAlert = "tmpl/ui/alert.tmpl"
 
 func NetAlert(args ...interface{}) string {
 
-	var d Alertbs
-	filename := "tmpl/ui/alert.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Alert) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDAlert
+	var d *Alertbs
+	defer templateFNAlert(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Alertbs{}
+		d = &Alertbs{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Alert")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Alert")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bAlert(d Alertbs) string {
 	return NetbAlert(d)
 }
 
+//
 func NetbAlert(d Alertbs) string {
-
-	filename := "tmpl/ui/alert.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDAlert
+	defer templateFNAlert(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Alert")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Alert) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Alert")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Alertbs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcAlert(args ...interface{}) (d Alertbs) {
 	if len(args) > 0 {
@@ -4012,90 +4074,103 @@ func NetcAlert(args ...interface{}) (d Alertbs) {
 
 func cAlert(args ...interface{}) (d Alertbs) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcAlert(args[0])
 	} else {
-		d = Alertbs{}
+		d = NetcAlert()
 	}
 	return
 }
 
-func BAlert(intstr interface{}) string {
-	return NetAlert(intstr)
+func templateFNStructEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/structs) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDStructEditor = "tmpl/editor/structs.tmpl"
 
 func NetStructEditor(args ...interface{}) string {
 
-	var d vHuf
-	filename := "tmpl/editor/structs.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (StructEditor) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDStructEditor
+	var d *vHuf
+	defer templateFNStructEditor(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = vHuf{}
+		d = &vHuf{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("StructEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("StructEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bStructEditor(d vHuf) string {
 	return NetbStructEditor(d)
 }
 
+//
 func NetbStructEditor(d vHuf) string {
-
-	filename := "tmpl/editor/structs.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDStructEditor
+	defer templateFNStructEditor(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("StructEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (StructEditor) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("StructEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = vHuf{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcStructEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
@@ -4113,90 +4188,103 @@ func NetcStructEditor(args ...interface{}) (d vHuf) {
 
 func cStructEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcStructEditor(args[0])
 	} else {
-		d = vHuf{}
+		d = NetcStructEditor()
 	}
 	return
 }
 
-func BStructEditor(intstr interface{}) string {
-	return NetStructEditor(intstr)
+func templateFNMethodEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/methods) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDMethodEditor = "tmpl/editor/methods.tmpl"
 
 func NetMethodEditor(args ...interface{}) string {
 
-	var d vHuf
-	filename := "tmpl/editor/methods.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (MethodEditor) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDMethodEditor
+	var d *vHuf
+	defer templateFNMethodEditor(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = vHuf{}
+		d = &vHuf{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("MethodEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("MethodEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bMethodEditor(d vHuf) string {
 	return NetbMethodEditor(d)
 }
 
+//
 func NetbMethodEditor(d vHuf) string {
-
-	filename := "tmpl/editor/methods.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDMethodEditor
+	defer templateFNMethodEditor(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("MethodEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (MethodEditor) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("MethodEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = vHuf{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcMethodEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
@@ -4214,90 +4302,103 @@ func NetcMethodEditor(args ...interface{}) (d vHuf) {
 
 func cMethodEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcMethodEditor(args[0])
 	} else {
-		d = vHuf{}
+		d = NetcMethodEditor()
 	}
 	return
 }
 
-func BMethodEditor(intstr interface{}) string {
-	return NetMethodEditor(intstr)
+func templateFNObjectEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/objects) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDObjectEditor = "tmpl/editor/objects.tmpl"
 
 func NetObjectEditor(args ...interface{}) string {
 
-	var d vHuf
-	filename := "tmpl/editor/objects.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (ObjectEditor) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDObjectEditor
+	var d *vHuf
+	defer templateFNObjectEditor(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = vHuf{}
+		d = &vHuf{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("ObjectEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("ObjectEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bObjectEditor(d vHuf) string {
 	return NetbObjectEditor(d)
 }
 
+//
 func NetbObjectEditor(d vHuf) string {
-
-	filename := "tmpl/editor/objects.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDObjectEditor
+	defer templateFNObjectEditor(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("ObjectEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (ObjectEditor) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("ObjectEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = vHuf{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcObjectEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
@@ -4315,90 +4416,103 @@ func NetcObjectEditor(args ...interface{}) (d vHuf) {
 
 func cObjectEditor(args ...interface{}) (d vHuf) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcObjectEditor(args[0])
 	} else {
-		d = vHuf{}
+		d = NetcObjectEditor()
 	}
 	return
 }
 
-func BObjectEditor(intstr interface{}) string {
-	return NetObjectEditor(intstr)
+func templateFNEndpointEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/endpoints) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDEndpointEditor = "tmpl/editor/endpoints.tmpl"
 
 func NetEndpointEditor(args ...interface{}) string {
 
-	var d TEditor
-	filename := "tmpl/editor/endpoints.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (EndpointEditor) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDEndpointEditor
+	var d *TEditor
+	defer templateFNEndpointEditor(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = TEditor{}
+		d = &TEditor{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("EndpointEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("EndpointEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bEndpointEditor(d TEditor) string {
 	return NetbEndpointEditor(d)
 }
 
+//
 func NetbEndpointEditor(d TEditor) string {
-
-	filename := "tmpl/editor/endpoints.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDEndpointEditor
+	defer templateFNEndpointEditor(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("EndpointEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (EndpointEditor) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("EndpointEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = TEditor{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcEndpointEditor(args ...interface{}) (d TEditor) {
 	if len(args) > 0 {
@@ -4416,90 +4530,103 @@ func NetcEndpointEditor(args ...interface{}) (d TEditor) {
 
 func cEndpointEditor(args ...interface{}) (d TEditor) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcEndpointEditor(args[0])
 	} else {
-		d = TEditor{}
+		d = NetcEndpointEditor()
 	}
 	return
 }
 
-func BEndpointEditor(intstr interface{}) string {
-	return NetEndpointEditor(intstr)
+func templateFNTimerEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/timers) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDTimerEditor = "tmpl/editor/timers.tmpl"
 
 func NetTimerEditor(args ...interface{}) string {
 
-	var d TEditor
-	filename := "tmpl/editor/timers.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TimerEditor) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDTimerEditor
+	var d *TEditor
+	defer templateFNTimerEditor(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = TEditor{}
+		d = &TEditor{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("TimerEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("TimerEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bTimerEditor(d TEditor) string {
 	return NetbTimerEditor(d)
 }
 
+//
 func NetbTimerEditor(d TEditor) string {
-
-	filename := "tmpl/editor/timers.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDTimerEditor
+	defer templateFNTimerEditor(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("TimerEditor")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TimerEditor) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("TimerEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = TEditor{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcTimerEditor(args ...interface{}) (d TEditor) {
 	if len(args) > 0 {
@@ -4517,90 +4644,103 @@ func NetcTimerEditor(args ...interface{}) (d TEditor) {
 
 func cTimerEditor(args ...interface{}) (d TEditor) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcTimerEditor(args[0])
 	} else {
-		d = TEditor{}
+		d = NetcTimerEditor()
 	}
 	return
 }
 
-func BTimerEditor(intstr interface{}) string {
-	return NetTimerEditor(intstr)
+func templateFNFSC(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/fsc) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDFSC = "tmpl/ui/fsc.tmpl"
 
 func NetFSC(args ...interface{}) string {
 
-	var d FSCs
-	filename := "tmpl/ui/fsc.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (FSC) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDFSC
+	var d *FSCs
+	defer templateFNFSC(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = FSCs{}
+		d = &FSCs{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("FSC")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("FSC")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bFSC(d FSCs) string {
 	return NetbFSC(d)
 }
 
+//
 func NetbFSC(d FSCs) string {
-
-	filename := "tmpl/ui/fsc.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDFSC
+	defer templateFNFSC(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("FSC")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (FSC) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("FSC")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = FSCs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcFSC(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
@@ -4618,90 +4758,103 @@ func NetcFSC(args ...interface{}) (d FSCs) {
 
 func cFSC(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcFSC(args[0])
 	} else {
-		d = FSCs{}
+		d = NetcFSC()
 	}
 	return
 }
 
-func BFSC(intstr interface{}) string {
-	return NetFSC(intstr)
+func templateFNMV(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/mv) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDMV = "tmpl/ui/mv.tmpl"
 
 func NetMV(args ...interface{}) string {
 
-	var d FSCs
-	filename := "tmpl/ui/mv.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (MV) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDMV
+	var d *FSCs
+	defer templateFNMV(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = FSCs{}
+		d = &FSCs{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("MV")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("MV")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bMV(d FSCs) string {
 	return NetbMV(d)
 }
 
+//
 func NetbMV(d FSCs) string {
-
-	filename := "tmpl/ui/mv.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDMV
+	defer templateFNMV(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("MV")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (MV) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("MV")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = FSCs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcMV(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
@@ -4719,90 +4872,103 @@ func NetcMV(args ...interface{}) (d FSCs) {
 
 func cMV(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcMV(args[0])
 	} else {
-		d = FSCs{}
+		d = NetcMV()
 	}
 	return
 }
 
-func BMV(intstr interface{}) string {
-	return NetMV(intstr)
+func templateFNRM(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/rm) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDRM = "tmpl/ui/user/rm.tmpl"
 
 func NetRM(args ...interface{}) string {
 
-	var d FSCs
-	filename := "tmpl/ui/user/rm.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (RM) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDRM
+	var d *FSCs
+	defer templateFNRM(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = FSCs{}
+		d = &FSCs{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("RM")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("RM")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bRM(d FSCs) string {
 	return NetbRM(d)
 }
 
+//
 func NetbRM(d FSCs) string {
-
-	filename := "tmpl/ui/user/rm.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDRM
+	defer templateFNRM(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("RM")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (RM) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("RM")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = FSCs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcRM(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
@@ -4820,90 +4986,103 @@ func NetcRM(args ...interface{}) (d FSCs) {
 
 func cRM(args ...interface{}) (d FSCs) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcRM(args[0])
 	} else {
-		d = FSCs{}
+		d = NetcRM()
 	}
 	return
 }
 
-func BRM(intstr interface{}) string {
-	return NetRM(intstr)
+func templateFNWebRootEdit(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/webrootedit) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDWebRootEdit = "tmpl/ui/user/panel/webrootedit.tmpl"
 
 func NetWebRootEdit(args ...interface{}) string {
 
-	var d WebRootEdits
-	filename := "tmpl/ui/user/panel/webrootedit.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (WebRootEdit) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDWebRootEdit
+	var d *WebRootEdits
+	defer templateFNWebRootEdit(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = WebRootEdits{}
+		d = &WebRootEdits{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("WebRootEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("WebRootEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bWebRootEdit(d WebRootEdits) string {
 	return NetbWebRootEdit(d)
 }
 
+//
 func NetbWebRootEdit(d WebRootEdits) string {
-
-	filename := "tmpl/ui/user/panel/webrootedit.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDWebRootEdit
+	defer templateFNWebRootEdit(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("WebRootEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (WebRootEdit) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("WebRootEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = WebRootEdits{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcWebRootEdit(args ...interface{}) (d WebRootEdits) {
 	if len(args) > 0 {
@@ -4921,90 +5100,103 @@ func NetcWebRootEdit(args ...interface{}) (d WebRootEdits) {
 
 func cWebRootEdit(args ...interface{}) (d WebRootEdits) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcWebRootEdit(args[0])
 	} else {
-		d = WebRootEdits{}
+		d = NetcWebRootEdit()
 	}
 	return
 }
 
-func BWebRootEdit(intstr interface{}) string {
-	return NetWebRootEdit(intstr)
+func templateFNWebRootEdittwo(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/webtwo) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDWebRootEdittwo = "tmpl/ui/user/panel/webtwo.tmpl"
 
 func NetWebRootEdittwo(args ...interface{}) string {
 
-	var d WebRootEdits
-	filename := "tmpl/ui/user/panel/webtwo.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (WebRootEdittwo) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDWebRootEdittwo
+	var d *WebRootEdits
+	defer templateFNWebRootEdittwo(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = WebRootEdits{}
+		d = &WebRootEdits{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("WebRootEdittwo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("WebRootEdittwo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bWebRootEdittwo(d WebRootEdits) string {
 	return NetbWebRootEdittwo(d)
 }
 
+//
 func NetbWebRootEdittwo(d WebRootEdits) string {
-
-	filename := "tmpl/ui/user/panel/webtwo.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDWebRootEdittwo
+	defer templateFNWebRootEdittwo(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("WebRootEdittwo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (WebRootEdittwo) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("WebRootEdittwo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = WebRootEdits{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcWebRootEdittwo(args ...interface{}) (d WebRootEdits) {
 	if len(args) > 0 {
@@ -5022,90 +5214,103 @@ func NetcWebRootEdittwo(args ...interface{}) (d WebRootEdits) {
 
 func cWebRootEdittwo(args ...interface{}) (d WebRootEdits) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcWebRootEdittwo(args[0])
 	} else {
-		d = WebRootEdits{}
+		d = NetcWebRootEdittwo()
 	}
 	return
 }
 
-func BWebRootEdittwo(intstr interface{}) string {
-	return NetWebRootEdittwo(intstr)
+func templateFNuSettings(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/settings) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDuSettings = "tmpl/editor/settings.tmpl"
 
 func NetuSettings(args ...interface{}) string {
 
-	var d USettings
-	filename := "tmpl/editor/settings.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (uSettings) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDuSettings
+	var d *USettings
+	defer templateFNuSettings(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = USettings{}
+		d = &USettings{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("uSettings")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("uSettings")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func buSettings(d USettings) string {
 	return NetbuSettings(d)
 }
 
+//
 func NetbuSettings(d USettings) string {
-
-	filename := "tmpl/editor/settings.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDuSettings
+	defer templateFNuSettings(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("uSettings")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (uSettings) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("uSettings")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = USettings{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcuSettings(args ...interface{}) (d USettings) {
 	if len(args) > 0 {
@@ -5123,90 +5328,103 @@ func NetcuSettings(args ...interface{}) (d USettings) {
 
 func cuSettings(args ...interface{}) (d USettings) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcuSettings(args[0])
 	} else {
-		d = USettings{}
+		d = NetcuSettings()
 	}
 	return
 }
 
-func BuSettings(intstr interface{}) string {
-	return NetuSettings(intstr)
+func templateFNForm(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/form) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDForm = "tmpl/ui/user/forms/form.tmpl"
 
 func NetForm(args ...interface{}) string {
 
-	var d Forms
-	filename := "tmpl/ui/user/forms/form.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Form) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDForm
+	var d *Forms
+	defer templateFNForm(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Forms{}
+		d = &Forms{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Form")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Form")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bForm(d Forms) string {
 	return NetbForm(d)
 }
 
+//
 func NetbForm(d Forms) string {
-
-	filename := "tmpl/ui/user/forms/form.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDForm
+	defer templateFNForm(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Form")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Form) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Form")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Forms{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcForm(args ...interface{}) (d Forms) {
 	if len(args) > 0 {
@@ -5224,90 +5442,103 @@ func NetcForm(args ...interface{}) (d Forms) {
 
 func cForm(args ...interface{}) (d Forms) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcForm(args[0])
 	} else {
-		d = Forms{}
+		d = NetcForm()
 	}
 	return
 }
 
-func BForm(intstr interface{}) string {
-	return NetForm(intstr)
+func templateFNSWAL(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/swal) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDSWAL = "tmpl/ui/user/forms/swal.tmpl"
 
 func NetSWAL(args ...interface{}) string {
 
-	var d sSWAL
-	filename := "tmpl/ui/user/forms/swal.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (SWAL) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDSWAL
+	var d *sSWAL
+	defer templateFNSWAL(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sSWAL{}
+		d = &sSWAL{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("SWAL")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("SWAL")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bSWAL(d sSWAL) string {
 	return NetbSWAL(d)
 }
 
+//
 func NetbSWAL(d sSWAL) string {
-
-	filename := "tmpl/ui/user/forms/swal.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDSWAL
+	defer templateFNSWAL(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("SWAL")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (SWAL) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("SWAL")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sSWAL{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcSWAL(args ...interface{}) (d sSWAL) {
 	if len(args) > 0 {
@@ -5325,90 +5556,103 @@ func NetcSWAL(args ...interface{}) (d sSWAL) {
 
 func cSWAL(args ...interface{}) (d sSWAL) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcSWAL(args[0])
 	} else {
-		d = sSWAL{}
+		d = NetcSWAL()
 	}
 	return
 }
 
-func BSWAL(intstr interface{}) string {
-	return NetSWAL(intstr)
+func templateFNROC(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/roc) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDROC = "tmpl/ui/user/panel/roc.tmpl"
 
 func NetROC(args ...interface{}) string {
 
-	var d sROC
-	filename := "tmpl/ui/user/panel/roc.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (ROC) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDROC
+	var d *sROC
+	defer templateFNROC(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sROC{}
+		d = &sROC{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("ROC")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("ROC")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bROC(d sROC) string {
 	return NetbROC(d)
 }
 
+//
 func NetbROC(d sROC) string {
-
-	filename := "tmpl/ui/user/panel/roc.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDROC
+	defer templateFNROC(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("ROC")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (ROC) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("ROC")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sROC{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcROC(args ...interface{}) (d sROC) {
 	if len(args) > 0 {
@@ -5426,90 +5670,103 @@ func NetcROC(args ...interface{}) (d sROC) {
 
 func cROC(args ...interface{}) (d sROC) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcROC(args[0])
 	} else {
-		d = sROC{}
+		d = NetcROC()
 	}
 	return
 }
 
-func BROC(intstr interface{}) string {
-	return NetROC(intstr)
+func templateFNRPUT(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/forms/rput) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDRPUT = "tmpl/ui/user/forms/rput.tmpl"
 
 func NetRPUT(args ...interface{}) string {
 
-	var d rPut
-	filename := "tmpl/ui/user/forms/rput.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (RPUT) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDRPUT
+	var d *rPut
+	defer templateFNRPUT(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = rPut{}
+		d = &rPut{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("RPUT")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("RPUT")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bRPUT(d rPut) string {
 	return NetbRPUT(d)
 }
 
+//
 func NetbRPUT(d rPut) string {
-
-	filename := "tmpl/ui/user/forms/rput.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDRPUT
+	defer templateFNRPUT(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("RPUT")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (RPUT) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("RPUT")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = rPut{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcRPUT(args ...interface{}) (d rPut) {
 	if len(args) > 0 {
@@ -5527,90 +5784,103 @@ func NetcRPUT(args ...interface{}) (d rPut) {
 
 func cRPUT(args ...interface{}) (d rPut) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcRPUT(args[0])
 	} else {
-		d = rPut{}
+		d = NetcRPUT()
 	}
 	return
 }
 
-func BRPUT(intstr interface{}) string {
-	return NetRPUT(intstr)
+func templateFNPackageEdit(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/package) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDPackageEdit = "tmpl/ui/user/panel/package.tmpl"
 
 func NetPackageEdit(args ...interface{}) string {
 
-	var d sPackageEdit
-	filename := "tmpl/ui/user/panel/package.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PackageEdit) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDPackageEdit
+	var d *sPackageEdit
+	defer templateFNPackageEdit(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = sPackageEdit{}
+		d = &sPackageEdit{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("PackageEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("PackageEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bPackageEdit(d sPackageEdit) string {
 	return NetbPackageEdit(d)
 }
 
+//
 func NetbPackageEdit(d sPackageEdit) string {
-
-	filename := "tmpl/ui/user/panel/package.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDPackageEdit
+	defer templateFNPackageEdit(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("PackageEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (PackageEdit) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("PackageEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = sPackageEdit{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcPackageEdit(args ...interface{}) (d sPackageEdit) {
 	if len(args) > 0 {
@@ -5628,90 +5898,103 @@ func NetcPackageEdit(args ...interface{}) (d sPackageEdit) {
 
 func cPackageEdit(args ...interface{}) (d sPackageEdit) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcPackageEdit(args[0])
 	} else {
-		d = sPackageEdit{}
+		d = NetcPackageEdit()
 	}
 	return
 }
 
-func BPackageEdit(intstr interface{}) string {
-	return NetPackageEdit(intstr)
+func templateFNDelete(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/delete) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDDelete = "tmpl/ui/user/panel/delete.tmpl"
 
 func NetDelete(args ...interface{}) string {
 
-	var d DForm
-	filename := "tmpl/ui/user/panel/delete.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Delete) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDDelete
+	var d *DForm
+	defer templateFNDelete(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = DForm{}
+		d = &DForm{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Delete")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Delete")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bDelete(d DForm) string {
 	return NetbDelete(d)
 }
 
+//
 func NetbDelete(d DForm) string {
-
-	filename := "tmpl/ui/user/panel/delete.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDDelete
+	defer templateFNDelete(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Delete")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Delete) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Delete")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = DForm{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcDelete(args ...interface{}) (d DForm) {
 	if len(args) > 0 {
@@ -5729,90 +6012,103 @@ func NetcDelete(args ...interface{}) (d DForm) {
 
 func cDelete(args ...interface{}) (d DForm) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcDelete(args[0])
 	} else {
-		d = DForm{}
+		d = NetcDelete()
 	}
 	return
 }
 
-func BDelete(intstr interface{}) string {
-	return NetDelete(intstr)
+func templateFNWelcome(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/welcome) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDWelcome = "tmpl/ui/welcome.tmpl"
 
 func NetWelcome(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/welcome.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Welcome) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDWelcome
+	var d *Dex
+	defer templateFNWelcome(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Welcome")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Welcome")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bWelcome(d Dex) string {
 	return NetbWelcome(d)
 }
 
+//
 func NetbWelcome(d Dex) string {
-
-	filename := "tmpl/ui/welcome.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDWelcome
+	defer templateFNWelcome(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Welcome")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Welcome) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Welcome")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcWelcome(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -5830,90 +6126,103 @@ func NetcWelcome(args ...interface{}) (d Dex) {
 
 func cWelcome(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcWelcome(args[0])
 	} else {
-		d = Dex{}
+		d = NetcWelcome()
 	}
 	return
 }
 
-func BWelcome(intstr interface{}) string {
-	return NetWelcome(intstr)
+func templateFNStripe(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/stripe) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDStripe = "tmpl/ui/stripe.tmpl"
 
 func NetStripe(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/stripe.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Stripe) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDStripe
+	var d *Dex
+	defer templateFNStripe(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Stripe")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Stripe")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bStripe(d Dex) string {
 	return NetbStripe(d)
 }
 
+//
 func NetbStripe(d Dex) string {
-
-	filename := "tmpl/ui/stripe.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDStripe
+	defer templateFNStripe(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Stripe")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Stripe) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Stripe")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcStripe(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -5931,90 +6240,103 @@ func NetcStripe(args ...interface{}) (d Dex) {
 
 func cStripe(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcStripe(args[0])
 	} else {
-		d = Dex{}
+		d = NetcStripe()
 	}
 	return
 }
 
-func BStripe(intstr interface{}) string {
-	return NetStripe(intstr)
+func templateFNDebugger(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/debugger) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDDebugger = "tmpl/ui/debugger.tmpl"
 
 func NetDebugger(args ...interface{}) string {
 
-	var d DebugObj
-	filename := "tmpl/ui/debugger.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Debugger) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDDebugger
+	var d *DebugObj
+	defer templateFNDebugger(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = DebugObj{}
+		d = &DebugObj{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Debugger")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Debugger")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bDebugger(d DebugObj) string {
 	return NetbDebugger(d)
 }
 
+//
 func NetbDebugger(d DebugObj) string {
-
-	filename := "tmpl/ui/debugger.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDDebugger
+	defer templateFNDebugger(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Debugger")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Debugger) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Debugger")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = DebugObj{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcDebugger(args ...interface{}) (d DebugObj) {
 	if len(args) > 0 {
@@ -6032,90 +6354,103 @@ func NetcDebugger(args ...interface{}) (d DebugObj) {
 
 func cDebugger(args ...interface{}) (d DebugObj) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcDebugger(args[0])
 	} else {
-		d = DebugObj{}
+		d = NetcDebugger()
 	}
 	return
 }
 
-func BDebugger(intstr interface{}) string {
-	return NetDebugger(intstr)
+func templateFNTemplateEdit(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/templateEditor) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDTemplateEdit = "tmpl/ui/user/panel/templateEditor.tmpl"
 
 func NetTemplateEdit(args ...interface{}) string {
 
-	var d TemplateEdits
-	filename := "tmpl/ui/user/panel/templateEditor.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TemplateEdit) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDTemplateEdit
+	var d *TemplateEdits
+	defer templateFNTemplateEdit(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = TemplateEdits{}
+		d = &TemplateEdits{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("TemplateEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("TemplateEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bTemplateEdit(d TemplateEdits) string {
 	return NetbTemplateEdit(d)
 }
 
+//
 func NetbTemplateEdit(d TemplateEdits) string {
-
-	filename := "tmpl/ui/user/panel/templateEditor.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDTemplateEdit
+	defer templateFNTemplateEdit(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("TemplateEdit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TemplateEdit) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("TemplateEdit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = TemplateEdits{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcTemplateEdit(args ...interface{}) (d TemplateEdits) {
 	if len(args) > 0 {
@@ -6133,90 +6468,103 @@ func NetcTemplateEdit(args ...interface{}) (d TemplateEdits) {
 
 func cTemplateEdit(args ...interface{}) (d TemplateEdits) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcTemplateEdit(args[0])
 	} else {
-		d = TemplateEdits{}
+		d = NetcTemplateEdit()
 	}
 	return
 }
 
-func BTemplateEdit(intstr interface{}) string {
-	return NetTemplateEdit(intstr)
+func templateFNTemplateEditTwo(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/user/panel/tpetwo) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDTemplateEditTwo = "tmpl/ui/user/panel/tpetwo.tmpl"
 
 func NetTemplateEditTwo(args ...interface{}) string {
 
-	var d TemplateEdits
-	filename := "tmpl/ui/user/panel/tpetwo.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TemplateEditTwo) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDTemplateEditTwo
+	var d *TemplateEdits
+	defer templateFNTemplateEditTwo(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = TemplateEdits{}
+		d = &TemplateEdits{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("TemplateEditTwo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("TemplateEditTwo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bTemplateEditTwo(d TemplateEdits) string {
 	return NetbTemplateEditTwo(d)
 }
 
+//
 func NetbTemplateEditTwo(d TemplateEdits) string {
-
-	filename := "tmpl/ui/user/panel/tpetwo.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDTemplateEditTwo
+	defer templateFNTemplateEditTwo(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("TemplateEditTwo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (TemplateEditTwo) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("TemplateEditTwo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = TemplateEdits{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcTemplateEditTwo(args ...interface{}) (d TemplateEdits) {
 	if len(args) > 0 {
@@ -6234,90 +6582,103 @@ func NetcTemplateEditTwo(args ...interface{}) (d TemplateEdits) {
 
 func cTemplateEditTwo(args ...interface{}) (d TemplateEdits) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcTemplateEditTwo(args[0])
 	} else {
-		d = TemplateEdits{}
+		d = NetcTemplateEditTwo()
 	}
 	return
 }
 
-func BTemplateEditTwo(intstr interface{}) string {
-	return NetTemplateEditTwo(intstr)
+func templateFNInput(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/input) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDInput = "tmpl/ui/input.tmpl"
 
 func NetInput(args ...interface{}) string {
 
-	var d Inputs
-	filename := "tmpl/ui/input.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Input) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDInput
+	var d *Inputs
+	defer templateFNInput(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Inputs{}
+		d = &Inputs{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Input")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Input")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bInput(d Inputs) string {
 	return NetbInput(d)
 }
 
+//
 func NetbInput(d Inputs) string {
-
-	filename := "tmpl/ui/input.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDInput
+	defer templateFNInput(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Input")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Input) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Input")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Inputs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcInput(args ...interface{}) (d Inputs) {
 	if len(args) > 0 {
@@ -6335,90 +6696,103 @@ func NetcInput(args ...interface{}) (d Inputs) {
 
 func cInput(args ...interface{}) (d Inputs) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcInput(args[0])
 	} else {
-		d = Inputs{}
+		d = NetcInput()
 	}
 	return
 }
 
-func BInput(intstr interface{}) string {
-	return NetInput(intstr)
+func templateFNDebuggerNode(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/debugnode) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDDebuggerNode = "tmpl/ui/debugnode.tmpl"
 
 func NetDebuggerNode(args ...interface{}) string {
 
-	var d DebugObj
-	filename := "tmpl/ui/debugnode.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (DebuggerNode) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDDebuggerNode
+	var d *DebugObj
+	defer templateFNDebuggerNode(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = DebugObj{}
+		d = &DebugObj{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("DebuggerNode")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("DebuggerNode")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bDebuggerNode(d DebugObj) string {
 	return NetbDebuggerNode(d)
 }
 
+//
 func NetbDebuggerNode(d DebugObj) string {
-
-	filename := "tmpl/ui/debugnode.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDDebuggerNode
+	defer templateFNDebuggerNode(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("DebuggerNode")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (DebuggerNode) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("DebuggerNode")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = DebugObj{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcDebuggerNode(args ...interface{}) (d DebugObj) {
 	if len(args) > 0 {
@@ -6436,90 +6810,103 @@ func NetcDebuggerNode(args ...interface{}) (d DebugObj) {
 
 func cDebuggerNode(args ...interface{}) (d DebugObj) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcDebuggerNode(args[0])
 	} else {
-		d = DebugObj{}
+		d = NetcDebuggerNode()
 	}
 	return
 }
 
-func BDebuggerNode(intstr interface{}) string {
-	return NetDebuggerNode(intstr)
+func templateFNButton(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/button) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDButton = "tmpl/ui/button.tmpl"
 
 func NetButton(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/button.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Button) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDButton
+	var d *Dex
+	defer templateFNButton(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Button")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Button")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bButton(d Dex) string {
 	return NetbButton(d)
 }
 
+//
 func NetbButton(d Dex) string {
-
-	filename := "tmpl/ui/button.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDButton
+	defer templateFNButton(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Button")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Button) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Button")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcButton(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -6537,90 +6924,103 @@ func NetcButton(args ...interface{}) (d Dex) {
 
 func cButton(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcButton(args[0])
 	} else {
-		d = Dex{}
+		d = NetcButton()
 	}
 	return
 }
 
-func BButton(intstr interface{}) string {
-	return NetButton(intstr)
+func templateFNSubmit(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/submit) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDSubmit = "tmpl/ui/submit.tmpl"
 
 func NetSubmit(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/submit.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Submit) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDSubmit
+	var d *Dex
+	defer templateFNSubmit(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Submit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Submit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bSubmit(d Dex) string {
 	return NetbSubmit(d)
 }
 
+//
 func NetbSubmit(d Dex) string {
-
-	filename := "tmpl/ui/submit.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDSubmit
+	defer templateFNSubmit(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Submit")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Submit) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Submit")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcSubmit(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -6638,90 +7038,103 @@ func NetcSubmit(args ...interface{}) (d Dex) {
 
 func cSubmit(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcSubmit(args[0])
 	} else {
-		d = Dex{}
+		d = NetcSubmit()
 	}
 	return
 }
 
-func BSubmit(intstr interface{}) string {
-	return NetSubmit(intstr)
+func templateFNLogo(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (logo) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDLogo = "tmpl/logo.tmpl"
 
 func NetLogo(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/logo.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Logo) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDLogo
+	var d *Dex
+	defer templateFNLogo(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Logo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Logo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bLogo(d Dex) string {
 	return NetbLogo(d)
 }
 
+//
 func NetbLogo(d Dex) string {
-
-	filename := "tmpl/logo.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDLogo
+	defer templateFNLogo(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Logo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Logo) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Logo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcLogo(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -6739,90 +7152,103 @@ func NetcLogo(args ...interface{}) (d Dex) {
 
 func cLogo(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcLogo(args[0])
 	} else {
-		d = Dex{}
+		d = NetcLogo()
 	}
 	return
 }
 
-func BLogo(intstr interface{}) string {
-	return NetLogo(intstr)
+func templateFNNavbar(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/navbar) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDNavbar = "tmpl/ui/navbar.tmpl"
 
 func NetNavbar(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/navbar.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Navbar) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDNavbar
+	var d *Dex
+	defer templateFNNavbar(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("Navbar")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Navbar")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bNavbar(d Dex) string {
 	return NetbNavbar(d)
 }
 
+//
 func NetbNavbar(d Dex) string {
-
-	filename := "tmpl/ui/navbar.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDNavbar
+	defer templateFNNavbar(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("Navbar")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (Navbar) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("Navbar")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcNavbar(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -6840,90 +7266,103 @@ func NetcNavbar(args ...interface{}) (d Dex) {
 
 func cNavbar(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcNavbar(args[0])
 	} else {
-		d = Dex{}
+		d = NetcNavbar()
 	}
 	return
 }
 
-func BNavbar(intstr interface{}) string {
-	return NetNavbar(intstr)
+func templateFNNavCustom(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/navbars) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDNavCustom = "tmpl/ui/navbars.tmpl"
 
 func NetNavCustom(args ...interface{}) string {
 
-	var d Navbars
-	filename := "tmpl/ui/navbars.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavCustom) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDNavCustom
+	var d *Navbars
+	defer templateFNNavCustom(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Navbars{}
+		d = &Navbars{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("NavCustom")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("NavCustom")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bNavCustom(d Navbars) string {
 	return NetbNavCustom(d)
 }
 
+//
 func NetbNavCustom(d Navbars) string {
-
-	filename := "tmpl/ui/navbars.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDNavCustom
+	defer templateFNNavCustom(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("NavCustom")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavCustom) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("NavCustom")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Navbars{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcNavCustom(args ...interface{}) (d Navbars) {
 	if len(args) > 0 {
@@ -6941,90 +7380,103 @@ func NetcNavCustom(args ...interface{}) (d Navbars) {
 
 func cNavCustom(args ...interface{}) (d Navbars) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcNavCustom(args[0])
 	} else {
-		d = Navbars{}
+		d = NetcNavCustom()
 	}
 	return
 }
 
-func BNavCustom(intstr interface{}) string {
-	return NetNavCustom(intstr)
+func templateFNNavMain(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/navmain) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDNavMain = "tmpl/ui/navmain.tmpl"
 
 func NetNavMain(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/navmain.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavMain) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDNavMain
+	var d *Dex
+	defer templateFNNavMain(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("NavMain")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("NavMain")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bNavMain(d Dex) string {
 	return NetbNavMain(d)
 }
 
+//
 func NetbNavMain(d Dex) string {
-
-	filename := "tmpl/ui/navmain.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDNavMain
+	defer templateFNNavMain(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("NavMain")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavMain) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("NavMain")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcNavMain(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -7042,90 +7494,103 @@ func NetcNavMain(args ...interface{}) (d Dex) {
 
 func cNavMain(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcNavMain(args[0])
 	} else {
-		d = Dex{}
+		d = NetcNavMain()
 	}
 	return
 }
 
-func BNavMain(intstr interface{}) string {
-	return NetNavMain(intstr)
+func templateFNNavPKG(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/navpkg) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDNavPKG = "tmpl/ui/navpkg.tmpl"
 
 func NetNavPKG(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/navpkg.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavPKG) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDNavPKG
+	var d *Dex
+	defer templateFNNavPKG(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("NavPKG")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("NavPKG")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bNavPKG(d Dex) string {
 	return NetbNavPKG(d)
 }
 
+//
 func NetbNavPKG(d Dex) string {
-
-	filename := "tmpl/ui/navpkg.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDNavPKG
+	defer templateFNNavPKG(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("NavPKG")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavPKG) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("NavPKG")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcNavPKG(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -7143,90 +7608,103 @@ func NetcNavPKG(args ...interface{}) (d Dex) {
 
 func cNavPKG(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcNavPKG(args[0])
 	} else {
-		d = Dex{}
+		d = NetcNavPKG()
 	}
 	return
 }
 
-func BNavPKG(intstr interface{}) string {
-	return NetNavPKG(intstr)
+func templateFNCrashedPage(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/crashedpage) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDCrashedPage = "tmpl/ui/crashedpage.tmpl"
 
 func NetCrashedPage(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/crashedpage.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (CrashedPage) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDCrashedPage
+	var d *Dex
+	defer templateFNCrashedPage(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("CrashedPage")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("CrashedPage")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bCrashedPage(d Dex) string {
 	return NetbCrashedPage(d)
 }
 
+//
 func NetbCrashedPage(d Dex) string {
-
-	filename := "tmpl/ui/crashedpage.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDCrashedPage
+	defer templateFNCrashedPage(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("CrashedPage")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (CrashedPage) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("CrashedPage")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcCrashedPage(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -7244,90 +7722,103 @@ func NetcCrashedPage(args ...interface{}) (d Dex) {
 
 func cCrashedPage(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcCrashedPage(args[0])
 	} else {
-		d = Dex{}
+		d = NetcCrashedPage()
 	}
 	return
 }
 
-func BCrashedPage(intstr interface{}) string {
-	return NetCrashedPage(intstr)
+func templateFNEndpointTesting(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/endpointtester) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDEndpointTesting = "tmpl/ui/endpointtester.tmpl"
 
 func NetEndpointTesting(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/endpointtester.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (EndpointTesting) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDEndpointTesting
+	var d *Dex
+	defer templateFNEndpointTesting(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("EndpointTesting")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("EndpointTesting")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bEndpointTesting(d Dex) string {
 	return NetbEndpointTesting(d)
 }
 
+//
 func NetbEndpointTesting(d Dex) string {
-
-	filename := "tmpl/ui/endpointtester.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDEndpointTesting
+	defer templateFNEndpointTesting(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("EndpointTesting")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (EndpointTesting) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("EndpointTesting")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcEndpointTesting(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -7345,90 +7836,103 @@ func NetcEndpointTesting(args ...interface{}) (d Dex) {
 
 func cEndpointTesting(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcEndpointTesting(args[0])
 	} else {
-		d = Dex{}
+		d = NetcEndpointTesting()
 	}
 	return
 }
 
-func BEndpointTesting(intstr interface{}) string {
-	return NetEndpointTesting(intstr)
+func templateFNNavPromo(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/navpromo) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
 }
+
+var templateIDNavPromo = "tmpl/ui/navpromo.tmpl"
 
 func NetNavPromo(args ...interface{}) string {
 
-	var d Dex
-	filename := "tmpl/ui/navpromo.tmpl"
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavPromo) : %s", filename))
-			// log.Println(n)
-			DebugTemplatePath(filename, &d)
-			//http.Redirect(w,r,"",307)
-		}
-	}()
+	localid := templateIDNavPromo
+	var d *Dex
+	defer templateFNNavPromo(localid, d)
 	if len(args) > 0 {
 		jso := args[0].(string)
 		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, &d)
+		err := json.Unmarshal(jsonBlob, d)
 		if err != nil {
-			log.Println("error:", err)
-			return ""
+			return err.Error()
 		}
 	} else {
-		d = Dex{}
+		d = &Dex{}
 	}
 
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
 	output := new(bytes.Buffer)
-	t := template.New("NavPromo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
 
-	erro := t.Execute(output, &d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", filename))
-		DebugTemplatePath(filename, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("NavPromo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
 	}
-	return html.UnescapeString(output.String())
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
 func bNavPromo(d Dex) string {
 	return NetbNavPromo(d)
 }
 
+//
 func NetbNavPromo(d Dex) string {
-
-	filename := "tmpl/ui/navpromo.tmpl"
-
-	body, er := Asset(filename)
-	if er != nil {
-		return ""
-	}
+	localid := templateIDNavPromo
+	defer templateFNNavPromo(localid, d)
 	output := new(bytes.Buffer)
-	t := template.New("NavPromo")
-	t = t.Funcs(template.FuncMap{"a": Netadd, "s": Netsubs, "m": Netmultiply, "d": Netdivided, "js": Netimportjs, "css": Netimportcss, "sd": NetsessionDelete, "sr": NetsessionRemove, "sc": NetsessionKey, "ss": NetsessionSet, "sso": NetsessionSetInt, "sgo": NetsessionGetInt, "sg": NetsessionGet, "form": formval, "eq": equalz, "neq": nequalz, "lte": netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf})
-	t, _ = t.Parse(ReadyTemplate(body))
-	defer func() {
-		if n := recover(); n != nil {
-			color.Red(fmt.Sprintf("Error loading template in path (NavPromo) : %s", filename))
-			DebugTemplatePath(filename, &d)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
 		}
-	}()
-	erro := t.Execute(output, &d)
+		var localtemplate = template.New("NavPromo")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
 	if erro != nil {
 		log.Println(erro)
 	}
-	return html.UnescapeString(output.String())
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 func NetcNavPromo(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
@@ -7446,20 +7950,11 @@ func NetcNavPromo(args ...interface{}) (d Dex) {
 
 func cNavPromo(args ...interface{}) (d Dex) {
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
-		if err != nil {
-			log.Println("error:", err)
-			return
-		}
+		d = NetcNavPromo(args[0])
 	} else {
-		d = Dex{}
+		d = NetcNavPromo()
 	}
 	return
-}
-
-func BNavPromo(intstr interface{}) string {
-	return NetNavPromo(intstr)
 }
 
 func dummy_timer() {
@@ -7550,13 +8045,34 @@ func main() {
 		port = fmt.Sprintf(":%s", envport)
 	}
 	log.Printf("Listenning on Port %v\n", port)
+
+	//+++extendgxmlmain+++
+
+	stop := make(chan os.Signal, 1)
+
+	signal.Notify(stop, os.Interrupt)
+	http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "web"}))
 	http.HandleFunc("/", MakeHandler(Handler))
 
-	http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "web"}))
+	h := &http.Server{Addr: port}
 
-	errgos := http.ListenAndServe(port, nil)
-	if errgos != nil {
-		log.Fatal(errgos)
-	}
+	go func() {
+		errgos := h.ListenAndServe()
+		if errgos != nil {
+			log.Fatal(errgos)
+		}
+	}()
+
+	<-stop
+
+	log.Println("\nShutting down the server...")
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	h.Shutdown(ctx)
+
+	log.Println("Server gracefully stopped")
 
 }
+
+//+++extendgxmlroot+++
