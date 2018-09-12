@@ -15,7 +15,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - View web application output.
 
 ## Requirements
-- Any version of Go. 😘
+- Go v1.7+. 😘
 - [GopherSauce](http://gophersauce.com) if using `makefile`.
 
 ## Install
