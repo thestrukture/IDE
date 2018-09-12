@@ -5,8 +5,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/cheikhshift/gos/core"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -147,6 +149,66 @@ func getPlugins() []string {
 
 	json.Unmarshal(raw, &c)
 	return c
+}
+
+func saveKanBan(pkg, raw string) {
+	gpath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "kanban.json")
+	fmt.Println("Writing ", gpath)
+	ioutil.WriteFile(gpath, []byte(raw), 0700)
+}
+
+func getKanBan(pkg string) (ret map[string]interface{}) {
+	gpath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "kanban.json")
+	fmt.Println("Reading ", gpath)
+	raw, err := ioutil.ReadFile(gpath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	json.Unmarshal(raw, &ret)
+
+	return
+
+}
+
+func pushGit(pkg string) {
+	gpath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg)
+
+	fmt.Println("pushing ", gpath)
+
+	os.Chdir(gpath)
+
+	glog, err := core.RunCmdSmart(fmt.Sprintf("git push"))
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Print(glog)
+
+}
+
+func commitGit(pkg, message string) bool {
+	gpath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg)
+	cmd := fmt.Sprintf("git commit -m \"%s\" ", message)
+
+	fmt.Println("committing ", gpath)
+
+	os.Chdir(gpath)
+
+	fmt.Println("Running : ", cmd)
+	glog, err := core.RunCmdSmart(cmd)
+
+	if err != nil {
+		log.Print(err)
+		return true
+	}
+
+	log.Print(glog)
+
+	return false
+
 }
 
 func FindinString(data string, match string) int {

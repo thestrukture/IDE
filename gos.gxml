@@ -556,6 +556,7 @@
 	    	 	 <template name="NavPKG" tmpl="ui/navpkg" struct="Dex" desc="Package Page Menu" />
 	    	 	 <template name="CrashedPage" tmpl="ui/crashedpage" struct="Dex" desc="Package Page Menu" />
 	    	 	 <template name="EndpointTesting" tmpl="ui/endpointtester" struct="Dex" />
+	    	 	 <template name="KanBan" tmpl="ui/kanban" struct="Dex" />
 	    	 	 <template name="NavPromo" tmpl="ui/navpromo" struct="Dex" desc="Package Page Menu" />
 
           </templates>
@@ -570,6 +571,39 @@
 						} else {
 						response = mResponse(bugs[0])
 						}
+				</end>
+
+				<end path="/api/kanban" type="GET">
+					pkgName := r.FormValue("pkg")
+					response = mResponse(getKanBan(pkgName))
+				</end>
+
+				<end path="/api/git" type="POST">
+					pkgName := r.FormValue("pkg")
+					cmd := r.FormValue("cmd")
+
+				
+
+					if cmd == "commit" {
+						mess := r.FormValue("message")
+						response = mResponse(commitGit(pkgName, mess))
+					}
+
+					if cmd == "push" {
+						pushGit(pkgName)
+						response = mResponse(false)
+					}
+
+					
+				</end>
+
+				<end path="/api/kanban" type="POST">
+					pkgName := r.FormValue("pkg")
+					payload := r.FormValue("payload")
+
+					saveKanBan(pkgName, payload)
+
+					response = "OK"
 				</end>
 
 				<end path="/api/empty" type="GET" >
@@ -696,6 +730,8 @@ for _, v := range apps {
 					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"16",Text: "Logs",Icon: "fa fa-list"} )
 
 					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"18",Text: "Testing",Icon: "fa fa-flask"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"300",Text: "KanBan board",Icon: "fa fa-briefcase"} )
 
 					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"7",Text: "Build center",Icon: "fa fa-server"} )
 
@@ -973,6 +1009,10 @@ for _, v := range apps {
 			} else if r.FormValue("type") == "18" {
 
 				response = net_bEndpointTesting(Dex{Misc:r.FormValue("space")})
+
+			} else if r.FormValue("type") == "300" {
+
+				response = net_bKanBan(Dex{Misc:r.FormValue("space")})
 
 			}
 			callmet = true

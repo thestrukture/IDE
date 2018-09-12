@@ -44,6 +44,7 @@
 <script type="text/javascript">
 	 editors["{{.ID}}"] = ace.edit("editor{{.ID}}");
 	 editors["{{.ID}}"].getSession().setMode("ace/mode/html")
+	 editors["{{.ID}}"].setTheme("ace/theme/clouds_midnight");
 	 editors[{{.ID}} + "c"] = {wrap:false};
 	   editors["{{.ID}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	 editors["{{.ID}}"].commands.addCommand({

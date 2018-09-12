@@ -1,10 +1,15 @@
 {{$rin := RandTen}}
-<div class="tabview" id="{{$rin}}" style="background-color:#fff;">
+<div class="tabview" id="{{$rin}}" >
+<style type="text/css">
+	blockquote input {
+		margin-bottom: 0.3em;
+	}
+</style>
 <div class="row endp-view full-height" style="    height: calc(100% - 12px);">
 	<div class="col-xs-5 card card-inverse card-info full-height over-flow-fix" style="border-right:1px #999 dotted;padding-left:29px;">
 			
 			  <div class="card-block">
-			    <blockquote class="card-blockquote">
+			    <blockquote  style="margin-bottom: 0.8em;" class="card-blockquote" >
 			     <h3 >Web services</h3>
 			  	{{bRPUT .CreateForm}}
 			    </blockquote>

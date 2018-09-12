@@ -1,5 +1,5 @@
 {{$rin := RandTen}}
-<div class="tabview" id="{{$rin}}" pkg="{{.PKG}}" style="background-color:#fff;">
+<div class="tabview" id="{{$rin}}" pkg="{{.PKG}}" >
 <div  class="row inf-x clear-btn" style="padding-top:20px;">
 	<div class="col-sm-12" style="min-height:32px;">
 				<button class="btn btn-warning" onclick="SavePKG('6','{{.PKG}}', '{{$rin}}')"><i class="fa fa-save"></i></button>
@@ -16,6 +16,7 @@
 <script type="text/javascript">
 	 editors["{{$rin}}"] = ace.edit("editor{{$rin}}");
 	 editors["{{$rin}}"].getSession().setMode("ace/mode/golang");
+	 editors["{{$rin}}"].setTheme("ace/theme/clouds_midnight");
 	 editors[{{$rin}} + "c"] = {wrap:false};
 	  editors["{{$rin}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	  editors["{{$rin}}"].commands.addCommand({

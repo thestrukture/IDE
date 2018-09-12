@@ -1,139 +1,136 @@
-<div class="full-height" id="{{.ID}}" pkg="{{.PKG}}" >
-<div  class="row inf-x clear-btn">
-<style type="text/css">
-	.spl-col .dosub {
-		float:left;
-	}
-</style>
-	<div class="col-sm-12">
-	<button class="btn btn-warning" onclick="SaveFile('{{.ID}}', '{{.SavesTo}}','{{.PKG}}')"><i class="fa fa-save"></i></button>
-		<button type="button" class="btn btn-primary" onclick="editors['{{.ID}}c'].wrap = editors['{{.ID}}c'].wrap ? false : true;editors['{{.ID}}'].getSession().setUseWrapMode( editors['{{.ID}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
- Wrap
-</button>
-		
-		<button onclick="$('#{{.ID}}myModal').modal('show')" class="btn">About service code box</button>
-	</div>
-	
-</div>
-
-<div id="editor{{.ID}}" class="col-xs-12 defed">{{printf "%s" .File}}</div>
-
-<div class="modal fade" id="{{.ID}}myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h5 class="modal-title" id="exampleModalLabel">About service code box.</h5>
-        
-      </div>
-      <div class="modal-body">
-      <p> In theory picture your code being wrapped around this func : </p>
-      <p>func DoRequest(r <a href="https://golang.org/pkg/net/http/#Request" target="_blank">*http.Request</a>, w <a href="https://golang.org/pkg/net/http/#ResponseWriter" target="_blank">http.ResponseWriter</a>,session.Values <a href="http://www.gorillatoolkit.org/pkg/sessions" target="_blank">map[string]interface{}</a> ) {</p>
-      <p><code>Service code here</code></p>
-      <p>}</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
-       
-      </div>
+<div class="full-height" id="{{.ID}}" pkg="{{.PKG}}">
+    <div class="row inf-x clear-btn">
+        <style type="text/css">
+        .spl-col .dosub {
+            float: left;
+        }
+        </style>
+        <div class="col-sm-12">
+            <button class="btn btn-warning" onclick="SaveFile('{{.ID}}', '{{.SavesTo}}','{{.PKG}}')"><i class="fa fa-save"></i></button>
+            <button type="button" class="btn btn-primary" onclick="editors['{{.ID}}c'].wrap = editors['{{.ID}}c'].wrap ? false : true;editors['{{.ID}}'].getSession().setUseWrapMode( editors['{{.ID}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
+                Wrap
+            </button>
+            <button onclick="$('#{{.ID}}myModal').modal('show')" class="btn">About service code box</button>
+        </div>
     </div>
-  </div>
-</div>
-<script type="text/javascript">
-	 editors["{{.ID}}"] = ace.edit("editor{{.ID}}");
-	 editors["{{.ID}}"].getSession().setMode("ace/mode/golang")
-	 editors[{{.ID}} + "c"] = {wrap:false};
-	   editors["{{.ID}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
-	 editors["{{.ID}}"].commands.addCommand({
-	    name: 'myCommand',
-	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
-	    exec: function(editor) {
-	        //...
-	        SaveFile('{{.ID}}', '{{.SavesTo}}','{{.PKG}}');
-	    },
-	    readOnly: true // false if this command should not apply in readOnly mode
-	});
+    <div id="editor{{.ID}}" class="col-xs-12 defed">{{printf "%s" .File}}</div>
+    <div class="modal fade" id="{{.ID}}myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h5 class="modal-title" id="exampleModalLabel">About service code box.</h5>
+                </div>
+                <div class="modal-body">
+                    <p> In theory picture your code being wrapped around this func : </p>
+                    <p>func DoRequest(r <a href="https://golang.org/pkg/net/http/#Request" target="_blank">*http.Request</a>, w <a href="https://golang.org/pkg/net/http/#ResponseWriter" target="_blank">http.ResponseWriter</a>,session.Values <a href="http://www.gorillatoolkit.org/pkg/sessions" target="_blank">map[string]interface{}</a> ) {</p>
+                    <p><code>Service code here</code></p>
+                    <p>}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Dismiss</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    editors["{{.ID}}"] = ace.edit("editor{{.ID}}");
+    editors["{{.ID}}"].getSession().setMode("ace/mode/golang");
+   	editors["{{.ID}}"].setTheme("ace/theme/clouds_midnight");
+    editors[{{.ID}} + "c"] = { wrap: false };
+    editors["{{.ID}}"].setOptions({ enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true });
+    editors["{{.ID}}"].commands.addCommand({
+        name: 'myCommand',
+        bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
+        exec: function(editor) {
+            //...
+            SaveFile('{{.ID}}', '{{.SavesTo}}', '{{.PKG}}');
+        },
+        readOnly: true // false if this command should not apply in readOnly mode
+    });
 
 
-			editors["{{.ID}}"].commands.addCommand({
-	    name: 'oterm',
-	    bindKey: {win: 'Ctrl-I',  mac: 'Ctrl-I'},
-	    exec: function(editor) {
-	        //...
-	    	toggleTerm()
-	    },
-	    readOnly: true // false if this command should not apply in readOnly mode
-		});
+    editors["{{.ID}}"].commands.addCommand({
+        name: 'oterm',
+        bindKey: { win: 'Ctrl-I', mac: 'Ctrl-I' },
+        exec: function(editor) {
+            //...
+            toggleTerm()
+        },
+        readOnly: true // false if this command should not apply in readOnly mode
+    });
 
-				editors["{{.ID}}"].commands.addCommand({
-	    name: 'collapse',
-	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
-	    exec: function(editor) {
-	        //...
-	    	CollapseGloj()
-	    },
-	    readOnly: true // false if this command should not apply in readOnly mode
-		});
-
-
+    editors["{{.ID}}"].commands.addCommand({
+        name: 'collapse',
+        bindKey: { win: 'Ctrl-M', mac: 'Ctrl-M' },
+        exec: function(editor) {
+            //...
+            CollapseGloj()
+        },
+        readOnly: true // false if this command should not apply in readOnly mode
+    });
 
 
 
 
-		editors["{{.ID}}"].container.addEventListener("contextmenu", function(e) {
-		  
-		    	var edt = editors["{{.ID}}"]
-			   		var cursor = edt.selection.getCursor()
-			   		var txt = edt.session.getTextRange(edt.getSelectionRange());
-			   		
-			   		
-			   	$('body').contextMenu("destroy");
-			   		
-			   			  e.preventDefault();
-			   			 $.contextMenu({
-					        selector: 'body', 
-					        trigger: 'none',
-					        animation: {duration: 0, show: 'fadeIn', hide: 'fadeOut'},
-					        callback: function(key, options) {
-					          handleClickStruk(key, txt, {{.ID}}, {{.PKG}})
-					        },
-					        items: getItems(txt)
-					    });
-			   		  $('body').contextMenu();
-			   		  return false;
-			   		
-		    
-		}, false);
 
-	 setTimeout(function(){
-	 	var id = {{.SavesTo}}
-	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{.PKG}}, success:function(html){
-	 		//console.log(html)
-	 		if (html.Bugs){
-	 		for (var i = html.Bugs.length - 1; i >= 0; i--) {
-	 			var bug = html.Bugs[i];
-	 			
-	 			var action = bug.Action.split(":")
-	 			if (action[0] == "service"){
-		 			if (id.includes(action[3])  ){
-		 				//find line
-		 				$(".ace_gutter-cell",  "#" + {{.ID}}).each(function(e,i){
-		 					if ($(this).html() == action[2]){
-		 						$(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
-		 						$(this).html( '<i class="fa fa-warning"></i>' + action[2] )
-		 					}
-		 				})
-		 			}
-	 			}
-	 		}
-	 		}
-	 	} 
-	 })
-	 },600)
-	 $(".tabview.active").attr("pkg", {{.PKG}})
-	 
-	// addTab("{{.SavesTo}}", "{{.ID}}" );
-</script>
+
+    editors["{{.ID}}"].container.addEventListener("contextmenu", function(e) {
+
+        var edt = editors["{{.ID}}"]
+        var cursor = edt.selection.getCursor()
+        var txt = edt.session.getTextRange(edt.getSelectionRange());
+
+
+        $('body').contextMenu("destroy");
+
+        e.preventDefault();
+        $.contextMenu({
+            selector: 'body',
+            trigger: 'none',
+            animation: { duration: 0, show: 'fadeIn', hide: 'fadeOut' },
+            callback: function(key, options) {
+                handleClickStruk(key, txt, {{.ID}}, {{.PKG}})
+            },
+            items: getItems(txt)
+        });
+        $('body').contextMenu();
+        return false;
+
+
+    }, false);
+
+    setTimeout(function() {
+        var id = {{.SavesTo}}
+        $.ajax({
+            url: "/api/pkg-bugs?pkg=" + {{.PKG}},
+            success: function(html) {
+                //console.log(html)
+                if (html.Bugs) {
+                    for (var i = html.Bugs.length - 1; i >= 0; i--) {
+                        var bug = html.Bugs[i];
+
+                        var action = bug.Action.split(":")
+                        if (action[0] == "service") {
+                            if (id.includes(action[3])) {
+                                //find line
+                                $(".ace_gutter-cell", "#" + {{.ID}}).each(function(e, i) {
+                                    if ($(this).html() == action[2]) {
+                                        $(this).attr("style", "height: 16px;width: 47px;padding-left: 10px;letter-spacing: 3px;")
+                                        $(this).html('<i class="fa fa-warning"></i>' + action[2])
+                                    }
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }, 600)
+    $(".tabview.active").attr("pkg", {{.PKG}})
+
+    // addTab("{{.SavesTo}}", "{{.ID}}" );
+    </script>
 </div>

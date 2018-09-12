@@ -1,5 +1,5 @@
 {{$rin := RandTen}}
-<div class="tabview" id="{{$rin}}" pkg="{{.PKG}}" style="background-color:#fff;">
+<div class="tabview" id="{{$rin}}" pkg="{{.PKG}}">
 <div  class="row" style="padding-top:20px;">
 	<div class="col-sm-3" style="min-height:50px;">
 	
@@ -18,6 +18,7 @@
 <script type="text/javascript">
 	 editors["{{$rin}}"] = ace.edit("editor{{$rin}}");
 	 editors["{{$rin}}"].getSession().setMode("ace/mode/golang");
+	 editors["{{$rin}}"].setTheme("ace/theme/clouds_midnight");
 	   editors["{{$rin}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
 	 editors["{{$rin}}"].commands.addCommand({
 	    name: 'myCommand',

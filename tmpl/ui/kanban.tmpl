@@ -1,0 +1,372 @@
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" kanban-project="{{.Misc}}" style="background-color:#fff;">
+<div style="position: fixed;width: 100%;height: auto;    background: #333;
+    z-index: 1;" class="fixed-handle">
+</div>
+    <div style="padding-left:20px;height:100%;overflow-y: auto;" class="card-info over-flow-fix">
+            <div class="new_task" style="max-width: 340px;display: none;">
+                <p class="text-right"><button class="btn btn-sm btn-danger cancel-task">Cancel</button></p>
+                <textarea style="height:300px;" class="card-text form-control" placeholder="Enter task description, this will be the name of the commit message."></textarea>
+                <br>
+                <label>Priority level</label>
+                <select class="form-control task-pri">
+                      <option value="#5dc3f0">Side objectives [GREEN].</option>
+                <option value= "#6bbd49">Project objectives [BLUE].</option>
+                 <option value="#f19b60">Required task [ORANGE].</option>
+                 <option value="#333">Not required [BLACK].</option>       
+                </select>
+                <br>
+                <input type="text" name="" placeholder="Enter comma separated tags, ie : tag1, tag2" class="form-control card-tags">
+
+            </div>
+
+            <p style="margin:0.4em;"><button class="btn btn-sm btn-warning new-task" style="margin-right: 0.6em;" >New Task</button> <input type="checkbox" class="do-pull"> <label>Commit to git on each task completion.</label> </p>
+            <div  style="width:100%;height:100%;overflow-y: auto;" id='kanban'>
+            </div>
+     
+    </div>
+    <script type="text/javascript">
+    var id = makeid();
+
+  
+
+
+
+    setTimeout(function(){
+        let built = false;
+        let cardsRaw = false;
+          function getKanbanBoard(){
+             return new Promise(function(resolve, reject) {
+                $.ajax({
+                        url: "/api/kanban?pkg={{.Misc}}",
+                        type: "GET",
+                        error: function(err) {
+                            reject(err);
+                        },
+                        success : function(res){
+                            console.log(res);
+                            resolve(res);
+                        }
+
+                    });
+                    });
+                }
+
+                let priority = [
+                    "#5dc3f0",
+                    "#6bbd49",
+                    "#f19b60",
+                    "#333"        
+                ]
+
+          let newTask = false;
+
+          function saveBoard(){
+
+            let struct = {
+                push : $("#{{$rin}} .do-pull").prop('checked'),
+                cards : $('#{{$rin}} #kanban').jqxKanban('getItems')
+            }
+
+            let filtCards = [];
+
+            if(cardsRaw)
+            for (var i = struct.cards.length - 1; i >= 0; i--) {    
+                struct.cards[i].ts = cardsRaw[struct.cards[i].id];
+            }
+
+            console.log(struct);
+            let data = JSON.stringify(struct);
+
+                  $.ajax({
+                        url: "/api/kanban?pkg={{.Misc}}",
+                        data : { payload : data },
+                        type: "POST",
+                        error: function(err) {
+                        },
+                        success : function(res){
+                            console.log(res);    
+                        }
+                    });
+          }
+
+          function closeEntry(){
+            newTask = false;
+            $("#{{$rin}} #kanban").css('display', 'block');
+            $("#{{$rin}} .new_task").css('display', 'none');
+             $("#{{$rin}} .new-task").html("New Task");
+          }
+
+          $("#{{$rin}} .cancel-task").click(function(){
+            closeEntry();
+
+           
+            return false;
+          });
+
+          $("#{{$rin}} .new-task").click(function(){
+
+
+            $(this).html(newTask ? "New Task" : "Save");
+
+            if(newTask){
+
+                let card = $("#{{$rin}} .card-text").val(),
+                 tags = "Edit ,"+$("#{{$rin}} .card-tags").val(),
+                 hex = $("#{{$rin}} .task-pri").val();
+
+                var newItem =  { id: makeid(), status: 'new', text: card, tags , color:hex  };
+                closeEntry();
+
+                if(!built)
+                buildKanban({cards : [newItem] });
+                else  
+                $('#{{$rin}} #kanban').jqxKanban('addItem', newItem);
+
+                newTask = true;
+
+                saveBoard();
+                //save and exit
+               
+            }
+
+            if(!newTask){
+                $("#{{$rin}} #kanban").css('display', 'none');
+                $(".new_task").css('display', 'block');
+            }
+
+
+            newTask = newTask ? false : true;
+
+            return false;
+          });
+
+          function pushSource(){
+             
+          }
+
+          function commitSource(message){
+             return new Promise(function(resolve, reject) {
+                    
+                    if(!$("#{{$rin}} .do-pull").prop('checked')){
+                        resolve(false);
+                        return;
+                    }
+                   $.ajax({
+                        url: "/api/git?pkg={{.Misc}}",
+                        data : { message , cmd : "commit" },
+                        type: "POST",
+                        error: function(err) {
+                              
+                        },
+                        success : function(res){
+                            if(res){
+                                swal("Error", "error running git command, please make sure your project has version control.","error");
+                                reject(false);  
+                                return;
+                            }
+                            console.log(res)
+                            resolve(true)   
+                        }
+                    });
+            });
+          }
+
+          function buildKanban(data){
+              var fields = [
+                     { name: "id", type: "string" },
+                     { name: "status", map: "status", type: "string" },
+                     { name: "text", map: "text", type: "string" },
+                     { name: "tags", type: "string" },
+                    { name: "ts", type: "date" },
+                     { name: "color", map: "color", type: "string" }
+            ];
+            built = true;
+             var source =
+             {
+                 localData: data.cards,
+                 dataType: "array",
+                 dataFields: fields
+             };
+            var dataAdapter = new $.jqx.dataAdapter(source);
+            var resourcesAdapterFunc = function () {
+                var resourcesSource =
+                {
+                    localData: [
+                          { id: 0, name: "No name", image: "../../jqwidgets/styles/images/common.png", common: true }
+                    ],
+                    dataType: "array",
+                    dataFields: [
+                         { name: "id", type: "number" },
+                         { name: "name", type: "string" },
+                         { name: "image", type: "string" },
+                         { name: "common", type: "boolean" }
+                    ]
+                };
+                var resourcesDataAdapter = new $.jqx.dataAdapter(resourcesSource);
+                return resourcesDataAdapter;
+            }
+                $('#{{$rin}} #kanban').jqxKanban({
+                    resources: resourcesAdapterFunc(),
+                    source: dataAdapter,
+                    theme: "black",
+                    columns: [
+                        { text: "Fresh", dataField: "new" },
+                        { text: "In Progress", dataField: "work" },
+                        { text: "Done", dataField: "done" }
+                    ]
+                });
+
+                $('#{{$rin}} #kanban').on('itemAttrClicked', function (event) {
+                        var args = event.args;
+        
+                        var item  = args.item;
+
+                        console.log(args);
+
+                        if(args.attribute != "keyword"){
+                            return;
+                        }
+
+                        if(!args.item){
+                            $('#kanban').jqxKanban('destroy');
+                            built = false;
+                            $("#{{$rin}} .card-info").append("<div id='kanban'></div>")
+                            getKanbanBoard() .then(
+                                data => {
+                                   
+                                    if(!data)
+                                        data = {push : false , cards : [] }
+
+                                    $("#{{$rin}} .do-pull").prop('checked', data.push ? true : false)
+
+                                   
+                               
+                                
+                                if(data.cards.length != 0)
+                                    buildKanban(data);
+                                }
+                              );
+                           
+                            return;
+                        }
+
+                        function updateItem(id, content){
+                            $('#{{$rin}} #kanban').jqxKanban('updateItem', id, content); 
+                        }
+
+                        function removeItem(id){
+                            $('#{{$rin}} #kanban').jqxKanban('removeItem', id);
+                        }
+
+                        //jqx-kanban-item-text
+                        let target = $(`#kanban_${item.id}`);
+                        
+                        let targetText = $(target ," .jqx-kanban-item-text");
+                        console.log(targetText.css('display'));
+                        if(targetText.css('display') == 'block'){
+                       
+
+                         let editor = $("<div />").css('padding', "12px");
+                         editor.attr('class','editor');
+                         let btn = $("<button />").attr("class", "btn btn-sm btn-primary")
+                         .html("Close input").css("margin-bottom", "10px")
+                         .click(function(){
+                            item.text = $(".fixed-handle textarea").val();
+                            $(".fixed-handle .editor").remove();
+                            updateItem(item.id, item);
+                            saveBoard();
+                            return false;
+                         });
+
+                        let btnDelete = $("<button />").attr("class", "btn btn-sm btn-primary pull-right ")
+                         .html("Remove card").css("margin-bottom", "10px")
+                         .click(function(){
+                            removeItem(item.id);
+                            $(".fixed-handle .editor").remove();
+                            saveBoard();
+                            return false;
+                         });
+
+
+
+                         editor.append(`<textarea class="form-control" style="margin-bottom:0.7em;" placeholder="New card text">${item.text}</textarea>`);
+
+                            editor.append(btnDelete);
+                         editor.append(btn);
+                      
+                         $(".fixed-handle").html("");
+                         $(".fixed-handle").append(editor);
+                         $(editor, "textarea").click(function(e){
+                            e.preventDefault();
+                         })
+
+                        } else {
+                            $(".fixed-handle .editor").remove();
+                            targetText.css('display','block');
+                        }
+                        
+
+                    });
+
+                $('#{{$rin}} #kanban').on('itemMoved', function (event) {
+                    console.log("item moved...");
+                      var args = event.args;
+                      var itemId = args.itemId;
+                     var newParentId = args.newParentId;
+
+                     if(args.newColumn.dataField == 'done'){
+                        console.log("committing to git...");
+                        commitSource(args.itemData.text)
+                        .then(
+                            (res) => {
+
+                                if(!res)
+                                    return;
+
+                                     if(  $("#{{$rin}} .do-pull").prop('checked') ){
+                                            pushSource();
+                                        }
+                            }
+                        )
+
+                       
+                     }  
+
+                        if(!cardsRaw)
+                            cardsRaw = {}
+
+                        cardsRaw[itemId] = new Date();
+                    setTimeout(function(e){
+                      
+
+                        saveBoard();
+                    }, 600,event);
+                    
+                }) ;
+          }
+
+          getKanbanBoard()
+          .then(
+            data => {
+               
+                if(!data)
+                    data = {push : false , cards : [] }
+
+                $("#{{$rin}} .do-pull").prop('checked', data.push ? true : false)
+
+               
+           
+            
+            if(data.cards.length != 0)
+                buildKanban(data);
+            }
+          )
+
+    	 
+
+    },400);
+
+    addTab( " {{.Misc}} - KanBan board", "{{$rin}}");
+    </script>
+</div>
