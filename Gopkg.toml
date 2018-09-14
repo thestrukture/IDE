@@ -27,23 +27,31 @@
 
 [[constraint]]
   name = "github.com/cheikhshift/db"
-  version = "0.5.0-beta"
+  version = "0.5.0"
 
 [[constraint]]
   name = "github.com/cheikhshift/gos"
-  version = "0.5.15"
+  version = "0.5.16"
 
 [[constraint]]
   name = "github.com/elazarl/go-bindata-assetfs"
   version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/gorilla/context"
+  name = "github.com/fatih/color"
+  version = "1.7.0"
 
 [[constraint]]
   name = "github.com/gorilla/sessions"
-  version = "1.1.0"
+  version = "1.1.2"
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.4.0"
+
+[[constraint]]
+  branch = "v2"
+  name = "gopkg.in/mgo.v2"
 
 [prune]
   go-tests = true

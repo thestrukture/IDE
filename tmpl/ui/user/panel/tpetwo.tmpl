@@ -102,6 +102,18 @@
 
     }, false);
 
+    editors["{{.ID}}"].on('change', function() {
+
+            sendMessage({ 
+                path : '{{.PKG}} - {{.SavesTo}}',
+                editor :  editors["{{.ID}}"].getValue()
+            });
+            
+        });
+
+
+   editorPaths['{{.PKG}} - {{.SavesTo}}'] = editors["{{.ID}}"];
+
     setTimeout(function() {
         var id = {{.SavesTo}}
         $.ajax({

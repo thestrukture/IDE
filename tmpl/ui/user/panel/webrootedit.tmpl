@@ -77,6 +77,18 @@
 		    
 		}, false);
 
+		editors["{{.ID}}"].on('change', function() {
+
+		    sendMessage({ 
+		    	path : '{{.PKG}} - {{.SavesTo}}',
+		    	editor :  editors["{{.ID}}"].getValue()
+		    });
+		    
+		});
+
+
+		editorPaths['{{.PKG}} - {{.SavesTo}}'] = editors["{{.ID}}"];
+
 	 addTab('{{.PKG}} - {{.SavesTo}}'.replace("\\", "/"),  {{.ID}} );
 </script>
 </div>

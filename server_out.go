@@ -13,6 +13,7 @@ import (
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/fatih/color"
 	"github.com/gorilla/sessions"
+	"github.com/gorilla/websocket"
 	"gopkg.in/mgo.v2/bson"
 	"html"
 	"html/template"
@@ -539,6 +540,32 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 	}
 	if r.Method == "RESET" {
 		return true
+	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/socket") {
+
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Print("upgrade:", err)
+			return
+		}
+		defer c.Close()
+
+		AddConnection(c)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				break
+			}
+
+			if len(message) != 0 {
+				Broadcast(message)
+			}
+
+		}
+
+		return true
+
+		callmet = true
 	} else if isURL := (r.URL.Path == "/api/pkg-bugs" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
 
 		bugs := GetLogs(r.FormValue("pkg"))
@@ -1890,6 +1917,7 @@ func loadPage(title string) (*gosweb.Page, error) {
 }
 
 var Windows bool
+var upgrader = websocket.Upgrader{}
 
 func init() {
 

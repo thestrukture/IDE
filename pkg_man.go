@@ -6,13 +6,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/websocket"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
+
+var lock *sync.RWMutex = new(sync.RWMutex)
+var connections = []*websocket.Conn{}
 
 var dfd string
 var addjsstr = ` <script type="text/javascript">
@@ -170,6 +175,28 @@ func getKanBan(pkg string) (ret map[string]interface{}) {
 
 	return
 
+}
+
+func AddConnection(c *websocket.Conn) {
+	lock.Lock()
+	connections = append(connections, c)
+	lock.Unlock()
+}
+
+func Broadcast(m []byte) {
+	lock.Lock()
+
+	for index, c := range connections {
+		if c != nil {
+			err := c.WriteMessage(1, m)
+			if err != nil {
+				log.Println("write:", err)
+				connections[index] = nil
+			}
+		}
+	}
+
+	lock.Unlock()
 }
 
 func pushGit(pkg string) {

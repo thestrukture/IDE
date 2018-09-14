@@ -88,6 +88,18 @@
 		    
 		}, false);
 
+		editors["{{$rin}}"].on('change', function() {
+
+		    sendMessage({ 
+		    	path : '{{.PKG}} - Pipelines',
+		    	editor :  editors["{{$rin}}"].getValue()
+		    });
+		    
+		});
+
+
+		editorPaths['{{.PKG}} - Pipelines'] = editors["{{$rin}}"];
+
 	   setTimeout(function(){
 	 	
 	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{.PKG}}, success:function(html){

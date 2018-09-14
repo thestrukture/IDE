@@ -119,6 +119,19 @@
 	 	} 
 	 })
 	 },600)
+
+	 editors["{{$rin}}"].on('change', function() {
+
+		    sendMessage({ 
+		    	path : '{{.PKG}} - Interfaces',
+		    	editor :  editors["{{$rin}}"].getValue()
+		    });
+		    
+	});
+
+
+	editorPaths['{{.PKG}} - Interfaces'] = editors["{{$rin}}"];
+
 	 addTab({{.PKG}} + " - Interfaces", {{$rin}} );
 </script>
 </div>

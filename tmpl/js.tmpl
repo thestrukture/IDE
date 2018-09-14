@@ -1,5 +1,26 @@
     <!-- jQuery first, then Bootstrap JS. -->
-
+    <!-- Modal -->
+<div class="modal fade" id="accountJoin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="exampleModalLabel"></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Welcome to the Strukture! To get started enter a username that will be with chat.</p>
+        <hr>
+        <p><input type="text" class="form-control username-input" name="" placeholder="username"></p>
+      </div>
+      <div class="modal-footer">
+  
+        <button type="button" onclick="saveProfile()" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
     <script src="/dist/jquery.js"></script>
     <script src="/dist/bootstrap.js" ></script>
     <script type="text/javascript" src="/dist/havok.js"></script>
@@ -19,11 +40,21 @@
 	<script type="text/javascript">
     var working = false;
     var editors = {};
+    var kanbanBoards = {};
+    var editorPaths = {};
 
     var termsize = 0;
 
 
+    try {
+      if(!window.localStorage["chatName"]){
 
+        $("#accountJoin").modal('show');
+      }
+
+    } catch(e) {
+
+    } 
         /*
 		Plugin format :
 		name : "Name"
@@ -56,6 +87,107 @@
       },
       plugins:[]
   	}
+
+    function addBubble(message){
+      //chatroom-thread
+      let styles = "margin-bottom:5px;max-width:240px;";
+      if(message.name == window.localStorage["chatName"]){
+        styles +=  "margin-left:auto;";
+      }
+
+      $(".chat-thread").append(`<div class='list-group-item' style='${styles}'><h6>${message.name}<h6>
+        <hr>
+        <div>${message.message}</div><br>${ (new Date()).toLocaleString() }</div>` );
+
+      var d = $('.chat-thread');
+      d.scrollTop(d.prop("scrollHeight"));
+    }
+
+
+
+    function toggleChat(){
+       if($(".chat-window").css("display") == "none" ){
+          $(".chat-window").css("display", "block");
+          return;
+       } 
+
+       $(".chat-window").css("display", "none");
+    }
+
+    function saveProfile(){
+        let name = $(".username-input").val();
+        window.localStorage["chatName"] = name;
+        $("#accountJoin").modal('hide');
+        sendMessage({message : window.localStorage["chatName"] + " has joined the chatroom." })
+    }
+
+     function sendMessage(obj){
+        let payload = Object.assign(obj, { name : window.localStorage["chatName"]  });
+        socket.send(JSON.stringify(payload));
+      }
+
+    function sendChat(){
+      //chat-input
+      if($(".chat-input").val() == "" )
+        return;
+
+      sendMessage({message : $(".chat-input").val() });
+      $(".chat-input").val(""); 
+    }
+
+    function connectSocket(){
+      window.socket = new WebSocket("ws://" + window.location.host + "/api/socket");
+
+
+      socket.onclose = function(event) {
+        console.log("WebSocket is closed now.");
+        swal("Connection closed!", "Realtime functionality will not currently work, to restore it, please refresh the page.", "warning");
+      };
+      // Connection opened
+      socket.addEventListener('open', function (event) {
+          if(window.localStorage["chatName"])
+             sendMessage({message : window.localStorage["chatName"] + " has joined the chatroom." })
+      });
+
+      // Listen for messages
+      socket.addEventListener('message', function (event) {
+          processMessage(JSON.parse(event.data) );
+        });
+    }
+
+    function processMessage(data){
+      //editor change
+      if(data.editor && data.name != window.localStorage["chatName"]){
+          if(editorPaths[data.path]){
+          
+              if( editorPaths[data.path].getValue() != data.editor){
+                  let currentCursor =  editorPaths[data.path].getCursorPosition();
+                  editorPaths[data.path].setValue(data.editor);
+                  editorPaths[data.path].moveCursorToPosition(currentCursor);
+
+              }
+
+          }
+      }
+
+      //chat message
+      if(data.message){
+        addBubble(data);
+      }
+      //kanban change
+
+      if(data.board && data.name){
+        if(!kanbanBoards[data.board])
+          return;
+
+          console.log("Updating board");
+          kanbanBoards[data.board]();
+          data.message = data.name + " has updated " + data.board;
+          addBubble(data);
+      }
+    }
+
+    connectSocket();
 
   	function handleClickStruk(plugin,txt,editorid,pkg){
   		//console.log(plugin,txt,editorid)
@@ -121,6 +253,7 @@
     		$(".plugin-list").html(e.responseText)
     	} })
     }
+
 
     function CollapseGloj(){
         if($(".panel-k-left").css('display') == "none"){

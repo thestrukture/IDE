@@ -81,6 +81,18 @@
 		}, false);
 
 
+		editors["{{.ID}}"].on('change', function() {
+
+		    sendMessage({ 
+		    	path : '{{.PKG}} - {{.SavesTo}}'.replace("\\", "/"),
+		    	editor :  editors["{{.ID}}"].getValue()
+		    });
+		    
+		});
+
+
+		editorPaths['{{.PKG}} - {{.SavesTo}}'.replace("\\", "/")] = editors["{{.ID}}"];
+
 
 	  	
 	    setTimeout(function(){

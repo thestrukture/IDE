@@ -35,6 +35,31 @@
     setTimeout(function(){
         let built = false;
         let cardsRaw = false;
+        let resName = "{{.Misc}} - KanBan board";
+
+          function resetBoard(){
+             $('#kanban').jqxKanban('destroy');
+                            built = false;
+                            $("#{{$rin}} .card-info").append("<div id='kanban'></div>")
+                            getKanbanBoard() .then(
+                                data => {
+                                   
+                                    if(!data)
+                                        data = {push : false , cards : [] }
+
+                                    $("#{{$rin}} .do-pull").prop('checked', data.push ? true : false)
+
+                                   
+                               
+                                
+                                if(data.cards.length != 0)
+                                    buildKanban(data);
+                                }
+                              );
+          }
+
+          kanbanBoards[resName] = resetBoard;
+
           function getKanbanBoard(){
              return new Promise(function(resolve, reject) {
                 $.ajax({
@@ -75,7 +100,6 @@
                 struct.cards[i].ts = cardsRaw[struct.cards[i].id];
             }
 
-            console.log(struct);
             let data = JSON.stringify(struct);
 
                   $.ajax({
@@ -83,9 +107,13 @@
                         data : { payload : data },
                         type: "POST",
                         error: function(err) {
+                            console.log(err)
+                               sendMessage({ board : resName });   
                         },
                         success : function(res){
-                            console.log(res);    
+                            console.log(res);
+                            sendMessage({ board : resName });   
+                         
                         }
                     });
           }
@@ -367,6 +395,6 @@
 
     },400);
 
-    addTab( " {{.Misc}} - KanBan board", "{{$rin}}");
+    addTab( "{{.Misc}} - KanBan board", "{{$rin}}");
     </script>
 </div>

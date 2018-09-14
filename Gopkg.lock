@@ -4,7 +4,8 @@
 [[projects]]
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
-  revision = "15028e809df8c71964e8efa6c11e81d5c0262302"
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
 
 [[projects]]
   name = "github.com/cheikhshift/db"
@@ -18,8 +19,8 @@
     "core",
     "web"
   ]
-  revision = "860affc38be80e38860d5131b1d36c9e43c55939"
-  version = "v0.5.15"
+  revision = "e090b5350de7df48b07b86122d2047b81edd0a76"
+  version = "v0.5.16"
 
 [[projects]]
   name = "github.com/elazarl/go-bindata-assetfs"
@@ -30,13 +31,14 @@
 [[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
-  revision = "67c513e5729f918f5e69786686770c27141a4490"
+  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
+  version = "v1.7.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/gorilla/securecookie"
@@ -47,19 +49,26 @@
 [[projects]]
   name = "github.com/gorilla/sessions"
   packages = ["."]
-  revision = "ca9ada44574153444b00d3fd9c8559e4cc95f896"
-  version = "v1.1"
+  revision = "81547393f870a35be888759a606ba7bf71dbe5c7"
+  version = "v1.1.2"
+
+[[projects]]
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
-  revision = "6c0fd4aa6ec5818d5e3ea9e03ae436972a6c5a9a"
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
+  version = "v0.0.4"
 
 [[projects]]
   name = "github.com/tj/go-spin"
@@ -68,23 +77,26 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/mgo.v2"
   packages = [
     ".",
     "bson",
+    "internal/json",
     "internal/sasl",
     "internal/scram"
   ]
-  revision = "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+  revision = "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fe842db3d5d7069bcda55ae5efb009a94c4c97b12abe52869d0262d612334af1"
+  inputs-digest = "a90676c33a014f5829aa47b4f9b18cdc8b3e1f36c095f3a05342527e2b0d494f"
   solver-name = "gps-cdcl"
   solver-version = 1

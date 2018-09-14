@@ -24,12 +24,13 @@
     <import src="os" />
     <import src="strconv" />
     <import src="strings" />
-    
+    <import src="github.com/gorilla/websocket" />
     <import src="path/filepath" />
 	<import src="runtime"/>
 	<output>server_out.go</output>
 	<var type="bool">Windows</var>
-	
+	<var type="">upgrader = websocket.Upgrader{}</var>
+
 	<key>something-secretive-is-what-a-gorrilla-needs</key>
 	<domain></domain>
 	<!-- The <init/> tag is similar to the init function within Go, -->
@@ -562,6 +563,31 @@
           </templates>
 		<endpoints>
 				<!-- Package methods -->
+				<end path="/api/socket" type="star" >
+					c, err := upgrader.Upgrade(w, r, nil)
+					if err != nil {
+						log.Print("upgrade:", err)
+						return
+					}
+					defer c.Close()
+
+					AddConnection(c)
+					for {
+						_, message, err := c.ReadMessage()
+						if err != nil {
+							log.Println("read:", err)
+							break
+						}
+
+						if len(message) != 0 {
+							Broadcast(message)
+						}
+						
+					}
+
+
+					return true
+				</end>
 				<end path="/api/pkg-bugs" type="GET">
 
 						bugs := GetLogs(r.FormValue("pkg"))
