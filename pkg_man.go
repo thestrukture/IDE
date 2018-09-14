@@ -218,7 +218,7 @@ func pushGit(pkg string) {
 
 func commitGit(pkg, message string) bool {
 	gpath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg)
-	cmd := fmt.Sprintf("git commit -m \"%s\" ", message)
+	cmd := fmt.Sprintf("git commit -m \"%s\" -a ", message)
 
 	fmt.Println("committing ", gpath)
 
