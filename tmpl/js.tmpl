@@ -139,6 +139,13 @@
       $(".chat-input").val(""); 
     }
 
+    $(".chat-input").keyup(function(e) {
+     var code = e.keyCode ? e.keyCode : e.which;
+     if (code == 13) {  // Enter keycode
+        sendChat();
+     }
+  });
+
     function connectSocket(){
       window.socket = new WebSocket("ws://" + window.location.host + "/api/socket");
 

@@ -405,6 +405,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			id := strings.Split(r.FormValue("id"), "@pkg:")
 			filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/" + id[1]
 
+			filep = strings.Replace(filep, "//", "/", -1)
+
+			if Windows {
+				filep = strings.Replace(filep, "/", "\\", -1)
+			}
+
 			data, _ := ioutil.ReadFile(filep)
 			data = []byte(html.EscapeString(string(data)))
 			response = NetbWebRootEdittwo(WebRootEdits{SavesTo: id[1], Type: "golang", File: data, ID: NetRandTen(), PKG: r.FormValue("space")})

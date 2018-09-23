@@ -916,7 +916,13 @@ for _, v := range apps {
 			} else if r.FormValue("type") == "60" {
 				id := strings.Split(r.FormValue("id"), "@pkg:")
 				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/" + id[1]
-				
+					
+				filep = strings.Replace(filep, "//", "/", -1)
+
+				if Windows {
+					filep = strings.Replace(filep, "/", "\\", -1)
+				}
+
 				data,_ := ioutil.ReadFile(filep)
 				data =  []byte(html.EscapeString(string(data)))
 				response = net_bWebRootEdittwo(WebRootEdits{SavesTo:id[1],Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
