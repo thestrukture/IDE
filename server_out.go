@@ -403,7 +403,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 		} else if r.FormValue("type") == "60" {
 			id := strings.Split(r.FormValue("id"), "@pkg:")
-			filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + id[1]
+			filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/" + id[1]
 
 			data, _ := ioutil.ReadFile(filep)
 			data = []byte(html.EscapeString(string(data)))
@@ -1492,68 +1492,74 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		prefx := r.FormValue("pref")
 		ret := []bson.M{}
 		//return {name: ea.word, value: ea.insert, score: 0, meta: ea.meta}
-		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
-		score := 0
-		for _, v := range gos.Variables {
+		gxml := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml"
 
-			if strings.Contains(v.Name, prefx) {
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "Global variable | " + v.Type})
+		if _, err := os.Stat(gxml); !os.IsNotExist(err) {
+			gos, _ := core.PLoadGos(gxml)
+			score := 0
+			for _, v := range gos.Variables {
+
+				if strings.Contains(v.Name, prefx) {
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "Global variable | " + v.Type})
+				}
+
 			}
 
-		}
+			for _, v := range gos.RootImports {
 
-		for _, v := range gos.RootImports {
+				if strings.Contains(v.Src, prefx) {
+					score = score + 1
+					paths := strings.Split(v.Src, "/")
+					ret = append(ret, bson.M{"name": v.Src, "value": paths[len(paths)-1], "score": score, "meta": "package"})
+				}
 
-			if strings.Contains(v.Src, prefx) {
-				score = score + 1
-				paths := strings.Split(v.Src, "/")
-				ret = append(ret, bson.M{"name": v.Src, "value": paths[len(paths)-1], "score": score, "meta": "package"})
 			}
 
-		}
+			for _, v := range gos.Header.Structs {
 
-		for _, v := range gos.Header.Structs {
+				if strings.Contains(v.Name, prefx) {
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "Interface"})
+				}
 
-			if strings.Contains(v.Name, prefx) {
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "Interface"})
 			}
 
-		}
+			for _, v := range gos.Header.Objects {
 
-		for _, v := range gos.Header.Objects {
+				if strings.Contains(v.Name, prefx) {
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "{{Interface func group}}"})
+				}
 
-			if strings.Contains(v.Name, prefx) {
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": v.Name, "score": score, "meta": "{{Interface func group}}"})
 			}
 
-		}
+			for _, v := range gos.Methods.Methods {
 
-		for _, v := range gos.Methods.Methods {
+				if strings.Contains(v.Name, prefx) {
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": v.Name + " ", "score": score, "meta": "{{Template pipeline}}"})
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": "Net" + v.Name + "(" + v.Variables + ")", "score": score, "meta": "Pipeline go function."})
+				}
 
-			if strings.Contains(v.Name, prefx) {
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": v.Name + " | ", "score": score, "meta": "{{Template pipeline}}"})
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": "Net" + v.Name + "(" + v.Variables + ")", "score": score, "meta": "Method"})
 			}
 
-		}
+			for _, v := range gos.Templates.Templates {
 
-		for _, v := range gos.Templates.Templates {
+				if strings.Contains(v.Name, prefx) {
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": v.Name + " ", "score": score, "meta": "{{Template $struct}}"})
+					score = score + 1
+					ret = append(ret, bson.M{"name": v.Name, "value": "Netb" + v.Name + "(" + v.Struct + "{})", "score": score, "meta": "Template build go function."})
+				}
 
-			if strings.Contains(v.Name, prefx) {
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": v.Name + " ", "score": score, "meta": "{{Template reference}}"})
-				score = score + 1
-				ret = append(ret, bson.M{"name": v.Name, "value": "Netb" + v.Name + "(" + v.Struct + "{})", "score": score, "meta": "Template"})
 			}
 
-		}
+			response = mResponse(ret)
+		} else {
 
-		response = mResponse(ret)
+		}
 
 		callmet = true
 	} else if isURL := (r.URL.Path == "/api/console" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
