@@ -17,8 +17,17 @@
 	 editors["{{.ID}}"].setTheme("ace/theme/clouds_midnight");
 	 editors[{{.ID}} + "c"] = {wrap:false};
 
+	
 
-	    editors["{{.ID}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+	{{if eq .Type "golang"}}
+		 editors["{{.ID}}"].custom = true;
+	 {{end}}
+
+	    editors["{{.ID}}"].setOptions({
+	    	enableBasicAutocompletion: true,
+	    	enableSnippets: true,
+	    	enableLiveAutocompletion: true
+	    });
 	
 	 	editors["{{.ID}}"].commands.addCommand({
 	    name: 'myCommand',

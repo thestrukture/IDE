@@ -16,6 +16,9 @@
 	 editors["{{.ID}}"].getSession().setMode("ace/mode/" + {{.Type}})
 	 editors["{{.ID}}"].setTheme("ace/theme/clouds_midnight");
 	 editors["{{.ID}}"].setOptions({enableBasicAutocompletion: true, enableSnippets: true, enableLiveAutocompletion: true});
+
+
+
 	 editors["{{.ID}}"].commands.addCommand({
 	    name: 'myCommand',
 	    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
@@ -77,7 +80,7 @@
 		    
 		}, false);
 
-		editors["{{.ID}}"].on('change', function() {
+			editors["{{.ID}}"].on('change', function() {
 
 		    sendMessage({ 
 		    	path : '{{.PKG}} - {{.SavesTo}}',

@@ -1493,14 +1493,15 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		http.ServeFile(w, r, strings.Replace(r.FormValue("pkg"), "/", ".", -1)+".zip")
 
 		callmet = true
-	} else if isURL := (r.URL.Path == "/api/complete" && r.Method == strings.ToUpper("GET")); !callmet && isURL {
+	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/complete") {
 
 		prefx := r.FormValue("pref")
+
 		ret := []bson.M{}
 		//return {name: ea.word, value: ea.insert, score: 0, meta: ea.meta}
 		gxml := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml"
 
-		if _, err := os.Stat(gxml); !os.IsNotExist(err) {
+		if _, err := os.Stat(gxml); !os.IsNotExist(err) && r.FormValue("gocode") == "" {
 			gos, _ := core.PLoadGos(gxml)
 			score := 0
 			for _, v := range gos.Variables {
@@ -1564,6 +1565,16 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			response = mResponse(ret)
 		} else {
+			content := r.FormValue("content")
+			id := r.FormValue("id")
+			tempFile := filepath.Join(autocompletePath, id)
+
+			ioutil.WriteFile(tempFile, []byte(content), 0700)
+			cmd := fmt.Sprintf("gocode -f=json --in=%s autocomplete %s", tempFile, prefx)
+
+			res, _ := core.RunCmdSmart(cmd)
+			response = res
+			os.Remove(tempFile)
 
 		}
 
@@ -1966,7 +1977,9 @@ func loadPage(title string) (*gosweb.Page, error) {
 }
 
 var Windows bool
+var autocompletePath string
 var upgrader = websocket.Upgrader{}
+var portCount = 35000
 
 func init() {
 
@@ -8203,14 +8216,14 @@ func main() {
 			os.Chdir(os.ExpandEnv("$HOME"))
 		}
 
-		err := os.MkdirAll("workspace/", 0777)
+		err := os.MkdirAll("workspace/", 0700)
 		if err != nil {
 			fmt.Println(err.Error())
 
 		} else {
 			//download go
-			os.MkdirAll("workspace/src", 0777)
-			os.MkdirAll("workspace/bin", 0777)
+			os.MkdirAll("workspace/src", 0700)
+			os.MkdirAll("workspace/bin", 0700)
 			cwd, _ := os.Getwd()
 			cwd = cwd + "/workspace"
 			os.Setenv("GOPATH", cwd)
@@ -8235,10 +8248,22 @@ func main() {
 		fmt.Println("Downloading GoS")
 		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
 		if err != nil {
-			color.Red("Please install GO : https://golang.org/dl/ ")
+			color.Red("Please, install GO : https://golang.org/dl/ ")
 		} else {
 			core.RunCmdSmart("gos deps")
 		}
+	}
+
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/nsf/gocode/"); os.IsNotExist(err) {
+		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
+		core.RunCmdSmart("go get github.com/nsf/gocode")
+	}
+
+	autocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
+
+	if _, err := os.Stat(autocompletePath); os.IsNotExist(err) {
+		fmt.Println("Creating autocomplete resource folder at " + autocompletePath)
+		os.MkdirAll(autocompletePath, 0700)
 	}
 
 	apps := getApps()

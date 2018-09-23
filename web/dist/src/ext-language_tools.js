@@ -1053,6 +1053,7 @@ var AcePopup = function(parentNode) {
             return tokens;
         if (typeof data == "string")
             data = {value: data};
+
         if (!data.caption)
             data.caption = data.value || data.name;
 
@@ -1519,7 +1520,14 @@ var Autocomplete = function() {
             var prefix = this.editor.session.getTextRange({start: this.base, end: pos});
             if (prefix == this.completions.filterText)
                 return;
-            this.completions.setFilter(prefix);
+
+          console.log("compl", this.completions)
+          
+
+           this.completions.setFilter(prefix);
+
+
+
             if (!this.completions.filtered.length)
                 return this.detach();
             if (this.completions.filtered.length == 1
@@ -1529,6 +1537,8 @@ var Autocomplete = function() {
             this.openPopup(this.editor, prefix, keepPopupPosition);
             return;
         }
+        window.completions = this;
+
         var _id = this.gatherCompletionsId;
         this.gatherCompletions(this.editor, function(err, results) {
             var detachIfFinished = function() {
@@ -1682,13 +1692,16 @@ var FilteredList = function(array, filterText) {
         var lower = needle.toLowerCase();
         loop: for (var i = 0, item; item = items[i]; i++) {
             var caption = item.value || item.caption || item.snippet;
+
             if (!caption) continue;
             var lastIndex = -1;
             var matchMask = 0;
             var penalty = 0;
             var index, distance;
 
-            if (this.exactMatch) {
+
+
+            if (this.exactMatch && !item.trigger) {
                 if (needle !== caption.substr(0, needle.length))
                     continue loop;
             }else{
@@ -1696,7 +1709,7 @@ var FilteredList = function(array, filterText) {
                     var i1 = caption.indexOf(lower[j], lastIndex + 1);
                     var i2 = caption.indexOf(upper[j], lastIndex + 1);
                     index = (i1 >= 0) ? ((i2 < 0 || i1 < i2) ? i1 : i2) : i2;
-                    if (index < 0)
+                    if (index < 0 && !item.trigger)
                         continue loop;
                     distance = index - lastIndex - 1;
                     if (distance > 0) {
@@ -1710,7 +1723,7 @@ var FilteredList = function(array, filterText) {
             }
             item.matchMask = matchMask;
             item.exactMatch = penalty ? 0 : 1;
-            item.score = (item.score || 0) - penalty;
+            item.score = item.trigger ? 0 : (item.score || 0) - penalty;
             results.push(item);
         }
         return results;

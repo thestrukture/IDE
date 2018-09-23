@@ -305,19 +305,61 @@
       var langTools = ace.require("ace/ext/language_tools");
 
         var rhymeCompleter = {
+        identifierRegexps: [/[a-zA-Z_0-9\.\-\u00A2-\uFFFF]/],
         getCompletions: function(editor, session, pos, prefix, callback) {
+         
+           let pkg  =  $(".tabview.active").attr("pkg"),
+           id = $(".tabview.active").attr("id");
+
+           if(editor.custom){
+
+              let latest = editor.getValue();
+              let index = editor.session.doc.positionToIndex(editor.selection.getCursor()) ;
+              
+              $.ajax(
+              {
+                url : "/api/complete",
+                type : "POST",
+                data : {
+                  content : latest,
+                  pref : index,
+                  pkg,
+                  gocode : "true",
+                  id
+                },
+                success : function(html){
+                  let completions = html[1];
+
+                  if(completions && completions.length > 0){
+                   
+                    callback(null, completions.map(function(ea) {
+                      console.log(prefix);
+                      if(prefix[prefix.length - 1] === ".")
+                        ea.package = prefix;
+
+                      return {caption: ea.name, value:prefix[prefix.length - 1] === "." ? ea.package + ea.name : ea.name, score: 0, meta: ea.type + " " + ea.class, trigger : true}
+                    }));
+                  } else callback(null, []);
+                }
+              }
+              )
+
+              
+           } else {
             if (prefix.length === 0) { callback(null, []); return }
-            $.getJSON(
-                "/api/complete?pref=" + prefix + "&pkg=" + $(".tabview.active").attr("pkg"),
+             $.getJSON(
+                "/api/complete?pref=" + prefix + "&pkg=" + pkg,
                 function(wordList) {
                     // wordList like [{"word":"flow","freq":24,"score":300,"flags":"bc","syllables":"1"}]
                     callback(null, wordList.map(function(ea) {
                         return {name: ea.word, value: ea.value, score: ea.score, meta: ea.meta}
                     }));
                 })
+           }
         }
     }
     langTools.addCompleter(rhymeCompleter);
+
 
     function ClearSideBay(){
       $(".side-bay").html("");
