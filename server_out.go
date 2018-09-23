@@ -155,63 +155,80 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			for _, v := range apps {
 				if v.Name != "" {
-					gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + v.Name + "/gos.gxml")
+
 					appCo := []PkgItem{}
 					Childtm := []PkgItem{}
-					for _, b := range v.Groups {
-						tmpls := []PkgItem{}
-
-						for _, tm := range gos.Templates.Templates {
-							if tm.Bundle == b {
-								tmpls = append(tmpls, PkgItem{Type: "5", AppID: v.Name, Icon: "fa fa-page", DType: "5&tmpl=" + b + "/" + tm.Name, Text: tm.Name, ID: v.Name + "@pkg:" + b + "/" + tm.Name})
-							}
-						}
-
-						Childtm = append(Childtm, PkgItem{AppID: v.Name, Text: b, Icon: "fa fa-square", CType: "4&bundle=" + b, DType: "4&bundle=" + b, RType: "4&bundle=" + b, Children: tmpls})
-
-					}
-					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
 
 					var folders []PkgItem
 					var pkgpath = core.TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + v.Name + "/"
 					if Windows {
 						pkgpath = strings.Replace(pkgpath, "/", "\\", -1)
 					}
-					_ = filepath.Walk(pkgpath+"web", func(path string, file os.FileInfo, _ error) error {
-						//fmt.Println(path)
-						if file.IsDir() {
-							lpathj := strings.Replace(path, pkgpath+"web", "", -1)
 
-							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
+					if _, errr := os.Stat(pkgpath + "gos.gxml"); !os.IsNotExist(errr) {
+						gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + v.Name + "/gos.gxml")
+						for _, b := range v.Groups {
+							tmpls := []PkgItem{}
 
-							loca.CType = "5&path=" + lpathj
-							loca.DType = "6&isDir=Yes&path=" + lpathj
-
-							loca.MType = "6&path=" + lpathj
-
-							files, _ := ioutil.ReadDir(path)
-
-							for _, f := range files {
-								if !f.IsDir() {
-									var mjk string
-									mjk = strings.Replace(path, pkgpath+"web", "", -1) + "/" + f.Name()
-									if Windows {
-										mjk = strings.Replace(mjk, "/", "\\", -1)
-									}
-
-									loca.Children = append(loca.Children, PkgItem{AppID: v.Name, Text: f.Name(), Icon: "fa fa-page", Type: "6", ID: v.Name + "@pkg:" + mjk, MType: "6&path=" + mjk, DType: "6&isDir=No&path=" + mjk})
-
+							for _, tm := range gos.Templates.Templates {
+								if tm.Bundle == b {
+									tmpls = append(tmpls, PkgItem{Type: "5", AppID: v.Name, Icon: "fa fa-page", DType: "5&tmpl=" + b + "/" + tm.Name, Text: tm.Name, ID: v.Name + "@pkg:" + b + "/" + tm.Name})
 								}
 							}
 
-							folders = append(folders, loca)
+							Childtm = append(Childtm, PkgItem{AppID: v.Name, Text: b, Icon: "fa fa-square", CType: "4&bundle=" + b, DType: "4&bundle=" + b, RType: "4&bundle=" + b, Children: tmpls})
 
 						}
-						//fmt.Println(file,path,file.Name,file.IsDir())
-						//   var loca PkgItem = PkgItem{AppID:v.Name,Text: file.Name(),Icon: "fa fa-folder"}
 
-						return nil
-					})
+						_ = filepath.Walk(pkgpath+"web", func(path string, file os.FileInfo, _ error) error {
+							//fmt.Println(path)
+							if file.IsDir() {
+								lpathj := strings.Replace(path, pkgpath+"web", "", -1)
+
+								var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
+
+								loca.CType = "5&path=" + lpathj
+								loca.DType = "6&isDir=Yes&path=" + lpathj
+
+								loca.MType = "6&path=" + lpathj
+
+								files, _ := ioutil.ReadDir(path)
+
+								for _, f := range files {
+									if !f.IsDir() {
+										var mjk string
+										mjk = strings.Replace(path, pkgpath+"web", "", -1) + "/" + f.Name()
+										if Windows {
+											mjk = strings.Replace(mjk, "/", "\\", -1)
+										}
+
+										loca.Children = append(loca.Children, PkgItem{AppID: v.Name, Text: f.Name(), Icon: "fa fa-page", Type: "6", ID: v.Name + "@pkg:" + mjk, MType: "6&path=" + mjk, DType: "6&isDir=No&path=" + mjk})
+
+									}
+								}
+
+								folders = append(folders, loca)
+
+							}
+							//fmt.Println(file,path,file.Name,file.IsDir())
+							//   var loca PkgItem = PkgItem{AppID:v.Name,Text: file.Name(),Icon: "fa fa-folder"}
+
+							return nil
+						})
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
+						appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Web Resources", CType: "5&path=/", Children: folders, Icon: "fa fa-folder"})
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "18", Text: "Testing", Icon: "fa fa-flask"})
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "8", Text: "Interfaces", Icon: "fa fa-share-alt"})
+						//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
+						appCo = append(appCo, PkgItem{Type: "10", AppID: v.Name, Text: "Template pipelines", Icon: "fa fa-exchange"})
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "11", Text: "Web services", Icon: "fa fa-circle-o-notch"})
+					}
+
 					var goFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
@@ -252,31 +269,19 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						return nil
 					})
 
-					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Web Resources", CType: "5&path=/", Children: folders, Icon: "fa fa-folder"})
-
 					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Go SRC", CType: "50&path=/", Children: goFiles, Icon: "fa fa-cube"})
-
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
-
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "18", Text: "Testing", Icon: "fa fa-flask"})
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "300", Text: "KanBan board", Icon: "fa fa-briefcase"})
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "7", Text: "Build center", Icon: "fa fa-server"})
-
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "8", Text: "Interfaces", Icon: "fa fa-share-alt"})
-					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
-					appCo = append(appCo, PkgItem{Type: "10", AppID: v.Name, Text: "Template pipelines", Icon: "fa fa-exchange"})
-
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "11", Text: "Web services", Icon: "fa fa-circle-o-notch"})
 
 					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"12",Text: "Timers",Icon: "fa fa-clock-o"} )
 
 					rootel := bson.M{"dtype": "3", "text": v.Name, "type": "1", "id": v.Name, "children": appCo, "appid": v.Name, "btype": "on"}
 					if v.Type == "webapp" {
 						rootel["icon"] = "fa fa-globe"
-					} else if v.Type == "bind" {
-						rootel["icon"] = "fa fa-mobile"
+					} else if v.Type == "app" {
+						rootel["icon"] = "fa fa-folder"
 					} else {
 						rootel["icon"] = "fa fa-gift"
 					}
@@ -293,37 +298,43 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			//get package
 			sapp := NetgetApp(getApps(), r.FormValue("id"))
 			prefix := "/api/put?type=0&id=" + sapp.Name
-			gos, _ := core.LoadGos(os.ExpandEnv("$GOPATH") + "/src/" + sapp.Name + "/gos.gxml")
 
 			//load gos
 
 			//set params democss,port,key,name,type
 			editor := sPackageEdit{Type: sapp.Type, TName: sapp.Name}
-			editor.IType = Aput{Link: prefix, Param: "app", Value: gos.Type}
+			pkgpath := os.ExpandEnv("$GOPATH") + "/src/" + sapp.Name + "/gos.gxml"
 
-			editor.Port = Aput{Link: prefix, Param: "port", Value: gos.Port}
-			editor.Key = Aput{Link: prefix, Param: "key", Value: gos.Key}
-			editor.Domain = Aput{Link: prefix, Param: "domain", Value: gos.Domain}
-			editor.Erpage = Aput{Link: prefix, Param: "erpage", Value: gos.ErrorPage}
-			editor.Ffpage = Aput{Link: prefix, Param: "fpage", Value: gos.NPage}
-			editor.Name = Aput{Link: prefix, Param: "Name", Value: sapp.Name}
-			editor.Package = Aput{Link: "/api/put?type=16&pkg=" + sapp.Name, Param: "npk", Value: gos.Package}
-			editor.Mainf = gos.Main
-			editor.Initf = gos.Init_Func
-			editor.Sessionf = gos.Session
+			if _, err := os.Stat(pkgpath); !os.IsNotExist(err) {
 
-			varf := []Inputs{}
-			varf = append(varf, Inputs{Name: "is", Type: "text", Text: "Variable type"})
-			varf = append(varf, Inputs{Name: "name", Type: "text", Text: "Variable name"})
-			editor.CreateVar = rPut{Count: "4", Link: "/api/create?type=0&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=2&pkg=" + sapp.Name}
+				gos, _ := core.LoadGos(pkgpath)
+				editor.IType = Aput{Link: prefix, Param: "app", Value: gos.Type}
 
-			varf = []Inputs{}
-			varf = append(varf, Inputs{Name: "src", Type: "text", Text: "Package path"})
+				editor.Port = Aput{Link: prefix, Param: "port", Value: gos.Port}
+				editor.Key = Aput{Link: prefix, Param: "key", Value: gos.Key}
+				editor.Domain = Aput{Link: prefix, Param: "domain", Value: gos.Domain}
+				editor.Erpage = Aput{Link: prefix, Param: "erpage", Value: gos.ErrorPage}
+				editor.Ffpage = Aput{Link: prefix, Param: "fpage", Value: gos.NPage}
+				editor.Name = Aput{Link: prefix, Param: "Name", Value: sapp.Name}
+				editor.Package = Aput{Link: "/api/put?type=16&pkg=" + sapp.Name, Param: "npk", Value: gos.Package}
+				editor.Mainf = gos.Main
+				editor.Initf = gos.Init_Func
+				editor.Sessionf = gos.Session
 
-			editor.CreateImport = rPut{Count: "6", Link: "/api/create?type=1&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=3&pkg=" + sapp.Name}
-			varf = []Inputs{}
-			varf = append(varf, Inputs{Name: "src", Type: "text", Text: "Path to css lib"})
-			editor.Css = rPut{Count: "6", Link: "/api/create?type=2&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=4&pkg=" + sapp.Name}
+				varf := []Inputs{}
+				varf = append(varf, Inputs{Name: "is", Type: "text", Text: "Variable type"})
+				varf = append(varf, Inputs{Name: "name", Type: "text", Text: "Variable name"})
+				editor.CreateVar = rPut{Count: "4", Link: "/api/create?type=0&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=2&pkg=" + sapp.Name}
+
+				varf = []Inputs{}
+				varf = append(varf, Inputs{Name: "src", Type: "text", Text: "Package path"})
+
+				editor.CreateImport = rPut{Count: "6", Link: "/api/create?type=1&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=3&pkg=" + sapp.Name}
+				varf = []Inputs{}
+				varf = append(varf, Inputs{Name: "src", Type: "text", Text: "Path to css lib"})
+				editor.Css = rPut{Count: "6", Link: "/api/create?type=2&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=4&pkg=" + sapp.Name}
+
+			}
 
 			response = NetbPackageEdit(editor)
 
@@ -866,7 +877,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
 			inputs = append(inputs, Inputs{Type: "hidden", Name: "type", Value: "0"})
-			response = NetbModal(sModal{Body: "", Title: "New Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Create Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
+			response = NetbModal(sModal{Body: "", Title: "Add Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 		} else if r.FormValue("type") == "100" {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Plugin install path"})
@@ -882,12 +893,17 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 		if r.FormValue("type") == "0" {
 			apps := getApps()
-			apps = append(apps, App{Type: "webapp", Name: r.FormValue("name")})
+			app := App{Type: "webapp", Name: r.FormValue("name")}
 
-			dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name") + "/gos.gxml"
+			dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name")
+
 			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name"))
+			} else {
+				app.Type = "app"
 			}
+
+			apps = append(apps, app)
 			//Users.Update(bson.M{"uid": me.UID}, me)
 			saveApps(apps)
 			response = NetbAlert(Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})

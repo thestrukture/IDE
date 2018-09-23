@@ -1,28 +1,27 @@
-
-{{$me :=  SoftUser }}
-  <!DOCTYPE html>
+ {{$me := SoftUser }}
+<!DOCTYPE html>
 <html class="full-height" lang="en">
-  <head>
+
+<head>
     <!-- Required meta tags always come first -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Home</title>
-      <link rel="shortcut icon" href="/img/logo.png" />
+    <link rel="shortcut icon" href="/img/logo.png" />
     <!-- Bootstrap CSS -->
- 
     <link rel="stylesheet" href="dist/css/font-awesome.min.css">
     <link rel="stylesheet" href="/dist/themes/default/style.min.css" />
-     <link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
+    <link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
+    <link rel="stylesheet" type="text/css" href="dist/ss.css">
+    <link rel="stylesheet" type="text/css" href="dist/jquery.terminal-0.10.8.min.css">
+    <link rel="stylesheet" href="/dist/jqx.base.css" type="text/css" />
+    <link rel="stylesheet" href="/dist/jqx.black.css" type="text/css" />
+</head>
 
-      <link rel="stylesheet" type="text/css" href="dist/ss.css">
-      <link rel="stylesheet" type="text/css" href="dist/jquery.terminal-0.10.8.min.css">
-  </head>
-  <body class="full-height">
-
+<body class="full-height">
     {{Css}}
-
-  <!-- <nav class="navbar navbar-fixed-top navbar-light bg-faded">
+    <!-- <nav class="navbar navbar-fixed-top navbar-light bg-faded">
   <a class="navbar-brand" href="/landing"><img src="/img/logo.png" style="display:inline;width:35px"> Strukture</a>
      <ul class="nav navbar-nav">
     
@@ -41,74 +40,129 @@
      <a class="btn btn-danger-outline" href="/api/logout">Logout</a>
   </div>
 </nav>-->
-  <style type="text/css">
-   body,html {
-    padding-top: 0;
-    background: #ededed;
-    overflow: hidden;
-   }
+    <style type="text/css">
+    body,
+    html {
+        padding-top: 0;
+        background: #375a7f;
+        overflow: hidden;
+    }
 
-   .pop-box {
+    .pop-box {
         overflow-x: auto;
-   }
+    }
 
-   .pop-panel {
+    .pop-panel {}
 
-   }
-
-   .right-bay {
-    position: fixed;
-    z-index: 3000;
-    right:10px;
-    top:10px;
-   }
+    .tavbiew {
+        background: #375a7f;
+    }
 
 
 
-     
-  </style>
+    .right-bay {
+        position: fixed;
+        z-index: 3000;
+        right: 10px;
+        top: 10px;
+    }
 
-  
-<div class="right-bay"></div>
-<div class="list-group list-group-item clear-btn" style="    padding: 2px;">
-<p class="auto-marker" style="line-height: 35px;margin:0px"> <button class="btn btn-sm cps-side" onclick="CollapseGloj()" style="background:none;"><i class="fa fa-compress"></i> <span class="hidden-md-down">Hide</span></button> <button onclick="updateTree()" class="btn btn-sm"><i class="fa fa-refresh"></i></button>  <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=0">New <span class="hidden-md-down">Package</span> </button> <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>  <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button> <a class="btn btn-sm btn-primary-outline " href="https://github.com/thestrukture/IDE/wiki" target="_blank">Docs</a>  </p>
-</div>
-    <div class="container-fluid full-height40" style="" id="panel">        
-      <div class="row full-height " style="margin-bottom:15px;">
-      <div class="col-sm-3 pop-box panel-k-left full-height over-flow-fix" style="-webkit-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
+    .jstree-default .jstree-clicked {
+        background: #7d0808 !important;
+    }
+
+    .jstree-default .jstree-hovered {
+        background: #6b3838 !important;
+    }
+    .jqx-kanban-item-avatar-image {
+        display: none;
+    }
+    .jqx-kanban-item-avatar {
+        display: none;
+    }
+
+    #kanban {
+        width: 100%% !important;
+        height: 92%% !important;
+    }
+    code {
+        width: 100%%;
+        display: block;
+    }
+
+    input, textarea,select {
+        border: 1px solid #7d0808 !important;
+        background: #656565 !important;
+        font-weight: bold !important;
+        color: #fff !important;
+    }
+
+    .jqx-kanban-column-header,.jqx-kanban-column-header-collapsed {
+        background: #375a7f;
+    }
+
+    .jqx-kanban-item-keyword {
+        padding: 5px;
+        background: #333;
+    }
+
+    .chat-window {
+        position: fixed;
+        top: 0px;
+        right: 0px;
+        max-width: 340px;
+        height: 100%%;
+        overflow-y: auto;
+        background: #333;
+        z-index: 10;
+        overflow-x: hidden;
+        width: 100%%;
+        display: none;
+    }
+
+    .overflow-y {
+        overflow-y: auto;
+        position: relative;
+    }
+    </style>
+    <div class="right-bay"></div>
+    <div class="list-group list-group-item clear-btn" style="    padding: 2px;">
+        <p class="auto-marker" style="line-height: 35px;
+    margin: 0px;
+    position: relative;
+    top: -5px;">
+            <button class="btn btn-sm cps-side" onclick="CollapseGloj()" style="background:none;"><i class="fa fa-compress"></i> <span class="hidden-md-down">Hide</span></button>
+            <button onclick="updateTree()" class="btn btn-sm"><i class="fa fa-refresh"></i></button>
+            <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=0">Add <span class="hidden-md-down">Package</span> </button>
+            <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>
+            <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleChat()"><i class="fa fa-user"></i> <span class="hidden-md-down">Chat</span> </button>
+            <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button> <a class="btn btn-sm btn-primary-outline " href="https://github.com/thestrukture/IDE/wiki" target="_blank">Docs</a> </p>
+    </div>
+    <div class="container-fluid full-height40" style="" id="panel">
+        <div class="row full-height " style="margin-bottom:15px;">
+            <div class="col-sm-3 pop-box panel-k-left full-height over-flow-fix" style="-webkit-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
 -moz-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);
-box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
-  <div class="">
- 
-
-            <div class="text-center loader-prog"><h1><b><i class="fa fa-sun-o fa-spin"></i> </b></h1></div>
-
-
-
- 
-
-      
-   
-  
-
-    
-        <p class="dimisser-btn" style="display:none;"><button class="btn btn-block btn-danger" onclick="ClearSideBay()"><b>Dismiss prompt</b></button></p>
-        <div class="side-bay left-bay"></div>
-          <div id="jstree"></div>
-  
-   </div>
-      </div>
-      <div class="col-sm-9 cbn ready-one">
-             <div class="text-center" style="padding:50px;"><img src="/img/logo.png" style="width:75px;"><h4>Strukture</h4></div>
-      </div>
-         
-        <div class="col-sm-9 pop-panel over-flow-fix full-height panel-k-right ready-three cbn" style="padding:0;">
-             <ul class="nav xnavs nav-tabs">
-          
-            </ul>
+box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10;">
+                <div class="">
+                    <div class="text-center loader-prog">
+                        <h1><b><i class="fa fa-sun-o fa-spin"></i> </b></h1></div>
+                    <p class="dimisser-btn" style="display:none;">
+                        <button class="btn btn-block btn-danger" onclick="ClearSideBay()"><b>Dismiss prompt</b></button>
+                    </p>
+                    <div class="side-bay left-bay"></div>
+                    <div id="jstree"></div>
+                </div>
+            </div>
+            <div class="col-sm-9 cbn ready-one">
+                <div class="text-center" style="padding:50px;"><img src="/img/logo.png" style="width:75px;">
+                    <h4>Strukture</h4></div>
+            </div>
+            <div class="col-sm-9 pop-panel over-flow-fix full-height panel-k-right ready-three cbn" style="padding:0;">
+                <ul class="nav xnavs nav-tabs">
+                </ul>
+            </div>
         </div>
-      </div>
-       <!-- <div class="row">
+        <!-- <div class="row">
 
     
         <div class="col-sm-10 ">
@@ -122,38 +176,51 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#fff; z-index: 10;">
   
 
       </div> -->
-        
-      
-
     </div>
-
+    <div class="chat-window">
+        <div class="overflow-y chat-thread" style="      padding: 15px;  height: calc(100%% - 64px);
+    background-color: #232323;">
+            
+        </div>
+        <div class=""><div class="row">
+                <div class="col-xs-9">
+                    <textarea class="chat-input form-control" placeholder="Message..."></textarea>
+                </div>
+                <div class="col-xs-3">
+                    <button onclick="sendChat()" style=" position: relative;
+    top: 13px;
+    right: 12px;" class="btn btn-sm btn-primary btn-block btn-lg">SEND</button>
+                </div>
+        </div> </div>
+    </div>
     <div class="terminal-side">
-  <button onclick="toggleTerm()" style="color:#fff;" type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span class="fa fa-compress"></span> 
-            </button>
+        <button onclick="toggleTerm()" style="color:#fff;" type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span class="fa fa-compress"></span>
+        </button>
         <div style="float: left;
     color: #6F6E6E;
     font-size: 11px;
     margin-left: 8px;">
-          
-          <button class="term-b" onclick="addtermwidth()"><i class="fa fa-arrow-left"></i> </button>
-          <label>Width</label>
+            <button class="term-b" onclick="addtermwidth()"><i class="fa fa-arrow-left"></i> </button>
+            <label>Width</label>
             <button class="term-b" onclick="redtermwidth()"><i class="fa fa-arrow-right"></i></button>
         </div>
-         
-            <div id="terminaldefault" class="terminal" style="clear:both"  ></div>
+        <div id="terminaldefault" class="terminal" style="clear:both"></div>
     </div>
-
     <div class="footer-bay">
-
     </div>
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
-
+    <script>
+    if (typeof module === 'object') {
+        window.module = module;
+        module = undefined;
+    }
+    window.boards = {placeholder : {} };
+    </script>
     {{JS}}
-   
+    <script type="text/javascript" src="/dist/jqxcore.js"></script>
+    <script type="text/javascript" src="/dist/jqxsortable.js"></script>
+    <script type="text/javascript" src="/dist/jqxkanban.js"></script>
+    <script type="text/javascript" src="/dist/jqxdata.js"></script>
+</body>
 
-
-  
- 
-  </body>
 </html>

@@ -52,6 +52,10 @@
         $("#accountJoin").modal('show');
       }
 
+      if(!window.localStorage["struktureid"]){
+        window.localStorage.struktureid = `makeid()-makeid()-(new Date()).getTime()`;
+      }
+
     } catch(e) {
 
     } 
