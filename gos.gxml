@@ -27,6 +27,7 @@
     <import src="github.com/gorilla/websocket" />
     <import src="path/filepath" />
 	<import src="runtime"/>
+	<import src="github.com/adlane/exec"/>
 	<output>server_out.go</output>
 	<var type="bool">Windows</var>
 	<var type="string">autocompletePath</var>
@@ -2072,34 +2073,79 @@ for _, v := range apps {
 				</end>
 			
 
-				<end path="/api/console" method="mConsole" type="POST">
+			<end path="/api/console" method="mConsole" type="POST">
 			
-			if strings.Contains(r.FormValue("command"), "cd"){
-				parts := strings.Fields(r.FormValue("command"))
+				if strings.Contains(r.FormValue("command"), "cd"){
+					parts := strings.Fields(r.FormValue("command"))
 
-				if len(parts) == 1 {
-					os.Chdir("")
-				} else {
-					os.Chdir(parts[1])
-				}
-				if dir,err :=  os.Getwd(); err != nil {
-				response = "Changed directory to " + dir
-				}
+					if len(parts) == 1 {
+						os.Chdir("")
+					} else {
+						os.Chdir(parts[1])
+					}
+					if dir,err :=  os.Getwd(); err != nil {
+					response = "Changed directory to " + dir
+					}
 
-			} else {
-				data,err := core.RunCmdSmart(r.FormValue("command") )
-				if err !=  nil {
-					response = fmt.Sprintf("Error:: %s",err) + "" + data
 				} else {
-					response = data
+					data,err := core.RunCmdSmart(r.FormValue("command") )
+					if err !=  nil {
+						response = fmt.Sprintf("Error:: %s",err) + "" + data
+					} else {
+						response = data
+					}
 				}
-			}
-			w.Write([]byte(response))
+				w.Write([]byte(response))
 			
 			
 			response = ""
 
-				</end>  
+				</end>
+				<end path="/api/terminal_realtime" type="star" >
+					c, err := upgrader.Upgrade(w, r, nil)
+					if err != nil {
+						log.Print("upgrade:", err)
+						return
+					}
+					defer c.Close()
+
+					ctx := exec.InteractiveExec("bash", "-i")
+			        r := reader{Conn : c}
+			        go ctx.Receive(&r, 5*time.Hour)
+			        
+
+					for {
+						_, message, err := c.ReadMessage()
+						if err != nil {
+							log.Println("read:", err)
+
+							if ctx != nil {
+								ctx.Stop()
+							}
+
+							break
+						}
+
+						if len(message) != 0 {
+							msg := string(message)
+
+							if msg == "killnow\n" {
+								fmt.Println("Restarting")
+								ctx.Stop()
+								ctx := exec.InteractiveExec("bash", "-i")
+						        go ctx.Receive(&r, 5*time.Hour)
+							} else {
+								ctx.Send(msg)
+							}
+
+							
+						}
+						
+					}
+
+
+					return true
+				</end> 
 				<!-- Auth -->
 	 			
 		</endpoints>

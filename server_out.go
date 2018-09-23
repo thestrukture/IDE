@@ -7,6 +7,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/adlane/exec"
 	"github.com/cheikhshift/db"
 	"github.com/cheikhshift/gos/core"
 	gosweb "github.com/cheikhshift/gos/web"
@@ -1604,6 +1605,50 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		w.Write([]byte(response))
 
 		response = ""
+
+		callmet = true
+	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/terminal_realtime") {
+
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Print("upgrade:", err)
+			return
+		}
+		defer c.Close()
+
+		ctx := exec.InteractiveExec("bash", "-i")
+		r := reader{Conn: c}
+		go ctx.Receive(&r, 5*time.Hour)
+
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+
+				if ctx != nil {
+					ctx.Stop()
+				}
+
+				break
+			}
+
+			if len(message) != 0 {
+				msg := string(message)
+
+				if msg == "killnow\n" {
+					fmt.Println("Restarting")
+					ctx.Stop()
+					ctx := exec.InteractiveExec("bash", "-i")
+					go ctx.Receive(&r, 5*time.Hour)
+				} else {
+					ctx.Send(msg)
+				}
+
+			}
+
+		}
+
+		return true
 
 		callmet = true
 	}

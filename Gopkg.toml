@@ -26,6 +26,10 @@
 
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/adlane/exec"
+
+[[constraint]]
   name = "github.com/cheikhshift/db"
   version = "0.5.0"
 

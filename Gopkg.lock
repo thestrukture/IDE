@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/adlane/exec"
+  packages = ["."]
+  revision = "bf2ccecd9b4d2dff9e3deba15afd928eaf3e7455"
+
+[[projects]]
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
   revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
@@ -80,7 +86,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "d47a0f3392421c5624713c9a19fe781f651f8a50"
 
 [[projects]]
   branch = "v2"
@@ -97,6 +103,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a90676c33a014f5829aa47b4f9b18cdc8b3e1f36c095f3a05342527e2b0d494f"
+  inputs-digest = "e9d977861aa26d26b9afa6a0f0d5afce7a29b16db6de4dc9ee1d784b0955477b"
   solver-name = "gps-cdcl"
   solver-version = 1

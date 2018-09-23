@@ -51,6 +51,26 @@ var addjsstr = ` <script type="text/javascript">
 				 	
 				 	</script>`
 
+type reader struct {
+	Conn *websocket.Conn
+}
+
+func (r *reader) OnData(b []byte) bool {
+	r.Conn.WriteMessage(1, b)
+	return false
+}
+
+func (r *reader) OnError(b []byte) bool {
+	if r.Conn != nil {
+		r.Conn.WriteMessage(1, b)
+	}
+	return false
+}
+
+func (r *reader) OnTimeout() {
+
+}
+
 func visit(path string, f os.FileInfo, err error) error {
 	fmt.Printf("Visited: %s\n", path)
 	return nil
