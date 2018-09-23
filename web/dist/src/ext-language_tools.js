@@ -1521,12 +1521,7 @@ var Autocomplete = function() {
             if (prefix == this.completions.filterText)
                 return;
 
-          console.log("compl", this.completions)
-          
-
            this.completions.setFilter(prefix);
-
-
 
             if (!this.completions.filtered.length)
                 return this.detach();
@@ -1540,36 +1535,41 @@ var Autocomplete = function() {
         window.completions = this;
 
         var _id = this.gatherCompletionsId;
+        this.refresh = function(){
         this.gatherCompletions(this.editor, function(err, results) {
-            var detachIfFinished = function() {
-                if (!results.finished) return;
-                return this.detach();
-            }.bind(this);
+                var detachIfFinished = function() {
+                    if (!results.finished) return;
+                    return this.detach();
+                }.bind(this);
 
-            var prefix = results.prefix;
-            var matches = results && results.matches;
+                var prefix = results.prefix;
+                var matches = results && results.matches;
 
-            if (!matches || !matches.length)
-                return detachIfFinished();
-            if (prefix.indexOf(results.prefix) !== 0 || _id != this.gatherCompletionsId)
-                return;
+                if (!matches || !matches.length)
+                    return detachIfFinished();
+                if (prefix.indexOf(results.prefix) !== 0 || _id != this.gatherCompletionsId)
+                    return;
 
-            this.completions = new FilteredList(matches);
+                this.completions = new FilteredList(matches);
 
-            if (this.exactMatch)
-                this.completions.exactMatch = true;
+                if (this.exactMatch)
+                    this.completions.exactMatch = true;
 
-            this.completions.setFilter(prefix);
-            var filtered = this.completions.filtered;
-            if (!filtered.length)
-                return detachIfFinished();
-            if (filtered.length == 1 && filtered[0].value == prefix && !filtered[0].snippet)
-                return detachIfFinished();
-            if (this.autoInsert && filtered.length == 1 && results.finished)
-                return this.insertMatch(filtered[0]);
+                this.completions.setFilter(prefix);
+                var filtered = this.completions.filtered;
+                if (!filtered.length)
+                    return detachIfFinished();
+                if (filtered.length == 1 && filtered[0].value == prefix && !filtered[0].snippet)
+                    return detachIfFinished();
+                if (this.autoInsert && filtered.length == 1 && results.finished)
+                    return this.insertMatch(filtered[0]);
 
-            this.openPopup(this.editor, prefix, keepPopupPosition);
-        }.bind(this));
+                this.openPopup(this.editor, prefix, keepPopupPosition);
+            }.bind(this));
+        }.bind(this);
+
+        this.refresh();
+
     };
 
     this.cancelContextMenu = function() {

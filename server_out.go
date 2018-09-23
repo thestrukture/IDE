@@ -1626,6 +1626,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				log.Println("read:", err)
 
 				if ctx != nil {
+					ctx.Cancel()
 					ctx.Stop()
 				}
 
@@ -1637,8 +1638,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 				if msg == "killnow\n" {
 					fmt.Println("Restarting")
+					ctx.Cancel()
 					ctx.Stop()
-					ctx := exec.InteractiveExec("bash", "-i")
+					ctx = exec.InteractiveExec("bash", "-i")
+					r := reader{Conn: c}
 					go ctx.Receive(&r, 5*time.Hour)
 				} else {
 					ctx.Send(msg)

@@ -2120,6 +2120,7 @@ for _, v := range apps {
 							log.Println("read:", err)
 
 							if ctx != nil {
+								ctx.Cancel()
 								ctx.Stop()
 							}
 
@@ -2131,8 +2132,10 @@ for _, v := range apps {
 
 							if msg == "killnow\n" {
 								fmt.Println("Restarting")
+								ctx.Cancel()
 								ctx.Stop()
-								ctx := exec.InteractiveExec("bash", "-i")
+								ctx = exec.InteractiveExec("bash", "-i")
+								r := reader{Conn : c}
 						        go ctx.Receive(&r, 5*time.Hour)
 							} else {
 								ctx.Send(msg)

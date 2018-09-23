@@ -429,7 +429,8 @@
            
             if(event.data.includes("bash") && event.data.length < 20){
                 working = false;
-                 term.set_prompt('user@Strutkure $')
+                prevBuff = "";
+                term.set_prompt('user@Strutkure $')
                 return;
             } 
             console.log(1);
