@@ -9,7 +9,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Autocomplete between different files.
 - Syntax correction.
 - Server process management.
-- Basic terminal via stateless HTTP.
+- Interactive terminal with bash.
 - Line tags in relation to failed build logs.
 - Project build scripts.
 - View web application output.
