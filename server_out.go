@@ -219,8 +219,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
 						appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Web Resources", CType: "5&path=/", Children: folders, Icon: "fa fa-folder"})
 
-						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
-
 						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "18", Text: "Testing", Icon: "fa fa-flask"})
 						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "8", Text: "Interfaces", Icon: "fa fa-share-alt"})
 						//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
@@ -229,6 +227,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "11", Text: "Web services", Icon: "fa fa-circle-o-notch"})
 					}
 
+					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
 					var goFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
@@ -278,10 +277,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"12",Text: "Timers",Icon: "fa fa-clock-o"} )
 
 					rootel := bson.M{"dtype": "3", "text": v.Name, "type": "1", "id": v.Name, "children": appCo, "appid": v.Name, "btype": "on"}
+
 					if v.Type == "webapp" {
 						rootel["icon"] = "fa fa-globe"
 					} else if v.Type == "app" {
 						rootel["icon"] = "fa fa-folder"
+						rootel["project"] = true
 					} else {
 						rootel["icon"] = "fa fa-gift"
 					}
@@ -298,8 +299,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			//get package
 			sapp := NetgetApp(getApps(), r.FormValue("id"))
 			prefix := "/api/put?type=0&id=" + sapp.Name
-
-			//load gos
 
 			//set params democss,port,key,name,type
 			editor := sPackageEdit{Type: sapp.Type, TName: sapp.Name}
@@ -333,10 +332,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				varf = []Inputs{}
 				varf = append(varf, Inputs{Name: "src", Type: "text", Text: "Path to css lib"})
 				editor.Css = rPut{Count: "6", Link: "/api/create?type=2&pkg=" + sapp.Name, Inputs: varf, ListLink: "/api/get?type=4&pkg=" + sapp.Name}
-
+				response = NetbPackageEdit(editor)
+			} else {
+				response = ""
 			}
-
-			response = NetbPackageEdit(editor)
 
 		} else if r.FormValue("type") == "2" {
 
@@ -1202,13 +1201,23 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		gp := os.ExpandEnv("$GOPATH")
 
 		os.Chdir(gp + "/src/" + r.FormValue("pkg"))
-		os.RemoveAll(gp + "/src/" + r.FormValue("pkg") + "/bindata.go")
-		os.RemoveAll(gp + "/src/" + r.FormValue("pkg") + "/application.go")
-		logBuilt, _ := core.RunCmdSmart("gos --run --buildcheck")
-		fmt.Println(logBuilt)
+		os.Remove(gp + "/src/" + r.FormValue("pkg") + "/bindata.go")
+		os.Remove(gp + "/src/" + r.FormValue("pkg") + "/application.go")
+
+		var logBuilt string
 		passed := false
 
-		if !strings.Contains(logBuilt, "Your build failed,") {
+		if _, err := os.Stat("./gos.gxml"); os.IsNotExist(err) {
+			logBuilt, _ = core.RunCmdSmart("go build")
+			if logBuilt != "" {
+				passed = false
+			}
+		} else {
+			logBuilt, _ = core.RunCmdSmart("gos --run --buildcheck")
+		}
+		fmt.Println(logBuilt)
+
+		if !strings.Contains(logBuilt, "Your build failed,") || !passed {
 			logBuilt, _ = core.RunCmdSmart("go build")
 			if logBuilt != "" {
 
@@ -1432,7 +1441,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		os.Remove(gp + "/src/" + r.FormValue("pkg") + "/server_out.go")
 
 		//core.Process(coreTemplate,gp + "/src/" +  r.FormValue("pkg"), "web","tmpl")
-		core.RunCmdB("gos --export")
+		if _, err := os.Stat("./gos.gxml"); os.IsNotExist(err) {
+			core.RunCmdB("go build")
+		} else {
+			core.RunCmdB("gos --export")
+		}
+
 		zipname := strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".binary.zip"
 		if Windows {
 			bPath[len(bPath)-1] += ".exe"
@@ -1451,6 +1465,13 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 		os.Chdir(os.ExpandEnv("$GOPATH") + "/src/")
 		os.Remove(strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip ")
+
+		if _, err := os.Stat("./gos.gxml"); os.IsNotExist(err) {
+			core.RunCmdB("go build")
+		} else {
+			core.RunCmdB("gos --export")
+		}
+
 		pkgpath := r.FormValue("pkg")
 		zipname := strings.Replace(r.FormValue("pkg"), "/", ".", -1) + ".zip"
 		if Windows {

@@ -511,7 +511,10 @@
     $(function () { 
       $('#jstree').on('changed.jstree', function (e, data) {
         var node = data.instance.get_node(data.selected[0]).original;
+
         if(node){
+          if(node.project)
+            return;
         if(!working && node.type != "" ){
           working = true;
     $(".loader-prog").css("display","block");
