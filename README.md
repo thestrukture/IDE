@@ -44,7 +44,7 @@ If build commands keep returning the same message, push the `F12` key down to op
 	
 ## Access
 
-Visit [localhost:8884/home](http://localhost:8884/home). Access the IDE from any device on your network as well...
+Visit [localhost:8884/index](http://localhost:8884/index). Access the IDE from any device on your network as well...
 
 ## Bug reports & questions :
 Please create a new issue on Github to report a bug.
