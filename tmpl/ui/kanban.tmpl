@@ -3,28 +3,15 @@
 <div style="position: fixed;width: 100%;height: auto;    background: #333;
     z-index: 1;" class="fixed-handle">
 </div>
+
     <div style="padding-left:20px;height:100%;overflow-y: auto;" class="card-info over-flow-fix">
-            <div class="new_task" style="max-width: 340px;display: none;">
-                <p class="text-right"><button class="btn btn-sm btn-danger cancel-task">Cancel</button></p>
-                <textarea style="height:300px;" class="card-text form-control" placeholder="Enter task description, this will be the name of the commit message."></textarea>
-                <br>
-                <label>Priority level</label>
-                <select class="form-control task-pri">
-                      <option value="#5dc3f0">Side objectives [GREEN].</option>
-                <option value= "#6bbd49">Project objectives [BLUE].</option>
-                 <option value="#f19b60">Required task [ORANGE].</option>
-                 <option value="#333">Not required [BLACK].</option>       
-                </select>
-                <br>
-                <input type="text" name="" placeholder="Enter comma separated tags, ie : tag1, tag2" class="form-control card-tags">
 
-            </div>
-
-            <p style="margin:0.4em;"><button class="btn btn-sm btn-warning new-task" style="margin-right: 0.6em;" >New Task</button> <input type="checkbox" class="do-pull"> <label>Commit to git on each task completion.</label> </p>
+            <p style="margin:0.4em;"><button class="btn btn-sm btn-warning new-task" style="margin-right: 0.6em;" >New Task</button> <input type="checkbox" class="do-pull"> <label>Commit and push to git on each task completion.</label> </p>
             <div  style="width:100%;height:100%;overflow-y: auto;" id='kanban'>
             </div>
      
     </div>
+
     <script type="text/javascript">
     var id = makeid();
 
@@ -36,6 +23,10 @@
         let built = false;
         let cardsRaw = false;
         let resName = "{{.Misc}} - KanBan board";
+
+          $('#{{$rin}} .new_task').on('hidden.bs.modal', function (e) {
+              newTask = false;
+          })
 
           function resetBoard(){
              $('#kanban').jqxKanban('destroy');
@@ -120,22 +111,10 @@
 
           function closeEntry(){
             newTask = false;
-            $("#{{$rin}} #kanban").css('display', 'block');
-            $("#{{$rin}} .new_task").css('display', 'none');
-             $("#{{$rin}} .new-task").html("New Task");
+            $("#{{$rin}} .new_task").modal('hide');
           }
 
-          $("#{{$rin}} .cancel-task").click(function(){
-            closeEntry();
-
-           
-            return false;
-          });
-
           $("#{{$rin}} .new-task").click(function(){
-
-
-            $(this).html(newTask ? "New Task" : "Save");
 
             if(newTask){
 
@@ -147,7 +126,7 @@
                 closeEntry();
 
                 if(!built)
-                buildKanban({cards : [newItem] });
+                  buildKanban({cards : [newItem] });
                 else  
                 $('#{{$rin}} #kanban').jqxKanban('addItem', newItem);
 
@@ -159,8 +138,7 @@
             }
 
             if(!newTask){
-                $("#{{$rin}} #kanban").css('display', 'none');
-                $(".new_task").css('display', 'block');
+                $("#{{$rin}} .new_task").modal('show');
             }
 
 
@@ -170,7 +148,11 @@
           });
 
           function pushSource(){
-             
+             if(!$(".terminal-side").hasClass('active')){
+                toggleTerm();
+             } 
+
+             $("#terminaldefault").terminal().insert("cd $GOPATH/src/" + {{.Misc}}  + " && git push\n");
           }
 
           function commitSource(message){
@@ -397,4 +379,34 @@
 
     addTab( "{{.Misc}} - KanBan board", "{{$rin}}");
     </script>
+    <div class="modal new_task" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New task</h5>
+       
+      </div>
+      <div class="modal-body">
+           <div class="" style="">
+                <textarea style="height:300px;" class="card-text form-control" placeholder="Enter task description, this will be the name of the commit message."></textarea>
+                <br>
+                <label>Priority level</label>
+                <select class="form-control task-pri">
+                      <option value="#5dc3f0">Side objectives [GREEN].</option>
+                <option value= "#6bbd49">Project objectives [BLUE].</option>
+                 <option value="#f19b60">Required task [ORANGE].</option>
+                 <option value="#333">Not required [BLACK].</option>       
+                </select>
+                <br>
+                <input type="text" name="" placeholder="Enter comma separated tags, ie : tag1, tag2" class="form-control card-tags">
+
+            </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn  btn-sm btn-secondary" data-dismiss="modal">Close</button>
+        <button class="btn  btn-warning new-task" style="margin-right: 0.6em;" >Add</button>
+      </div>
+    </div>
+  </div>
+</div>
 </div>

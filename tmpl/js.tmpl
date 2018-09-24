@@ -408,6 +408,24 @@
 
       // Listen for messages
     
+       socketTerminal.addEventListener('message', function (event) {
+            let term =  $('#terminaldefault').terminal();
+
+            if(event.data.includes("bash") && event.data.includes("$") && event.data.length < 50){
+                working = false;
+                prevBuff = "";
+                term.set_prompt('user@Strutkure $')
+                return;
+            } 
+
+            if(event.data != prevBuff){
+              term.echo(event.data);
+              prevBuff = event.data;
+            }
+
+            if(working)
+              term.set_prompt('>')
+    });
 
     jQuery(function($, undefined) {
     $('#terminaldefault').terminal(function(command, term) {
@@ -424,29 +442,15 @@
 
         term.set_prompt(( working ? "":'user@Strutkure $' ) )
 
-
-        socketTerminal.addEventListener('message', function (event) {
-           
-            if(event.data.includes("bash") && event.data.length < 20){
-                working = false;
-                prevBuff = "";
-                term.set_prompt('user@Strutkure $')
-                return;
-            } 
-            console.log(1);
-
-            if(event.data != prevBuff){
-              term.echo(event.data);
-              prevBuff = event.data;
-            }
-            term.set_prompt('>')
-        });
-
     }, {
         greetings: 'Welcome to the Strukture v1.1\nA few notes :\nMake use of the kill command to stop a process.\n2.Command killnow will stop the current process.\n3. Ctrl + c is not supported yet (looking for unicode characters to replace it).',
         name: 'struk_term',
         height: ($(".terminal-side").height() - 55),
-        prompt: (working ? "":'user@Strutkure $')
+        prompt: (working ? "":'user@Strutkure $'),
+        completion : function (string, callback){
+          console.log(string);
+          return ["test", "foo","tt"];
+        }
     });
 });
 
