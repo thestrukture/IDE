@@ -883,7 +883,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
 			inputs = append(inputs, Inputs{Type: "hidden", Name: "type", Value: "0"})
+			inputs = append(inputs, Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce"}})
+
 			response = NetbModal(sModal{Body: "", Title: "Add Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
+
 		} else if r.FormValue("type") == "100" {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Plugin install path"})
@@ -900,19 +903,34 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		if r.FormValue("type") == "0" {
 			apps := getApps()
 			app := App{Type: "webapp", Name: r.FormValue("name")}
+			useGos := r.FormValue("usegos")
+
+			var err error
 
 			dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name")
 
 			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				core.RunCmdB(os.ExpandEnv("$GOPATH") + "/bin/gos make " + r.FormValue("name"))
+				if strings.Contains(useGos, "Scratch") {
+					app.Type = "app"
+					err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
+
+					if err != nil {
+						response = NetbAlert(Alertbs{Type: "danger", Text: "Error creating package " + r.FormValue("name") + ":" + err.Error(), Redirect: "javascript:console.log('error!')"})
+					}
+
+				} else {
+					core.RunCmdB("gos make " + app.Name)
+				}
 			} else {
 				app.Type = "app"
 			}
 
-			apps = append(apps, app)
-			//Users.Update(bson.M{"uid": me.UID}, me)
-			saveApps(apps)
-			response = NetbAlert(Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
+			if err == nil {
+				apps = append(apps, app)
+				//Users.Update(bson.M{"uid": me.UID}, me)
+				saveApps(apps)
+				response = NetbAlert(Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
+			}
 		} else if r.FormValue("type") == "100" {
 			plugins := getPlugins()
 			plugins = append(plugins, r.FormValue("name"))

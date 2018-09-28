@@ -120,9 +120,10 @@
 
                 let card = $("#{{$rin}} .card-text").val(),
                  tags = "Edit ,"+$("#{{$rin}} .card-tags").val(),
+                 cmd = $("#{{$rin}} .card-command").val(),
                  hex = $("#{{$rin}} .task-pri").val();
 
-                var newItem =  { id: makeid(), status: 'new', text: card, tags , color:hex  };
+                var newItem =  { id: makeid(), status: 'new', content : cmd !== '' ? cmd : 'N/A',text: card, tags , color:hex  };
                 closeEntry();
 
                 if(!built)
@@ -187,8 +188,9 @@
                      { name: "id", type: "string" },
                      { name: "status", map: "status", type: "string" },
                      { name: "text", map: "text", type: "string" },
+                     { name: "content", map: "content", type: "string" },
                      { name: "tags", type: "string" },
-                    { name: "ts", type: "date" },
+                     { name: "ts", type: "date" },
                      { name: "color", map: "color", type: "string" }
             ];
             built = true;
@@ -224,7 +226,13 @@
                         { text: "Fresh", dataField: "new" },
                         { text: "In Progress", dataField: "work" },
                         { text: "Done", dataField: "done" }
-                    ]
+                    ],
+                    template : "<div class='jqx-kanban-item' id=''>"
+                    + "<div class='jqx-kanban-item-color-status'></div>"
+                    + "<div class='jqx-kanban-item-avatar'></div>"
+                    + "<div class='jqx-kanban-item-text'></div><div class='jqx-kanban-item-content'></div>"
+                    + "<div class='jqx-kanban-item-footer'></div>"
+                    + "</div>"
                 });
 
                 $('#{{$rin}} #kanban').on('itemAttrClicked', function (event) {
@@ -321,9 +329,13 @@
 
                 $('#{{$rin}} #kanban').on('itemMoved', function (event) {
                     console.log("item moved...");
-                      var args = event.args;
-                      var itemId = args.itemId;
+                    var args = event.args;
+                     var itemId = args.itemId;
                      var newParentId = args.newParentId;
+
+                     if(args.itemData.content !== 'N/A'){
+                        socketTerminal.send(`${args.itemData.content}\n`);
+                     }
 
                      if(args.newColumn.dataField == 'done'){
                         console.log("committing to git...");
@@ -388,22 +400,25 @@
       </div>
       <div class="modal-body">
            <div class="" style="">
-                <textarea style="height:300px;" class="card-text form-control" placeholder="Enter task description, this will be the name of the commit message."></textarea>
+                <textarea style="height:230px;" class="card-text form-control" placeholder="Enter task description, this will be the name of the commit message."></textarea>
                 <br>
                 <label>Priority level</label>
                 <select class="form-control task-pri">
-                      <option value="#5dc3f0">Side objectives [GREEN].</option>
-                <option value= "#6bbd49">Project objectives [BLUE].</option>
+                      <option value="#5dc3f0">Side objectives [BLUE].</option>
+                <option value= "#6bbd49">Project objectives [GREEN].</option>
                  <option value="#f19b60">Required task [ORANGE].</option>
                  <option value="#333">Not required [BLACK].</option>       
                 </select>
                 <br>
                 <input type="text" name="" placeholder="Enter comma separated tags, ie : tag1, tag2" class="form-control card-tags">
+                <br>
+                <label>Optional</label>
+                <input type="text" name="" placeholder="Run custom command on task finish." class="form-control card-command">
 
             </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn  btn-sm btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn  btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
         <button class="btn  btn-warning new-task" style="margin-right: 0.6em;" >Add</button>
       </div>
     </div>

@@ -6,17 +6,15 @@
 {{end}}
 
 {{if .Type | eq "select"}}
+	<label>{{.Misc}}</label>
 	<select class="form-control xsub"  name="{{.Name}}" >
 		{{with .Options}}
 			{{range .}}
-				{{if . eq .Value}}
-				<option value="{{.}}" selected>{{.}}</option>
-				{{else}}
 				<option value="{{.}}">{{.}}</option>
-				{{end}}
 			{{end}}
 		{{end}}
 	</select>
+	<br/>
 {{end}}
 
 {{if .Type | neq "h"}}
