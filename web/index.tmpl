@@ -79,9 +79,11 @@
     .jstree-default .jstree-hovered {
         background: #6b3838 !important;
     }
+
     .jqx-kanban-item-avatar-image {
         display: none;
     }
+
     .jqx-kanban-item-avatar {
         display: none;
     }
@@ -90,19 +92,23 @@
         width: 100%% !important;
         height: 92%% !important;
     }
+
     code {
         width: 100%%;
         display: block;
     }
 
-    input, textarea,select {
+    input,
+    textarea,
+    select {
         border: 1px solid #7d0808 !important;
         background: #656565 !important;
         font-weight: bold !important;
         color: #fff !important;
     }
 
-    .jqx-kanban-column-header,.jqx-kanban-column-header-collapsed {
+    .jqx-kanban-column-header,
+    .jqx-kanban-column-header-collapsed {
         background: #375a7f;
     }
 
@@ -118,7 +124,6 @@
         max-width: 340px;
         height: 100%%;
         overflow-y: auto;
-        background: #333;
         z-index: 10;
         overflow-x: hidden;
         width: 100%%;
@@ -131,7 +136,7 @@
     }
 
     .ace_editor.ace_autocomplete {
-      width: 380px !important;
+        width: 380px !important;
     }
     </style>
     <div class="right-bay"></div>
@@ -145,6 +150,7 @@
             <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=0">Add <span class="hidden-md-down">Package</span> </button>
             <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>
             <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleChat()"><i class="fa fa-user"></i> <span class="hidden-md-down">Chat</span> </button>
+ 
             <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button> <a class="btn btn-sm btn-primary-outline " href="https://github.com/thestrukture/IDE/wiki" target="_blank">Docs</a> </p>
     </div>
     <div class="container-fluid full-height40" style="" id="panel">
@@ -178,7 +184,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
 
               <div class="text-center" style="padding:50px;"><img src="/img/logo.png" style="width:75px;"><h4>Strukture</h4></div>
         </div>
-         <div id="editor" style="height:600px" class="col-sm-10 cbn ready-two"></div>
+        <div id="editor" style="height:600px" class="col-sm-10 cbn ready-two"></div>
         <div class="col-sm-10 ready-three cbn">
             
         </div>
@@ -187,11 +193,14 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
       </div> -->
     </div>
     <div class="chat-window">
-        <div class="overflow-y chat-thread" style="      padding: 15px;  height: calc(100%% - 64px);
-    background-color: #232323;">
-            
+        <div style="text-align:center;">
+            <button class="btn btn-sm btn-primary-outline btn-block" style="border:none;border-radius: 0;" onclick="toggleChat()"> HIDE </button>
         </div>
-        <div class=""><div class="row">
+        <div class="overflow-y chat-thread" style="padding: 15px;  height: calc(100%% - 99px);
+    background-color: #23232380;">
+        </div>
+        <div style="background-color: #333;">
+            <div class="row">
                 <div class="col-xs-9">
                     <textarea class="chat-input form-control" placeholder="Message..."></textarea>
                 </div>
@@ -200,7 +209,8 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
     top: 13px;
     right: 12px;" class="btn btn-sm btn-primary btn-block btn-lg">SEND</button>
                 </div>
-        </div> </div>
+            </div>
+        </div>
     </div>
     <div class="terminal-side">
         <button onclick="toggleTerm()" style="color:#fff;" type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -223,7 +233,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
         window.module = module;
         module = undefined;
     }
-    window.boards = {placeholder : {} };
+    window.boards = { placeholder: {} };
     </script>
     {{JS}}
     <script type="text/javascript" src="/dist/jqxcore.js"></script>

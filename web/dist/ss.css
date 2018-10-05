@@ -24,15 +24,14 @@ html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:1
 }
 
 .modal-header {
-	border-bottom: 1px solid #7d0808 !important;
 	background: #333 !important;
 }
 
 
 .xtab.active , .xtab.factive {
-  	color: #fff;
-    background-color: #7d0808;
-    border-color: #7d0808 #7d0808 transparent;
+      color: #fff;
+    background-color: #6161617a;
+    border-color: #6161617a #6161617a transparent;
 }
 .context-menu-list {
     z-index: 8000 !important;
@@ -92,6 +91,8 @@ body {
 .xnavs .nav-item {
     float:none;
     display: inline-block;
+    top: -4px;
+    position: relative;
 }
 
 .btn {

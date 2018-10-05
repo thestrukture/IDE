@@ -91,6 +91,11 @@
 			 		core.RunCmdSmart("go get github.com/nsf/gocode")
 			 	}
 
+			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/golang/dep"); os.IsNotExist(err) {
+			 		fmt.Println("Go dep not present, installing from github.com/golang/dep")
+			 		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
+			 	}
+
 			 	autocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
 
 			 	if _, err := os.Stat(autocompletePath); os.IsNotExist(err) {
@@ -576,11 +581,38 @@
 	    	 	 <template name="CrashedPage" tmpl="ui/crashedpage" struct="Dex" desc="Package Page Menu" />
 	    	 	 <template name="EndpointTesting" tmpl="ui/endpointtester" struct="Dex" />
 	    	 	 <template name="KanBan" tmpl="ui/kanban" struct="Dex" />
+	    	 	  <template name="Docker" tmpl="ui/docker" struct="Dex" />
 	    	 	 <template name="NavPromo" tmpl="ui/navpromo" struct="Dex" desc="Package Page Menu" />
 
           </templates>
 		<endpoints>
 				<!-- Package methods -->
+				<end path="/api/dockerfile" type="POST" >
+					imageName := r.FormValue("image")
+					strat := r.FormValue("strat")
+					port := r.FormValue("port")
+					pkg := r.FormValue("pkg")
+
+					dockerFilePath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "Dockerfile")
+
+					
+					var dockerfile string
+
+					if strat == "Fast" {
+						dockerfile = fmt.Sprintf(dockerLarge, imageName, port, port)
+					} else {
+						dockerfile = fmt.Sprintf(dockerSmall, imageName, port, port)
+					}
+
+					err := ioutil.WriteFile(dockerFilePath, []byte(dockerfile),0700)
+
+					if err != nil {
+						log.Println(err)
+					}
+
+					response = "OK"
+
+				</end>
 				<end path="/api/socket" type="star" >
 					c, err := upgrader.Upgrade(w, r, nil)
 					if err != nil {
@@ -746,6 +778,9 @@ for _, v := range apps {
 					}
 
 					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"16",Text: "Logs",Icon: "fa fa-list"} )
+
+					appCo = append(appCo, PkgItem{AppID:v.Name,Type:"5500",Text: "Docker",Icon: "fa fa-cloud-upload"} )
+
 					var goFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
@@ -1083,7 +1118,10 @@ for _, v := range apps {
 
 				response = net_bKanBan(Dex{Misc:r.FormValue("space")})
 
+			} else if r.FormValue("type") == "5500" {
+				response = net_bDocker(Dex{Misc:r.FormValue("space")})
 			}
+
 			callmet = true
 				</end>
 
@@ -1343,7 +1381,7 @@ for _, v := range apps {
 	     		inputs := []Inputs{}
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Package Name"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
-	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Build with GopherSauce"} })
+	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Build with GopherSauce", "Existing package"} })
 	     		
 	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
 				

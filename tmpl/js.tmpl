@@ -395,7 +395,7 @@
     $(document).bind('keydown', 'ctrl+s', function(){}); 
     $(document).bind('keydown', 'ctrl+i', toggleTerm); 
     $(document).bind('keydown', 'ctrl+m', CollapseGloj);
-     $(document).bind('keydown', 'ctrl+n', function(){
+    $(document).bind('keydown', 'ctrl+n', function(){
      	$(".footer-bay .modal").modal("hide")
      	$(".new-package").click();
       });
@@ -709,7 +709,8 @@
        $(".xtab").removeClass("active");
        $(".tabview").removeClass("active");
        $(".nav-link.xtab").removeClass("factive");
-       $("a[target='" + id + "']").addClass("factive")
+       $("a[target='" + id + "']").addClass("factive");
+       $("title").html($("a[target='" + id + "']").html());
        $("#" + id).addClass("active");
     }
 

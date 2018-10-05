@@ -1,0 +1,187 @@
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" style="background-color:#fff;">
+    <div style="position: fixed;width: 100%;height: auto;    background: #333;
+    z-index: 1;" class="fixed-handle">
+    </div>
+    <div style="height:100%;overflow-y: auto;background:#ededed;" class="over-flow-fix">
+        <ul class="nav nav-tabs" style="background:#333">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Image manager</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="https://github.com/thestrukture/IDE/wiki/Docker" target="_blank">Guides</a>
+            </li>
+        </ul>
+
+        <div class="row image-view" style="padding:10px;">
+            <div class="col-md-6" style="height:100%;overflow-y:auto;color:#333;">
+
+
+                <h4 style="color:#333;">Image build settings</h4>
+                <hr>
+
+                <label>Base image</label>
+                <p><input type="text" class="form-control go-version" placeholder="Name of image use with build." /></p>
+                <p><input type="text" class="form-control app-port" placeholder="Exposed port number." /></p>
+                <label>Build strategy</label>
+                <select class="build-strategy form-control" >
+                    <option >
+                      Fast
+                    </option>
+                    <option >
+                      Small
+                    </option>
+                </select>
+
+                <p>Your image will be named `{{.Misc}}`</p>
+                <button class="btn btn-lg build-button btn-primary">Build</button>
+            </div>
+            <div class="col-md-6" style="padding-top:10px;">
+                
+                <!--<p><button class="btn btn-sm btn-tag btn-block do-push" >Push</button></p> -->
+                <p><span style="color:#333;">Use the button below to use `dep` to download and save dependencies to project. (vendor folder)</span><br/><button class="btn btn-sm btn-tag btn-block get-deps">Download dependencies</button></p>
+
+            </div>
+        </div>
+
+
+    </div>
+    <script type="text/javascript">
+    setTimeout(function() {
+
+      function BindDocker(){
+
+
+        function buildImage(){
+
+            swal("Hijacking terminal", "Building image. Please be patient, this will take some time.", "warning");
+
+             if(!$(".terminal-side").hasClass('active')){
+                $(".terminal-side").addClass('active');
+                $(".terminal-side").css('display','block');
+            }
+
+            let term =  $('#terminaldefault').terminal();
+
+            term.exec(["cd $GOPATH/src/{{.Misc}}"]);
+
+             setTimeout(function(){
+                term.exec(["docker build -t {{.Misc}} ."]);
+             }, 1100);
+
+        }
+
+
+        if(window.localStorage["Docker{{.Misc}}"]){
+          let settings = JSON.parse(window.localStorage["Docker{{.Misc}}"]);
+
+          $("#{{$rin}} .build-strategy").val(settings.strategy);
+          $("#{{$rin}} .go-version").val(settings.version);
+          $("#{{$rin}} .app-port").val(settings.port);
+
+        }
+
+        $("#{{$rin}} .get-deps").click(function(){
+
+            swal("Hijacking terminal", "", "warning");
+
+             if(!$(".terminal-side").hasClass('active')){
+                $(".terminal-side").addClass('active');
+                $(".terminal-side").css('display','block');
+            }
+
+            let term =  $('#terminaldefault').terminal();
+
+            term.exec(["cd $GOPATH/src/{{.Misc}} "]);
+
+            setTimeout(function(){
+              term.exec(["rm Gopkg.lock"]);
+            }, 900);
+
+             setTimeout(function(){
+              term.exec(["rm Gopkg.toml"]);
+            }, 1100);
+
+            setTimeout(function(){
+              term.exec(["dep init"]);
+            }, 2500);
+
+        });
+
+        $("#{{$rin}} .do-push").click(function(){
+          $("#{{$rin}} .modal.push").modal("show");
+        });
+
+        $("#{{$rin}} .confirm-push").click(function(){
+
+            let tagname = $("#{{$rin}} .tag-name").val();
+
+            
+        });
+
+        $("#{{$rin}} .build-button").click(function() { 
+            let strategy = $("#{{$rin}} .build-strategy").val(),
+            version = $("#{{$rin}} .go-version").val(),
+            port = $("#{{$rin}} .app-port").val();
+
+            if (port == ""){
+              swal("Enter a port number", "Add a port number your docker application will listen on.", "error");
+              return;
+            }
+
+            if(version == ""){
+              version = "golang:1.8";
+              $("#{{$rin}} .go-version").val(version);
+
+            }
+
+            window.localStorage["Docker{{.Misc}}"] = JSON.stringify({ strategy , version, port });
+
+
+              $.ajax({
+                    url: "/api/dockerfile",
+                    data : { image : version , strat : strategy, port , pkg : "{{.Misc}}" },
+                    type: "POST",
+                    error: function(err) {
+                        console.log("error :" ,err)
+                        if(err.status == 200)
+                        buildImage();
+                    },
+                    success : function(res){
+                        console.log(res);
+                        buildImage();
+                         
+                    }
+              });
+
+
+
+        });
+
+      }
+
+
+      BindDocker();
+
+    }, 300);
+    addTab("{{.Misc}} - Docker", "{{$rin}}");
+    </script>
+    <div class="modal push" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Push {{.Misc}} </h5>
+        
+        </div>
+        <div class="modal-body">
+          <label>Tag image</label>
+                <p><input type="text" class="form-control tag-name" placeholder="Tag image prior to push" /></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary confirm-push">Push</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -20,6 +20,37 @@ var lock *sync.RWMutex = new(sync.RWMutex)
 var connections = []*websocket.Conn{}
 
 var dfd string
+
+var dockerLarge = `FROM %s
+ENV WEBAPP /go/src/server
+RUN mkdir -p ${WEBAPP}
+COPY . ${WEBAPP}
+ENV PORT=%s 
+WORKDIR ${WEBAPP}
+RUN go install
+RUN rm -rf ${WEBAPP} 
+EXPOSE %s
+CMD server
+`
+
+var dockerSmall = `FROM %s as builder
+ENV WEBAPP /go/src/server
+RUN mkdir -p ${WEBAPP}
+COPY . ${WEBAPP}
+ENV PORT=%s 
+WORKDIR ${WEBAPP}
+RUN go install
+
+# start from scratch
+FROM scratch
+# Copy our static executable
+COPY --from=builder /go/bin/server /go/bin/server
+ENTRYPOINT ["/go/bin/server"]
+
+EXPOSE %s
+CMD server
+`
+
 var addjsstr = ` <script type="text/javascript">
 
 					$(".marker .row",".endp-view").each(function(e,i){

@@ -39,7 +39,7 @@ var TemplateFuncStore template.FuncMap
 var templateCache = gosweb.NewTemplateCache()
 
 func StoreNetfn() int {
-	TemplateFuncStore = template.FuncMap{"a": gosweb.Netadd, "s": gosweb.Netsubs, "m": gosweb.Netmultiply, "d": gosweb.Netdivided, "js": gosweb.Netimportjs, "css": gosweb.Netimportcss, "sd": gosweb.NetsessionDelete, "sr": gosweb.NetsessionRemove, "sc": gosweb.NetsessionKey, "ss": gosweb.NetsessionSet, "sso": gosweb.NetsessionSetInt, "sgo": gosweb.NetsessionGetInt, "sg": gosweb.NetsessionGet, "form": gosweb.Formval, "eq": gosweb.Equalz, "neq": gosweb.Nequalz, "lte": gosweb.Netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "KanBan": NetKanBan, "bKanBan": NetbKanBan, "cKanBan": NetcKanBan, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "NoStruct": NetstructNoStruct, "isNoStruct": NetcastNoStruct, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf}
+	TemplateFuncStore = template.FuncMap{"a": gosweb.Netadd, "s": gosweb.Netsubs, "m": gosweb.Netmultiply, "d": gosweb.Netdivided, "js": gosweb.Netimportjs, "css": gosweb.Netimportcss, "sd": gosweb.NetsessionDelete, "sr": gosweb.NetsessionRemove, "sc": gosweb.NetsessionKey, "ss": gosweb.NetsessionSet, "sso": gosweb.NetsessionSetInt, "sgo": gosweb.NetsessionGetInt, "sg": gosweb.NetsessionGet, "form": gosweb.Formval, "eq": gosweb.Equalz, "neq": gosweb.Nequalz, "lte": gosweb.Netlt, "BindMisc": NetBindMisc, "ListPlugins": NetListPlugins, "BindID": NetBindID, "RandTen": NetRandTen, "Fragmentize": NetFragmentize, "parseLog": NetparseLog, "anyBugs": NetanyBugs, "PluginJS": NetPluginJS, "FindmyBugs": NetFindmyBugs, "isExpired": NetisExpired, "getTemplate": NetgetTemplate, "mConsole": NetmConsole, "mPut": NetmPut, "updateApp": NetupdateApp, "getApp": NetgetApp, "Css": NetCss, "bCss": NetbCss, "cCss": NetcCss, "JS": NetJS, "bJS": NetbJS, "cJS": NetcJS, "FA": NetFA, "bFA": NetbFA, "cFA": NetcFA, "PluginList": NetPluginList, "bPluginList": NetbPluginList, "cPluginList": NetcPluginList, "Login": NetLogin, "bLogin": NetbLogin, "cLogin": NetcLogin, "Modal": NetModal, "bModal": NetbModal, "cModal": NetcModal, "xButton": NetxButton, "bxButton": NetbxButton, "cxButton": NetcxButton, "jButton": NetjButton, "bjButton": NetbjButton, "cjButton": NetcjButton, "PUT": NetPUT, "bPUT": NetbPUT, "cPUT": NetcPUT, "Group": NetGroup, "bGroup": NetbGroup, "cGroup": NetcGroup, "Register": NetRegister, "bRegister": NetbRegister, "cRegister": NetcRegister, "Alert": NetAlert, "bAlert": NetbAlert, "cAlert": NetcAlert, "StructEditor": NetStructEditor, "bStructEditor": NetbStructEditor, "cStructEditor": NetcStructEditor, "MethodEditor": NetMethodEditor, "bMethodEditor": NetbMethodEditor, "cMethodEditor": NetcMethodEditor, "ObjectEditor": NetObjectEditor, "bObjectEditor": NetbObjectEditor, "cObjectEditor": NetcObjectEditor, "EndpointEditor": NetEndpointEditor, "bEndpointEditor": NetbEndpointEditor, "cEndpointEditor": NetcEndpointEditor, "TimerEditor": NetTimerEditor, "bTimerEditor": NetbTimerEditor, "cTimerEditor": NetcTimerEditor, "FSC": NetFSC, "bFSC": NetbFSC, "cFSC": NetcFSC, "MV": NetMV, "bMV": NetbMV, "cMV": NetcMV, "RM": NetRM, "bRM": NetbRM, "cRM": NetcRM, "WebRootEdit": NetWebRootEdit, "bWebRootEdit": NetbWebRootEdit, "cWebRootEdit": NetcWebRootEdit, "WebRootEdittwo": NetWebRootEdittwo, "bWebRootEdittwo": NetbWebRootEdittwo, "cWebRootEdittwo": NetcWebRootEdittwo, "uSettings": NetuSettings, "buSettings": NetbuSettings, "cuSettings": NetcuSettings, "Form": NetForm, "bForm": NetbForm, "cForm": NetcForm, "SWAL": NetSWAL, "bSWAL": NetbSWAL, "cSWAL": NetcSWAL, "ROC": NetROC, "bROC": NetbROC, "cROC": NetcROC, "RPUT": NetRPUT, "bRPUT": NetbRPUT, "cRPUT": NetcRPUT, "PackageEdit": NetPackageEdit, "bPackageEdit": NetbPackageEdit, "cPackageEdit": NetcPackageEdit, "Delete": NetDelete, "bDelete": NetbDelete, "cDelete": NetcDelete, "Welcome": NetWelcome, "bWelcome": NetbWelcome, "cWelcome": NetcWelcome, "Stripe": NetStripe, "bStripe": NetbStripe, "cStripe": NetcStripe, "Debugger": NetDebugger, "bDebugger": NetbDebugger, "cDebugger": NetcDebugger, "TemplateEdit": NetTemplateEdit, "bTemplateEdit": NetbTemplateEdit, "cTemplateEdit": NetcTemplateEdit, "TemplateEditTwo": NetTemplateEditTwo, "bTemplateEditTwo": NetbTemplateEditTwo, "cTemplateEditTwo": NetcTemplateEditTwo, "Input": NetInput, "bInput": NetbInput, "cInput": NetcInput, "DebuggerNode": NetDebuggerNode, "bDebuggerNode": NetbDebuggerNode, "cDebuggerNode": NetcDebuggerNode, "Button": NetButton, "bButton": NetbButton, "cButton": NetcButton, "Submit": NetSubmit, "bSubmit": NetbSubmit, "cSubmit": NetcSubmit, "Logo": NetLogo, "bLogo": NetbLogo, "cLogo": NetcLogo, "Navbar": NetNavbar, "bNavbar": NetbNavbar, "cNavbar": NetcNavbar, "NavCustom": NetNavCustom, "bNavCustom": NetbNavCustom, "cNavCustom": NetcNavCustom, "NavMain": NetNavMain, "bNavMain": NetbNavMain, "cNavMain": NetcNavMain, "NavPKG": NetNavPKG, "bNavPKG": NetbNavPKG, "cNavPKG": NetcNavPKG, "CrashedPage": NetCrashedPage, "bCrashedPage": NetbCrashedPage, "cCrashedPage": NetcCrashedPage, "EndpointTesting": NetEndpointTesting, "bEndpointTesting": NetbEndpointTesting, "cEndpointTesting": NetcEndpointTesting, "KanBan": NetKanBan, "bKanBan": NetbKanBan, "cKanBan": NetcKanBan, "Docker": NetDocker, "bDocker": NetbDocker, "cDocker": NetcDocker, "NavPromo": NetNavPromo, "bNavPromo": NetbNavPromo, "cNavPromo": NetcNavPromo, "FSCs": NetstructFSCs, "isFSCs": NetcastFSCs, "Dex": NetstructDex, "isDex": NetcastDex, "SoftUser": NetstructSoftUser, "isSoftUser": NetcastSoftUser, "NoStruct": NetstructNoStruct, "isNoStruct": NetcastNoStruct, "USettings": NetstructUSettings, "isUSettings": NetcastUSettings, "App": NetstructApp, "isApp": NetcastApp, "TemplateEdits": NetstructTemplateEdits, "isTemplateEdits": NetcastTemplateEdits, "WebRootEdits": NetstructWebRootEdits, "isWebRootEdits": NetcastWebRootEdits, "TEditor": NetstructTEditor, "isTEditor": NetcastTEditor, "Navbars": NetstructNavbars, "isNavbars": NetcastNavbars, "sModal": NetstructsModal, "issModal": NetcastsModal, "Forms": NetstructForms, "isForms": NetcastForms, "sButton": NetstructsButton, "issButton": NetcastsButton, "sTab": NetstructsTab, "issTab": NetcastsTab, "DForm": NetstructDForm, "isDForm": NetcastDForm, "Alertbs": NetstructAlertbs, "isAlertbs": NetcastAlertbs, "Inputs": NetstructInputs, "isInputs": NetcastInputs, "Aput": NetstructAput, "isAput": NetcastAput, "rPut": NetstructrPut, "isrPut": NetcastrPut, "sSWAL": NetstructsSWAL, "issSWAL": NetcastsSWAL, "sPackageEdit": NetstructsPackageEdit, "issPackageEdit": NetcastsPackageEdit, "DebugObj": NetstructDebugObj, "isDebugObj": NetcastDebugObj, "DebugNode": NetstructDebugNode, "isDebugNode": NetcastDebugNode, "PkgItem": NetstructPkgItem, "isPkgItem": NetcastPkgItem, "sROC": NetstructsROC, "issROC": NetcastsROC, "vHuf": NetstructvHuf, "isvHuf": NetcastvHuf}
 	return 0
 }
 
@@ -229,6 +229,9 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 					}
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
+
+					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "5500", Text: "Docker", Icon: "fa fa-cloud-upload"})
+
 					var goFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
@@ -551,12 +554,41 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			response = NetbKanBan(Dex{Misc: r.FormValue("space")})
 
+		} else if r.FormValue("type") == "5500" {
+			response = NetbDocker(Dex{Misc: r.FormValue("space")})
 		}
+
 		callmet = true
 
 	}
 	if r.Method == "RESET" {
 		return true
+	} else if isURL := (r.URL.Path == "/api/dockerfile" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+
+		imageName := r.FormValue("image")
+		strat := r.FormValue("strat")
+		port := r.FormValue("port")
+		pkg := r.FormValue("pkg")
+
+		dockerFilePath := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "Dockerfile")
+
+		var dockerfile string
+
+		if strat == "Fast" {
+			dockerfile = fmt.Sprintf(dockerLarge, imageName, port, port)
+		} else {
+			dockerfile = fmt.Sprintf(dockerSmall, imageName, port, port)
+		}
+
+		err := ioutil.WriteFile(dockerFilePath, []byte(dockerfile), 0700)
+
+		if err != nil {
+			log.Println(err)
+		}
+
+		response = "OK"
+
+		callmet = true
 	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/socket") {
 
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -883,7 +915,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
 			inputs = append(inputs, Inputs{Type: "hidden", Name: "type", Value: "0"})
-			inputs = append(inputs, Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce"}})
+			inputs = append(inputs, Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce", "Existing package"}})
 
 			response = NetbModal(sModal{Body: "", Title: "Add Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 
@@ -8151,6 +8183,120 @@ func cKanBan(args ...interface{}) (d Dex) {
 	return
 }
 
+func templateFNDocker(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/docker) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
+}
+
+var templateIDDocker = "tmpl/ui/docker.tmpl"
+
+func NetDocker(args ...interface{}) string {
+
+	localid := templateIDDocker
+	var d *Dex
+	defer templateFNDocker(localid, d)
+	if len(args) > 0 {
+		jso := args[0].(string)
+		var jsonBlob = []byte(jso)
+		err := json.Unmarshal(jsonBlob, d)
+		if err != nil {
+			return err.Error()
+		}
+	} else {
+		d = &Dex{}
+	}
+
+	output := new(bytes.Buffer)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Docker")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
+
+}
+func bDocker(d Dex) string {
+	return NetbDocker(d)
+}
+
+//
+func NetbDocker(d Dex) string {
+	localid := templateIDDocker
+	defer templateFNDocker(localid, d)
+	output := new(bytes.Buffer)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Docker")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		log.Println(erro)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = Dex{}
+	output.Reset()
+	output = nil
+	return outpescaped
+}
+func NetcDocker(args ...interface{}) (d Dex) {
+	if len(args) > 0 {
+		var jsonBlob = []byte(args[0].(string))
+		err := json.Unmarshal(jsonBlob, &d)
+		if err != nil {
+			log.Println("error:", err)
+			return
+		}
+	} else {
+		d = Dex{}
+	}
+	return
+}
+
+func cDocker(args ...interface{}) (d Dex) {
+	if len(args) > 0 {
+		d = NetcDocker(args[0])
+	} else {
+		d = NetcDocker()
+	}
+	return
+}
+
 func templateFNNavPromo(localid string, d interface{}) {
 	if n := recover(); n != nil {
 		color.Red(fmt.Sprintf("Error loading template in path (ui/navpromo) : %s", localid))
@@ -8323,6 +8469,11 @@ func main() {
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/nsf/gocode/"); os.IsNotExist(err) {
 		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
 		core.RunCmdSmart("go get github.com/nsf/gocode")
+	}
+
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/golang/dep"); os.IsNotExist(err) {
+		fmt.Println("Go dep not present, installing from github.com/golang/dep")
+		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
 	}
 
 	autocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
