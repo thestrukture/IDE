@@ -55,9 +55,12 @@
               <div class="col-md-6">
                    <h4>Composer</h4>
                    <hr>
-                    <label>Base image</label>
+                    <label>Web server name</label>
+                    <p><input type="text" class="form-control compose-setting" pattern="[A-Za-z]{15}" name="name" placeholder="Name (hostname) service." /></p>
 
-                    <label>Leave the following field blank to image `{{.Misc}}:latest`</label>
+                    <label>Base image</label>
+                    <br>
+                    <label>Leave the following field blank to use image `{{.Misc}}:latest`</label>
                     <p><input type="text" class="form-control compose-setting" name="image" placeholder="Name of image to use with compose." /></p>
 
                     <label>APP WEB SERVER PORT</label>

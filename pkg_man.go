@@ -52,6 +52,11 @@ func generateComposeFile(r *http.Request) {
 	image := r.FormValue("image")
 	port := r.FormValue("port")
 
+	name := r.FormValue("name")
+
+	if name == "" {
+		name = "go"
+	}
 	pkg := r.FormValue("pkg")
 	path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "compose-file.yml")
 	var fileCompleted string
@@ -60,7 +65,7 @@ func generateComposeFile(r *http.Request) {
 
 		composefile := strings.Replace(composeBase, "links:", "", -1)
 
-		fileCompleted = fmt.Sprintf(composefile, image, port, fport, "", "")
+		fileCompleted = fmt.Sprintf(composefile, name, image, port, fport, "", "")
 
 	} else {
 		links := "%s"
@@ -85,7 +90,7 @@ func generateComposeFile(r *http.Request) {
 
 		links = fmt.Sprintf(links, "")
 
-		fileCompleted = fmt.Sprintf(composeBase, image, port, fport, links, services)
+		fileCompleted = fmt.Sprintf(composeBase, name, image, port, fport, links, services)
 
 	}
 
@@ -102,7 +107,7 @@ services:
     # Application container
 
 
-    go:
+    %s:
         image: %s
         ports:
             - "%s:%s"
