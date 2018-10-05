@@ -589,6 +589,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		response = "OK"
 
 		callmet = true
+	} else if isURL := (r.URL.Path == "/api/composer" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+
+		generateComposeFile(r)
+		response = "OK"
+
+		callmet = true
 	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/socket") {
 
 		c, err := upgrader.Upgrade(w, r, nil)

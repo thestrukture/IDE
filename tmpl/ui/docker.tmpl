@@ -6,13 +6,17 @@
     <div style="height:100%;overflow-y: auto;background:#ededed;" class="over-flow-fix">
         <ul class="nav nav-tabs" style="background:#333">
             <li class="nav-item active">
-                <a class="nav-link" href="#">Image manager</a>
+                <a class="nav-link tab-btn" href="#home">Image manager</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link tab-btn" href="#composer">Composer</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="https://github.com/thestrukture/IDE/wiki/Docker" target="_blank">Guides</a>
             </li>
         </ul>
-
+        <div class="tab-content">
+        <div class="tab-pane active" id="home" role="tabpanel" aria-labelledby="home-tab">
         <div class="row image-view" style="padding:10px;">
             <div class="col-md-6" style="height:100%;overflow-y:auto;color:#333;">
 
@@ -21,7 +25,7 @@
                 <hr>
 
                 <label>Base image</label>
-                <p><input type="text" class="form-control go-version" placeholder="Name of image use with build." /></p>
+                <p><input type="text" class="form-control go-version" placeholder="Name of image to use with build." /></p>
                 <p><input type="text" class="form-control app-port" placeholder="Exposed port number." /></p>
                 <label>Build strategy</label>
                 <select class="build-strategy form-control" >
@@ -43,6 +47,84 @@
 
             </div>
         </div>
+
+        </div>
+
+         <div class="tab-pane" id="composer" role="tabpanel" aria-labelledby="home-tab">
+            <div class="row" style="color:#333;padding:20px;">
+              <div class="col-md-6">
+                   <h4>Composer</h4>
+                   <hr>
+                    <label>Base image</label>
+
+                    <label>Leave the following field blank to image `{{.Misc}}:latest`</label>
+                    <p><input type="text" class="form-control compose-setting" name="image" placeholder="Name of image to use with compose." /></p>
+
+                    <label>APP WEB SERVER PORT</label>
+                    <p><input type="text" value="8080" class="form-control compose-setting" name="port" placeholder="APP PORT" /></p>
+
+                    <label>PORT NUMBER TO FORWARD SERVICE TO.</label>
+                    <p><input value="8080" type="text" class="form-control compose-setting" name="fport" placeholder="PORT NUMBER TO FORWARD SERVICE TO." /></p>
+                   <button class="btn btn-lg compose-button btn-primary">Deploy with composer</button>
+
+              </div>
+              <div class="col-md-6">
+                  <h5>Link Database services to compose file.</h5>
+                  <hr>
+                  <div>
+                    
+                   <p><button class="btn btn-primary btn-block btn-lg btn-primary" type="button" data-toggle="collapse" data-target="#postgres" aria-expanded="false" aria-controls="collapseExample">
+                     POSTGRES
+                    </button></p>
+                    <div class="collapse" id="postgres">
+                        <div class="card card-body">
+                        <input type="checkbox" class="compose-setting" name="postgres"> Link POSTGRES
+
+                        <p><input type="text" class="form-control compose-setting" name="username" placeholder="USERNAME" /></p>
+                        <p><input type="text" class="form-control compose-setting" name="pass" placeholder="PASSWORD" /></p>
+                        <p><input type="text" class="form-control compose-setting" name="dbname" placeholder="DATABASE NAME" /></p>
+
+                        <label>Forward service to</label>
+                        <p><input type="text" value="5432" class="form-control compose-setting" name="pPort" placeholder="Forward to port (Default 5432)" /></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div> 
+                   <p><button class="btn btn-primary btn-block btn-lg btn-primary" type="button" data-toggle="collapse" data-target="#mongodb" aria-expanded="false" aria-controls="collapseExample">
+                     MONGODB
+                    </button></p>
+                    <div class="collapse" id="mongodb">
+                      <div class="card card-body">
+                        <input type="checkbox" class="compose-setting" name="mongo"> Link MongoDB<br>
+                        
+                        <label>Forward service to port:</label>
+                        <p><input type="text" value="27017" class="form-control compose-setting" name="mPort" placeholder="Forward to port (Default 27017)" /></p>
+
+                      </div>
+                    </div>
+                  </div>
+
+                   <div> 
+                   <p><button class="btn btn-primary btn-block btn-lg btn-primary" type="button" data-toggle="collapse" data-target="#redis" aria-expanded="false" aria-controls="collapseExample">
+                     REDIS
+                    </button></p>
+                    <div class="collapse" id="redis">
+                        <div class="card card-body">
+                            <input type="checkbox" class="compose-setting" name="redis"> Link Redis<br>
+
+                            <label>Forward service to</label>
+                            <p><input type="text" value="6379" class="form-control compose-setting" name="rPort" placeholder="Forward to port (Default 6379)" /></p>
+                      </div>
+                    </div>
+                  </div>
+
+
+              </div>
+            </div>
+         </div>
+
+         </div>
 
 
     </div>
@@ -67,6 +149,74 @@
 
              setTimeout(function(){
                 term.exec(["docker build -t {{.Misc}} ."]);
+             }, 1100);
+
+        }
+
+        function saveComposer(){
+            return new Promise(function(resolve, reject){
+            
+              let options = $("#{{$rin}} .compose-setting");
+              let q = options.length;
+              let data = {};
+              options.each(function(i, item){
+                let input = $(item);
+
+                if(input.attr("name") == "image" && input.val() == ""){
+                  input.val("{{.Misc}}:latest")
+                }
+
+                data[input.attr("name")] = input.attr("type") == "checkbox" ?
+                  input.prop('checked') : input.val();
+
+                q--;
+
+                if(q <= 0){
+                  window.localStorage["{{.Misc}}composer"] = JSON.stringify(data);
+                  resolve(data)
+                }
+              })
+
+
+            });
+
+
+        }
+
+        function loadComposer(){
+            let stringJson = window.localStorage["{{.Misc}}composer"];
+
+            if(stringJson){
+              let options = JSON.parse(stringJson);
+              let keys = Object.keys(options);
+
+              for (var i = keys.length - 1; i >= 0; i--) {
+                let key = keys[i];
+                let current = options[key];
+                if(current && typeof current !== "boolean"){
+                  $(`input[name='${key}']`).val(current);
+                } else if(current){
+                   $(`input[name='${key}']`).prop('checked', true);
+                }
+
+              }
+
+            }
+        }
+
+        function launchService(){
+            swal("Hijacking terminal", "Deploying with compose.", "warning")
+             if(!$(".terminal-side").hasClass('active')){
+                $(".terminal-side").addClass('active');
+                $(".terminal-side").css('display','block');
+            }
+
+            let term =  $('#terminaldefault').terminal();
+
+            term.exec(["cd $GOPATH/src/{{.Misc}}"]);
+
+            setTimeout(function(){
+                term.exec(["docker-compose -f compose-file.yml up"]);
              }, 1100);
 
         }
@@ -116,7 +266,59 @@
 
             let tagname = $("#{{$rin}} .tag-name").val();
 
+
             
+        });
+
+        $('#{{$rin}} .collapse').collapse({
+          toggle: false
+        })
+
+        $("#{{$rin}} [data-toggle='collapse']").click(function(e){
+          e.preventDefault();
+
+          let link = $(this).attr("data-target");
+
+          $("#{{$rin}} " + link).collapse('toggle');
+        });
+
+        loadComposer();
+
+        $("#{{$rin}} .tab-btn").click(function(e){
+
+            e.preventDefault();
+            let link = $(this).attr("href");
+            let tabs = $("#{{$rin}} .nav-tabs");
+            $("li.active", tabs).removeClass("active");
+            $(this).parent().addClass("active");
+            $("#{{$rin}} .tab-pane").removeClass("active");
+            $("#{{$rin}} " + link).tab('show');
+        });
+
+        $("#{{$rin}} .compose-button").click(function() { 
+
+          saveComposer()
+          .then( function(settings){
+              
+              console.log(settings);
+               $.ajax({
+                    url: "/api/composer?pkg={{.Misc}}",
+                    data : settings,
+                    type: "POST",
+                    error: function(err) {
+                        console.log("error :" ,err)
+                        if(err.status == 200)
+                          launchService();
+                    },
+                    success : function(res){
+                          console.log(res);
+                          launchService();
+                         
+                    }
+              });
+
+          });
+
         });
 
         $("#{{$rin}} .build-button").click(function() { 

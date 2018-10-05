@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,114 @@ RUN rm -rf ${WEBAPP}
 EXPOSE %s
 CMD server
 `
+
+func generateComposeFile(r *http.Request) {
+
+	mongo := r.FormValue("mongo")
+	mPort := r.FormValue("mPort")
+
+	redis := r.FormValue("redis")
+	rPort := r.FormValue("rPort")
+
+	postgr := r.FormValue("postgres")
+	dbname := r.FormValue("dbname")
+	username := r.FormValue("username")
+	pass := r.FormValue("pass")
+	pPort := r.FormValue("pPort")
+
+	fport := r.FormValue("fport")
+	image := r.FormValue("image")
+	port := r.FormValue("port")
+
+	pkg := r.FormValue("pkg")
+	path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, "compose-file.yml")
+	var fileCompleted string
+
+	if mongo == "false" && redis == "false" && postgr == "false" {
+
+		composefile := strings.Replace(composeBase, "links:", "", -1)
+
+		fileCompleted = fmt.Sprintf(composefile, image, port, fport, "", "")
+
+	} else {
+		links := "%s"
+
+		services := ""
+
+		if mongo == "true" {
+			links = fmt.Sprintf(links, "            - mongodb\n%s")
+			services += fmt.Sprintf(mongotemp, mPort)
+		}
+
+		if postgr == "true" {
+			links = fmt.Sprintf(links, "            - postgres\n%s")
+
+			services += fmt.Sprintf(postgrestemp, pPort, username, pass, dbname)
+		}
+
+		if redis == "true" {
+			links = fmt.Sprintf(links, "            - redis\n%s")
+			services += fmt.Sprintf(redistemp, rPort)
+		}
+
+		links = fmt.Sprintf(links, "")
+
+		fileCompleted = fmt.Sprintf(composeBase, image, port, fport, links, services)
+
+	}
+
+	err := ioutil.WriteFile(path, []byte(fileCompleted), 0700)
+	if err != nil {
+		log.Println(err)
+	}
+
+}
+
+var composeBase string = `version: '2'
+services:
+
+    # Application container
+
+
+    go:
+        image: %s
+        ports:
+            - "%s:%s"
+        links:
+%s
+
+
+    %s`
+
+var mongotemp string = `mongodb:
+        image: mvertes/alpine-mongo:3.2.3
+        restart: unless-stopped
+        ports:
+            - "27017:%s"
+
+
+            `
+
+var postgrestemp string = `postgres:
+        image: onjin/alpine-postgres:9.5
+        restart: unless-stopped
+        ports:
+            - "5432:%s"
+        environment:
+            LC_ALL: C.UTF-8
+            POSTGRES_USER: %s
+            POSTGRES_PASSWORD: %s
+            POSTGRES_DB: %s
+
+            `
+
+var redistemp string = `redis:
+        image: sickp/alpine-redis:3.2.2
+        restart: unless-stopped
+        ports:
+            - "6379:%s"
+
+            `
 
 var dockerSmall = `FROM %s as builder
 ENV WEBAPP /go/src/server

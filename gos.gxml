@@ -613,6 +613,13 @@
 					response = "OK"
 
 				</end>
+
+				<end path="/api/composer" type="POST" >
+					generateComposeFile(r)
+					response = "OK"
+				</end>
+
+
 				<end path="/api/socket" type="star" >
 					c, err := upgrader.Upgrade(w, r, nil)
 					if err != nil {
