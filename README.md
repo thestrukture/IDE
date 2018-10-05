@@ -71,6 +71,8 @@ As a human I can't be everywhere, please help me find problems or unexpected beh
 
 ## Screenshots
 
+![screenshot](tests/5500.png)
+![screenshot](tests/5501.png)
 ![screenshot](tests/1newsc.png)
 ![screenshot](tests/2newsc.png)
 ![screenshot](tests/3newsc.png)
