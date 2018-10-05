@@ -13,6 +13,7 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Line tags in relation to failed build logs.
 - Project build scripts.
 - View web application output.
+- Build docker images (Must have docker running on host) . 
 
 ## Requirements
 - Go v1.7+. 😘
