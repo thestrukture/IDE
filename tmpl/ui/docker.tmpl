@@ -151,7 +151,7 @@
             term.exec(["cd $GOPATH/src/{{.Misc}}"]);
 
              setTimeout(function(){
-                term.exec(["docker build -t {{.Misc}} ."]);
+                term.exec(["docker build --no-cache -t {{.Misc}} ."]);
              }, 1100);
 
         }

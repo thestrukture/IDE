@@ -153,16 +153,15 @@ RUN mkdir -p ${WEBAPP}
 COPY . ${WEBAPP}
 ENV PORT=%s 
 WORKDIR ${WEBAPP}
-RUN go install
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server .
 
 # start from scratch
 FROM scratch
 # Copy our static executable
-COPY --from=builder /go/bin/server /go/bin/server
-ENTRYPOINT ["/go/bin/server"]
+COPY --from=builder /go/src/server/server /
 
 EXPOSE %s
-CMD server
+CMD ["/server"]
 `
 
 var addjsstr = ` <script type="text/javascript">
