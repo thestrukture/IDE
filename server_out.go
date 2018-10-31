@@ -993,7 +993,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		} else if r.FormValue("type") == "62" {
 			//pkg
 			if r.FormValue("conf") != "do" {
-				response = NetbDelete(DForm{Text: "Are you sure you want to delete the function " + r.FormValue("path"), Link: "type=60&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
+				response = NetbDelete(DForm{Text: "Are you sure you want to delete the function " + r.FormValue("path"), Link: "type=62&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
 
 			} else {
 				//delete
