@@ -2,10 +2,15 @@
 <div class="tabview" id="{{.ID}}" pkg="{{.PKG}}">
 <div  class="row">
 	<div class="col-sm-9 clear-btn" style="min-height:32px;">
+	
 	<button class="btn btn-warning" onclick="SaveFileSrc('{{.ID}}', '{{.SavesTo}}','{{.PKG}}')"><i class="fa fa-save"></i></button>
 	<button type="button" class="btn btn-primary" onclick="editors['{{.ID}}c'].wrap = editors['{{.ID}}c'].wrap ? false : true;editors['{{.ID}}'].getSession().setUseWrapMode( editors['{{.ID}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap text
 </button>
+	{{if .Faas}}
+		<button title="Ctrl + ." class="btn  btn-warning" onclick="buildFunction('{{.PKG}}', '{{.PreviewLink}}')">Build</button>
+		<button title="Ctrl + U" class="btn  btn-warning" onclick="deployFunction('{{.PKG}}', '{{.PreviewLink}}')"><i class="fa fa-play"></i> Deploy </button>
+	{{end}}
 	</div>
 	
 	
@@ -58,6 +63,32 @@
 	    },
 	    readOnly: true // false if this command should not apply in readOnly mode
 		});
+
+
+		{{if .Faas}}
+
+			editors["{{.ID}}"].commands.addCommand({
+		    name: 'build',
+		    bindKey: {win: 'Ctrl-.',  mac: 'Ctrl-.'},
+		    exec: function(editor) {
+		        //...
+		    	buildFunction('{{.PKG}}', '{{.PreviewLink}}')
+		    },
+		    readOnly: true // false if this command should not apply in readOnly mode
+			});
+
+			editors["{{.ID}}"].commands.addCommand({
+		    name: 'deploy',
+		    bindKey: {win: 'Ctrl-U',  mac: 'Ctrl-U'},
+		    exec: function(editor) {
+		        //...
+		    	deployFunction('{{.PKG}}', '{{.PreviewLink}}')
+		    },
+		    readOnly: true // false if this command should not apply in readOnly mode
+			});
+
+
+		{{end}}
 
 
 

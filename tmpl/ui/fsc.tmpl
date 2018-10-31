@@ -1,12 +1,19 @@
 <div class="fsc">
-<p>Please Specify the action to perform</p>
-<p><select class="form-control actionm">
-<option value="touch">Touch (create file at path specified)</option>
-<option value="dir">Create directory at path specified</option>
-<option value="upload">Upload binary</option>
-</select></p>
-<p style="display:none" class="filem"><input type="file" id="filePicker"></p>
-<label class="label label-info">Creating in directory {{.Path}}</label>
+
+{{if .Hide}}
+    <p class="actionm">
+    </p>
+{{else}}
+    <p>Please Specify the action to perform</p>
+    <p><select class="form-control actionm">
+    <option value="touch">Touch (create file at path specified)</option>
+    <option value="dir">Create directory at path specified</option>
+    <option value="upload">Upload binary</option>
+    </select></p>
+    <p style="display:none" class="filem"><input type="file" id="filePicker"></p>
+    <label class="label label-info">Creating in directory {{.Path}}</label>
+{{end}}
+
 {{bForm .Form}}
 <script type="text/javascript">
 $(".actionm").change(function(e){
@@ -38,6 +45,7 @@ var handleFileSelect = function(evt) {
 };
 
 if (window.File && window.FileReader && window.FileList && window.Blob) {
+    if(document.getElementById('filePicker'))
     document.getElementById('filePicker').addEventListener('change', handleFileSelect, false);
 } else {
     alert('The File APIs are not fully supported in this browser.');

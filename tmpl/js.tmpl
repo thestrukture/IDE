@@ -553,6 +553,40 @@
      
     }
 
+    function buildFunction(package, name){
+          swal("Hijacking terminal", "Building image. Please be patient, this will take some time.", "warning");
+
+             if(!$(".terminal-side").hasClass('active')){
+                $(".terminal-side").addClass('active');
+                $(".terminal-side").css('display','block');
+            }
+
+            let term =  $('#terminaldefault').terminal();
+
+            term.exec([`cd $GOPATH/src/${package}`]);
+
+             setTimeout(function(){
+                term.exec([`faas-cli build -f ${name}.yml`]);
+             }, 1100);
+    }
+
+    function deployFunction(package, name){
+          swal("Hijacking terminal", "Building image. Please be patient, this will take some time.", "warning");
+
+             if(!$(".terminal-side").hasClass('active')){
+                $(".terminal-side").addClass('active');
+                $(".terminal-side").css('display','block');
+            }
+
+            let term =  $('#terminaldefault').terminal();
+
+            term.exec([`cd $GOPATH/src/${package}`]);
+
+             setTimeout(function(){
+                term.exec([`faas-cli deploy -f ${name}.yml`]);
+             }, 1100);
+    }
+
 
        function SaveFileWeb(editor, link,pkv){
       
@@ -626,6 +660,8 @@
                         }
 
                       if ($node.original.btype){
+
+
                          menu["Build"] = {
                               "label": "Build",
                               "action": function (obj) {
@@ -704,13 +740,15 @@
       $("#" + id).remove();
     }
 
-    function mready(id){
+    function mready(id){ 
+       let title = $("a[target='" + id + "']").html() ? $("a[target='" + id + "']").html()
+       .split("<button")[0] : $("a[target='" + id + "']").html();
   
        $(".xtab").removeClass("active");
        $(".tabview").removeClass("active");
        $(".nav-link.xtab").removeClass("factive");
        $("a[target='" + id + "']").addClass("factive");
-       $("title").html($("a[target='" + id + "']").html());
+       $("title").html( title );
        $("#" + id).addClass("active");
     }
 

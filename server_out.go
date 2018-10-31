@@ -228,10 +228,6 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "11", Text: "Web services", Icon: "fa fa-circle-o-notch"})
 					}
 
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
-
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "5500", Text: "Docker", Icon: "fa fa-cloud-upload"})
-
 					var goFiles, ymlFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
@@ -312,7 +308,22 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "300", Text: "KanBan board", Icon: "fa fa-briefcase"})
 
-					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "7", Text: "Build center", Icon: "fa fa-server"})
+					if v.Type != "faas" {
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "16", Text: "Logs", Icon: "fa fa-list"})
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "7", Text: "Build center", Icon: "fa fa-server"})
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "5500", Text: "Docker", Icon: "fa fa-cloud-upload"})
+
+					} else {
+						var functions []PkgItem
+
+						for _, fn := range v.Groups {
+							ref := PkgItem{AppID: v.Name, Text: fn, Icon: "fa fa-square", Type: "62", ID: v.Name + "@pkg:" + fn, DType: "62&path=" + fn}
+							functions = append(functions, ref)
+						}
+
+						appCo = append(appCo, PkgItem{AppID: v.Name, CType: "52", Children: functions, Text: "Functions", Icon: "fa fa-folder"})
+					}
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, CType: "51&path=/", Children: ymlFiles, Text: "YAML files", Icon: "fa fa-folder"})
 
@@ -325,6 +336,10 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 					} else if v.Type == "app" {
 						rootel["icon"] = "fa fa-folder"
 						rootel["project"] = true
+					} else if v.Type == "faas" {
+						rootel["icon"] = "fa fa-cubes"
+						rootel["project"] = true
+						rootel["btype"] = nil
 					} else {
 						rootel["icon"] = "fa fa-gift"
 					}
@@ -470,6 +485,22 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			data, _ := ioutil.ReadFile(filep)
 			data = []byte(html.EscapeString(string(data)))
 			response = NetbWebRootEdittwo(WebRootEdits{SavesTo: id[1], Type: "yaml", File: data, ID: NetRandTen(), PKG: r.FormValue("space")})
+
+		} else if r.FormValue("type") == "62" {
+			id := strings.Split(r.FormValue("id"), "@pkg:")
+			function := id[1] + "/handler.go"
+
+			filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/" + function
+
+			filep = strings.Replace(filep, "//", "/", -1)
+
+			if Windows {
+				filep = strings.Replace(filep, "/", "\\", -1)
+			}
+
+			data, _ := ioutil.ReadFile(filep)
+			data = []byte(html.EscapeString(string(data)))
+			response = NetbWebRootEdittwo(WebRootEdits{SavesTo: function, Faas: true, Type: "golang", File: data, ID: NetRandTen(), PKG: r.FormValue("space"), PreviewLink: id[1]})
 
 		} else if r.FormValue("type") == "7" {
 			sapp := NetgetApp(getApps(), r.FormValue("space"))
@@ -794,6 +825,12 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			varf = append(varf, Inputs{Type: "hidden", Name: "fmode", Value: "touch"})
 
 			response = NetbFSC(FSCs{Path: r.FormValue("path"), Form: Forms{Link: "/api/act?type=61&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Add YAML file", Class: "warning"}})
+		} else if r.FormValue("type") == "52" {
+			//prefix pkg
+			varf := []Inputs{}
+			varf = append(varf, Inputs{Type: "text", Name: "name", Text: "Function name."})
+			response = NetbFSC(FSCs{Path: r.FormValue("path"), Hide: true, Form: Forms{Link: "/api/act?type=62&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Add function", Class: "success"}})
+
 		} else if r.FormValue("type") == "6" {
 			varf := []Inputs{}
 			varf = append(varf, Inputs{Type: "text", Name: "path", Misc: "required", Text: "New path"})
@@ -953,6 +990,35 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				response = NetbAlert(Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " removed!", Redirect: "javascript:updateTree()"})
 			}
 
+		} else if r.FormValue("type") == "62" {
+			//pkg
+			if r.FormValue("conf") != "do" {
+				response = NetbDelete(DForm{Text: "Are you sure you want to delete the function " + r.FormValue("path"), Link: "type=60&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
+
+			} else {
+				//delete
+				apps := getApps()
+				app := NetgetApp(getApps(), r.FormValue("pkg"))
+
+				newGroups := []string{}
+
+				for _, group := range app.Groups {
+					if group != r.FormValue("path") {
+						newGroups = append(newGroups, group)
+					}
+				}
+
+				app.Groups = newGroups
+
+				apps = NetupdateApp(getApps(), r.FormValue("pkg"), app)
+				saveApps(apps)
+
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path") + ".yml")
+
+				response = NetbAlert(Alertbs{Type: "success", Text: "Success, function " + r.FormValue("path") + " removed!", Redirect: "javascript:updateTree()"})
+			}
+
 		} else if r.FormValue("type") == "7" {
 			//type pkg path name
 			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
@@ -981,7 +1047,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			inputs := []Inputs{}
 			inputs = append(inputs, Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
 			inputs = append(inputs, Inputs{Type: "hidden", Name: "type", Value: "0"})
-			inputs = append(inputs, Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce", "Existing package"}})
+			inputs = append(inputs, Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce", "Existing package", "faas"}})
 
 			response = NetbModal(sModal{Body: "", Title: "Add Package", Color: "#ededed", Form: Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []sButton{}, Inputs: inputs}})
 
@@ -1010,6 +1076,18 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				if strings.Contains(useGos, "Scratch") {
 					app.Type = "app"
+					err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
+
+					if err != nil {
+						response = NetbAlert(Alertbs{Type: "danger", Text: "Error creating package " + r.FormValue("name") + ":" + err.Error(), Redirect: "javascript:console.log('error!')"})
+					}
+
+				} else if strings.Contains(useGos, "faas") {
+
+					app.Type = "faas"
+
+					app.Groups = []string{}
+
 					err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
 
 					if err != nil {
@@ -1127,6 +1205,50 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), 0777)
 			} else if r.FormValue("fmode") == "upload" {
 				ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+			}
+
+		} else if r.FormValue("type") == "61" {
+
+			if r.FormValue("fmode") == "touch" {
+				addstr := ""
+				if !strings.Contains(r.FormValue("path"), ".yml") {
+					addstr = ".yml"
+				}
+				_, err := os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+
+				if err != nil {
+					npath := strings.Split(r.FormValue("path"), "/")
+					os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+strings.Join(npath[:len(npath)-1], "/"), 0777)
+					os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+
+				}
+
+			} else if r.FormValue("fmode") == "dir" {
+				os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), 0777)
+			} else if r.FormValue("fmode") == "upload" {
+				ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+			}
+
+		} else if r.FormValue("type") == "62" {
+
+			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg"))
+
+			name := strings.ToLower(strings.Replace(r.FormValue("name"), "/", "_", -1))
+
+			ioutil.WriteFile("./faas-gen.sh", []byte("#!/bin/sh\n\nfaas-cli new --lang go "+name+" &>faas-log.txt &disown"), 0700)
+
+			logFull, err := core.RunCmdSmart("sh ./faas-gen.sh")
+
+			if err != nil {
+				response = NetbAlert(Alertbs{Type: "danger", Text: "Failed to add function: " + err.Error() + logFull})
+			} else {
+
+				apps := getApps()
+				app := NetgetApp(getApps(), r.FormValue("pkg"))
+				app.Groups = append(app.Groups, r.FormValue("name"))
+				apps = NetupdateApp(getApps(), r.FormValue("pkg"), app)
+				saveApps(apps)
+				response = NetbAlert(Alertbs{Type: "success", Text: "Operation succeeded, one moment, generating function source.<script>setTimeout(updateTree , 8200)</script>"})
 			}
 
 		} else if r.FormValue("type") == "7" {
@@ -2153,6 +2275,7 @@ func init() {
 
 type FSCs struct {
 	Path string
+	Hide bool
 	Form Forms
 }
 
@@ -2325,6 +2448,7 @@ func NetstructTemplateEdits() *TemplateEdits { return &TemplateEdits{} }
 
 type WebRootEdits struct {
 	SavesTo, Type, PreviewLink, ID, PKG string
+	Faas                                bool
 	File                                []byte
 }
 

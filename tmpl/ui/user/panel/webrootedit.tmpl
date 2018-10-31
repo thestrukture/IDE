@@ -2,6 +2,7 @@
 <div class="tabview" id="{{.ID}}" pkg="{{.PKG}}">
 <div  class="row">
 	<div class="col-sm-9 clear-btn" style="min-height:32px;">
+	
 	<button class="btn  btn-warning" onclick="SaveFileWeb('{{.ID}}', '{{.SavesTo}}','{{.PKG}}')"><i class="fa fa-save"></i></button>
 	<button type="button" class="btn btn-primary" onclick="editors['{{.ID}}c'].wrap = editors['{{.ID}}c'].wrap ? false : true;editors['{{.ID}}'].getSession().setUseWrapMode( editors['{{.ID}}c'].wrap   );" data-toggle="button" aria-pressed="true" autocomplete="off">
  Wrap text
@@ -40,7 +41,7 @@
 	    readOnly: true // false if this command should not apply in readOnly mode
 		});
 
-				editors["{{.ID}}"].commands.addCommand({
+		editors["{{.ID}}"].commands.addCommand({
 	    name: 'collapse',
 	    bindKey: {win: 'Ctrl-M',  mac: 'Ctrl-M'},
 	    exec: function(editor) {
@@ -50,6 +51,7 @@
 	    readOnly: true // false if this command should not apply in readOnly mode
 		});
 
+		
 
 
 

@@ -4,9 +4,9 @@
 	function havop(url,target){
 		vpath = url.split("?");
 		$.ajax({url:vpath[0], data: getJsonFromUrl(vpath[1]),type:"POST",success:function(html){
-			$(target).html(html);
+			$(".side-bay").html(html);
 		},error:function(e){
-			$(target).html(e.responseText);
+			$(".side-bay").html(e.responseText);
 		}
 	});
 	}
