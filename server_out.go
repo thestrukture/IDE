@@ -1204,19 +1204,19 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				if !strings.Contains(r.FormValue("path"), ".go") {
 					addstr = ".go"
 				}
-				_, err := os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+				_, err := os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
 
 				if err != nil {
 					npath := strings.Split(r.FormValue("path"), "/")
-					os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+strings.Join(npath[:len(npath)-1], "/"), 0777)
-					os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+					os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), strings.Join(npath[:len(npath)-1], "/")), 0777)
+					os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
 
 				}
 
 			} else if r.FormValue("fmode") == "dir" {
-				os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), 0777)
+				os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), 0777)
 			} else if r.FormValue("fmode") == "upload" {
-				ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+				ioutil.WriteFile(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
 			}
 
 		} else if r.FormValue("type") == "61" {
@@ -1226,19 +1226,19 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 				if !strings.Contains(r.FormValue("path"), ".yml") {
 					addstr = ".yml"
 				}
-				_, err := os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+				_, err := os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
 
 				if err != nil {
 					npath := strings.Split(r.FormValue("path"), "/")
-					os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+strings.Join(npath[:len(npath)-1], "/"), 0777)
-					os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + r.FormValue("prefix") + r.FormValue("path") + addstr)
+					os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), strings.Join(npath[:len(npath)-1], "/")), 0777)
+					os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
 
 				}
 
 			} else if r.FormValue("fmode") == "dir" {
-				os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), 0777)
+				os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), 0777)
 			} else if r.FormValue("fmode") == "upload" {
-				ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix")+r.FormValue("path"), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+				ioutil.WriteFile(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
 			}
 
 		} else if r.FormValue("type") == "62" {
@@ -1273,7 +1273,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			}
 
 		} else if r.FormValue("type") == "70" {
-			err := os.Rename(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+r.FormValue("prefix"), os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/"+r.FormValue("path"))
+			err := os.Rename(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix")), filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), "/", r.FormValue("path")))
 			if err != nil {
 				response = NetbAlert(Alertbs{Type: "danger", Text: "Failed to move resource : " + err.Error()})
 			} else {
