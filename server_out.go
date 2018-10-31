@@ -232,7 +232,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "5500", Text: "Docker", Icon: "fa fa-cloud-upload"})
 
-					var goFiles []PkgItem
+					var goFiles, ymlFiles []PkgItem
 
 					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
 						//fmt.Println(path)
@@ -272,11 +272,49 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						return nil
 					})
 
+					_ = filepath.Walk(pkgpath, func(path string, file os.FileInfo, _ error) error {
+						//fmt.Println(path)
+						if file.IsDir() {
+							lpathj := strings.Replace(path, pkgpath, "", -1)
+
+							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
+							hasyml := false
+							files, _ := ioutil.ReadDir(path)
+							for _, f := range files {
+								if !f.IsDir() && strings.Contains(f.Name(), ".yml") {
+
+									var mjk string
+									mjk = strings.Replace(path, pkgpath, "", -1) + "/" + f.Name()
+									if Windows {
+										mjk = strings.Replace(mjk, "/", "\\", -1)
+									}
+									hasyml = true
+									loca.Children = append(loca.Children, PkgItem{AppID: v.Name, Text: f.Name(), Icon: "fa fa-magic", Type: "61", ID: v.Name + "@pkg:" + mjk, MType: "60&path=" + mjk, DType: "60&isDir=No&path=" + mjk})
+
+								}
+							}
+
+							loca.CType = "51&path=" + lpathj
+							loca.DType = "60&isDir=Yes&path=" + lpathj
+
+							loca.MType = "60&path=" + lpathj
+
+							if hasyml {
+								ymlFiles = append(ymlFiles, loca)
+							}
+
+						}
+
+						return nil
+					})
+
 					appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Go SRC", CType: "50&path=/", Children: goFiles, Icon: "fa fa-cube"})
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "300", Text: "KanBan board", Icon: "fa fa-briefcase"})
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, Type: "7", Text: "Build center", Icon: "fa fa-server"})
+
+					appCo = append(appCo, PkgItem{AppID: v.Name, CType: "51&path=/", Children: ymlFiles, Text: "YAML files", Icon: "fa fa-folder"})
 
 					//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"12",Text: "Timers",Icon: "fa fa-clock-o"} )
 
@@ -418,6 +456,20 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			data, _ := ioutil.ReadFile(filep)
 			data = []byte(html.EscapeString(string(data)))
 			response = NetbWebRootEdittwo(WebRootEdits{SavesTo: id[1], Type: "golang", File: data, ID: NetRandTen(), PKG: r.FormValue("space")})
+
+		} else if r.FormValue("type") == "61" {
+			id := strings.Split(r.FormValue("id"), "@pkg:")
+			filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/" + id[1]
+
+			filep = strings.Replace(filep, "//", "/", -1)
+
+			if Windows {
+				filep = strings.Replace(filep, "/", "\\", -1)
+			}
+
+			data, _ := ioutil.ReadFile(filep)
+			data = []byte(html.EscapeString(string(data)))
+			response = NetbWebRootEdittwo(WebRootEdits{SavesTo: id[1], Type: "yaml", File: data, ID: NetRandTen(), PKG: r.FormValue("space")})
 
 		} else if r.FormValue("type") == "7" {
 			sapp := NetgetApp(getApps(), r.FormValue("space"))
@@ -734,6 +786,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 			varf = append(varf, Inputs{Type: "hidden", Name: "fmode", Value: "touch"})
 
 			response = NetbFSC(FSCs{Path: r.FormValue("path"), Form: Forms{Link: "/api/act?type=60&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Create", Class: "warning"}})
+		} else if r.FormValue("type") == "51" {
+			//prefix pkg
+			varf := []Inputs{}
+			varf = append(varf, Inputs{Type: "text", Name: "path", Text: "Path"})
+			varf = append(varf, Inputs{Type: "hidden", Name: "basesix"})
+			varf = append(varf, Inputs{Type: "hidden", Name: "fmode", Value: "touch"})
+
+			response = NetbFSC(FSCs{Path: r.FormValue("path"), Form: Forms{Link: "/api/act?type=61&pkg=" + r.FormValue("pkg") + "&prefix=" + r.FormValue("path"), Inputs: varf, CTA: "Add YAML file", Class: "warning"}})
 		} else if r.FormValue("type") == "6" {
 			varf := []Inputs{}
 			varf = append(varf, Inputs{Type: "text", Name: "path", Misc: "required", Text: "New path"})
