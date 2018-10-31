@@ -566,7 +566,7 @@
             term.exec([`cd $GOPATH/src/${package}`]);
 
              setTimeout(function(){
-                term.exec([`cd ${name} && dep init -gopath && rm ./Gopkg.* && rm -rf ./vendor && cd ../ && faas-cli build -f ${name}.yml`]);
+                term.exec([`cd ${name} && dep init -gopath && rm ./Gopkg.* &&  cd ../ && faas-cli build -f ${name}.yml && rm -rf ./${name}/vendor`]);
              }, 1100);
     }
 

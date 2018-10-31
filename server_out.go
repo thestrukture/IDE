@@ -318,11 +318,11 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						var functions []PkgItem
 
 						for _, fn := range v.Groups {
-							ref := PkgItem{AppID: v.Name, Text: fn, Icon: "fa fa-square", Type: "62", ID: v.Name + "@pkg:" + fn, DType: "62&path=" + fn}
+							ref := PkgItem{AppID: v.Name, Text: fn, Icon: "fa fa-cube", Type: "62", ID: v.Name + "@pkg:" + fn, DType: "62&path=" + fn}
 							functions = append(functions, ref)
 						}
 
-						appCo = append(appCo, PkgItem{AppID: v.Name, CType: "52", Children: functions, Text: "Functions", Icon: "fa fa-folder"})
+						appCo = append(appCo, PkgItem{AppID: v.Name, CType: "52", Children: functions, Text: "Functions", Icon: "fa fa-cubes"})
 					}
 
 					appCo = append(appCo, PkgItem{AppID: v.Name, CType: "51&path=/", Children: ymlFiles, Text: "YAML files", Icon: "fa fa-folder"})
@@ -337,7 +337,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						rootel["icon"] = "fa fa-folder"
 						rootel["project"] = true
 					} else if v.Type == "faas" {
-						rootel["icon"] = "fa fa-cubes"
+						rootel["icon"] = "fa fa-rocket"
 						rootel["project"] = true
 						rootel["btype"] = nil
 					} else {
