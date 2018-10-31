@@ -554,7 +554,7 @@
     }
 
     function buildFunction(package, name){
-          swal("Hijacking terminal", "Building image. Please be patient, this will take some time.", "warning");
+          swal("Hijacking terminal", "Building function. Please be patient, this will take some time.", "warning");
 
              if(!$(".terminal-side").hasClass('active')){
                 $(".terminal-side").addClass('active');
@@ -566,12 +566,12 @@
             term.exec([`cd $GOPATH/src/${package}`]);
 
              setTimeout(function(){
-                term.exec([`faas-cli build -f ${name}.yml`]);
+                term.exec([`cd ${name} && dep init -gopath && rm ./Gopkg.* && rm -rf ./vendor && cd ../ && faas-cli build -f ${name}.yml`]);
              }, 1100);
     }
 
     function deployFunction(package, name){
-          swal("Hijacking terminal", "Building image. Please be patient, this will take some time.", "warning");
+          swal("Hijacking terminal", "Deploying function. Please be patient, this will take some time.", "warning");
 
              if(!$(".terminal-side").hasClass('active')){
                 $(".terminal-side").addClass('active');
