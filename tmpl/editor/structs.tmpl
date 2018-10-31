@@ -123,15 +123,15 @@
 	 editors["{{$rin}}"].on('change', function() {
 
 		    sendMessage({ 
-		    	path : '{{.PKG}} - Interfaces',
+		    	path : '{{.PKG}} - Structs',
 		    	editor :  editors["{{$rin}}"].getValue()
 		    });
 		    
 	});
 
 
-	editorPaths['{{.PKG}} - Interfaces'] = editors["{{$rin}}"];
+	editorPaths['{{.PKG}} - Structs'] = editors["{{$rin}}"];
 
-	 addTab({{.PKG}} + " - Interfaces", {{$rin}} );
+	 addTab({{.PKG}} + " - Structs", {{$rin}} );
 </script>
 </div>

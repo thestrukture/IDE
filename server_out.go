@@ -221,7 +221,7 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 						appCo = append(appCo, PkgItem{AppID: v.Name, Text: "Web Resources", CType: "5&path=/", Children: folders, Icon: "fa fa-folder"})
 
 						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "18", Text: "Testing", Icon: "fa fa-flask"})
-						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "8", Text: "Interfaces", Icon: "fa fa-share-alt"})
+						appCo = append(appCo, PkgItem{AppID: v.Name, Type: "8", Text: "Structs", Icon: "fa fa-share-alt"})
 						//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
 						appCo = append(appCo, PkgItem{Type: "10", AppID: v.Name, Text: "Template pipelines", Icon: "fa fa-exchange"})
 
@@ -511,10 +511,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("<gos&gt; \n \n </gos&gt; ")
-			} else {
-				b = []byte(html.EscapeString(string(b[:len(b)])))
+
+				b = []byte("<gos> \n \n </gos> ")
 			}
+
+			data := html.EscapeString(string(b[:len(b)]))
+
+			b = []byte(data)
+
 			response = NetbStructEditor(vHuf{Edata: b, PKG: r.FormValue("space")})
 
 		} else if r.FormValue("type") == "9" {
@@ -523,10 +527,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("<gos&gt; \n \n </gos&gt; ")
-			} else {
-				b = []byte(html.EscapeString(string(b[:len(b)])))
+
+				b = []byte("<gos> \n \n </gos> ")
 			}
+
+			data := html.EscapeString(string(b[:len(b)]))
+
+			b = []byte(data)
+
 			response = NetbObjectEditor(vHuf{Edata: b, PKG: r.FormValue("space")})
 
 		} else if r.FormValue("type") == "10" {
@@ -535,10 +543,14 @@ func apiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 			b, e := ioutil.ReadFile(filep)
 			if e != nil {
-				b = []byte("<gos&gt; \n \n </gos&gt; ")
-			} else {
-				b = []byte(html.EscapeString(string(b[:len(b)])))
+
+				b = []byte("<gos> \n \n </gos> ")
 			}
+
+			data := html.EscapeString(string(b[:len(b)]))
+
+			b = []byte(data)
+
 			response = NetbMethodEditor(vHuf{Edata: b, PKG: r.FormValue("space")})
 
 		} else if r.FormValue("type") == "11" {

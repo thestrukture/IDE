@@ -779,7 +779,7 @@ for _, v := range apps {
 					
 
 						appCo = append(appCo, PkgItem{AppID:v.Name,Type:"18",Text: "Testing",Icon: "fa fa-flask"} )
-						appCo = append(appCo, PkgItem{AppID:v.Name,Type:"8",Text: "Interfaces",Icon: "fa fa-share-alt"} )
+						appCo = append(appCo, PkgItem{AppID:v.Name,Type:"8",Text: "Structs",Icon: "fa fa-share-alt"} )
 						//appCo = append(appCo, PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
 						appCo = append(appCo, PkgItem{Type:"10",AppID:v.Name,Text: "Template pipelines",Icon: "fa fa-exchange"} )
 
@@ -1086,10 +1086,14 @@ for _, v := range apps {
 					
 				 b,e := ioutil.ReadFile(filep)
 				 if e != nil {
-				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
-				 } else {
-				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				 	
+				 	b = []byte("<gos> \n \n </gos> ")
 				 }
+
+				 data := html.EscapeString(string(b[:len(b)]))
+
+				 b = []byte(data)
+				
 				 response = net_bStructEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
 
 			} else if r.FormValue("type") == "9" {
@@ -1097,11 +1101,15 @@ for _, v := range apps {
 				 filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/objects.dsl"
 					
 				 b,e := ioutil.ReadFile(filep)
-				 if e != nil {
-				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
-				 } else {
-				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				  if e != nil {
+				 	
+				 	b = []byte("<gos> \n \n </gos> ")
 				 }
+
+				 data := html.EscapeString(string(b[:len(b)]))
+
+				 b = []byte(data)
+
 				 response = net_bObjectEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
 
 			} else if r.FormValue("type") == "10" {
@@ -1110,10 +1118,14 @@ for _, v := range apps {
 					
 				 b,e := ioutil.ReadFile(filep)
 				 if e != nil {
-				 	b = []byte("&lt;gos&gt; \n \n &lt;/gos&gt; ")
-				 } else {
-				 b = []byte(html.EscapeString(string(b[:len(b)])))
+				 	
+				 	b = []byte("<gos> \n \n </gos> ")
 				 }
+
+				 data := html.EscapeString(string(b[:len(b)]))
+
+				 b = []byte(data)
+
 				 response = net_bMethodEditor(vHuf{Edata:b,PKG: r.FormValue("space") })
 
 			} else if r.FormValue("type") == "11" {
