@@ -741,8 +741,8 @@
     }
 
     function mready(id){ 
-       let title = $("a[target='" + id + "']").html() ? $("a[target='" + id + "']").html()
-       .split("<button")[0] : $("a[target='" + id + "']").html();
+       let title = $("a[target='" + id + "'] .tab-name").html() ? $("a[target='" + id + "'] .tab-name").html()
+       .split("<button")[0] : $("a[target='" + id + "'] .tab-name").html();
   
        $(".xtab").removeClass("active");
        $(".tabview").removeClass("active");
@@ -769,12 +769,12 @@
           currentlink.attr("target", elementid)
          
          
-          $(".xnavs").scrollLeft(currentlink.offset().left)
-          currentlink.click()
-          mready(elementid)
+          $(".xnavs").scrollLeft(currentlink.offset().left);
+          currentlink.click();
+          mready(elementid);
 
       } else {
-        mready(elementid);
+       
         $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#" title="' + name + '"><span class="tab-name">' + name +'</span><button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
         $("a[target='" + elementid + "']").click(function(){
           //show tab 
@@ -796,6 +796,7 @@
           $("#" + elemid).remove();
           return false;
         });
+        mready(elementid);
         editors.tabnames.push(name)
       }
     }
