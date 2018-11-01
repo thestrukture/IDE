@@ -940,10 +940,13 @@ for _, v := range apps {
 					editor.Key =  Aput{ Link:prefix ,Param: "key",Value: gos.Key }
 					editor.Domain =  Aput{ Link:prefix ,Param: "domain",Value: gos.Domain }
 					editor.Erpage =  Aput{ Link:prefix ,Param: "erpage",Value: gos.ErrorPage }
+
 					editor.Ffpage =  Aput{ Link:prefix ,Param: "fpage",Value: gos.NPage }
 					editor.Name =  Aput{ Link:prefix ,Param: "Name",Value: sapp.Name }
 					editor.Package =  Aput{Link:"/api/put?type=16&pkg=" + sapp.Name,Param:"npk",Value:gos.Package}
+					
 					editor.Mainf = gos.Main
+					editor.Shutdown =  gos.Shutdown
 					editor.Initf = gos.Init_Func
 					editor.Sessionf = gos.Session 
 					
