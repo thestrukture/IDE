@@ -771,11 +771,11 @@
          
           $(".xnavs").scrollLeft(currentlink.offset().left)
           currentlink.click()
-           mready(elementid)
+          mready(elementid)
 
       } else {
         mready(elementid);
-        $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#">' + name +' <button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
+        $(".xnavs").prepend('<li class="nav-item"><a data-name="' + name +'" class="nav-link xtab factive active" target="' + elementid + '" href="#" title="' + name + '"><span class="tab-name">' + name +'</span><button style="margin-left:15px;" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></a></li>');
         $("a[target='" + elementid + "']").click(function(){
           //show tab 
           mready($(this).attr("target"));
