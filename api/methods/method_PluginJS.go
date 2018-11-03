@@ -1,0 +1,24 @@
+package methods
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+//
+func PluginJS(args ...interface{}) string {
+
+	plugins := GetPlugins()
+	jsstring := ""
+	for _, v := range plugins {
+		data, err := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" + v + "/index.js")
+		if err != nil {
+			fmt.Println("Error loading ", v)
+		} else {
+			jsstring = jsstring + "\n" + string(data)
+		}
+	}
+	return "<script>" + jsstring + "</script>"
+
+}

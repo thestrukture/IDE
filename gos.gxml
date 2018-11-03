@@ -33,6 +33,7 @@
 	<var type="string">autocompletePath</var>
 	<var type="">upgrader = websocket.Upgrader{}</var>
 	<var type="">portCount = 35000</var>
+	<var type="string">dfd</var>
 	<key>something-secretive-is-what-a-gorrilla-needs</key>
 	<domain></domain>
 	<!-- The <init/> tag is similar to the init function within Go, -->
@@ -107,7 +108,7 @@
 
 
 				
-				apps := getApps()
+				apps := methods.GetApps()
 				newapps := []App{}
 				for _, app := range apps {
 					if app.Name != "" {
@@ -115,7 +116,7 @@
 						newapps = append(newapps, app)
 					}
 				} 
-		saveApps(newapps)
+		methods.SaveApps(newapps)
 
        log.Println("Strukture up on port 8884")
       	if len(os.Args) == 1 && !Windows {
@@ -130,7 +131,7 @@
 	</main>
 
 	<init>
-		gob.Register(&SoftUser{})
+		gob.Register(&types.SoftUser{})
 	</init>
 
 	<!-- Contains interfaces and structs
@@ -158,9 +159,7 @@
              TrialEnd int64
              StripeID,FLogin string
 		</struct>
-		<struct name="NoStruct">
-		
-		</struct>
+
 
 		<struct name="USettings">
 			LastPaid string
@@ -181,7 +180,7 @@
 		<struct name="TemplateEdits">
 			SavesTo,PKG,PreviewLink,ID,Mime string
 			File []byte
-			Settings rPut
+			Settings RPut
 		</struct>
 
 		<struct name="WebRootEdits">
@@ -194,7 +193,7 @@
 	
 		<struct name="TEditor">
 			PKG,Type,LType string
-			CreateForm rPut
+			CreateForm RPut
 		</struct>
 
 		<!-- Boostrap -->
@@ -207,26 +206,26 @@
 			Title string
 			Body string
 			Color string
-			Buttons []sButton
+			Buttons []SButton
 			Form Forms
 		</struct>
 
 		<struct name="Forms">
 			Link string
 			Inputs []Inputs
-			Buttons []sButton
+			Buttons []SButton
 			CTA string
 			Class string
 		</struct>
 
-		<struct name="sButton">
+		<struct name="SButton">
 			Text string
 			Class string
 			Link string
 		</struct>
 
 	     <struct name="sTab">
-			Buttons []sButton
+			Buttons []SButton
 		</struct>
 
 		<struct name="DForm">
@@ -268,12 +267,12 @@
 		<struct name="sPackageEdit">
 			Type,Mainf,Shutdown,Initf,Sessionf string
 			IType,Package,Port,Key,Name,Ffpage,Erpage,Domain Aput
-			Css rPut
-			Imports []rPut
-			Variables []rPut
-			CssFiles []rPut
-			CreateVar rPut
-			CreateImport rPut
+			Css RPut
+			Imports []RPut
+			Variables []RPut
+			CssFiles []RPut
+			CreateVar RPut
+			CreateImport RPut
 			TName string
 		</struct>
 
@@ -342,7 +341,7 @@
 		</method>
 
 		<method name="ListPlugins" var="" return="[]string">
-			return getPlugins()	
+			return GetPlugins()	
 		</method>
 
 		<method name="BindID" var="id,nav" return="Dex">
@@ -396,7 +395,9 @@
 			ajet = false //,err := DebugLogs.Find(bson.M{"pkg":packge.(string), "username":usernam.(string)}).Count()
 
 			bugs := GetLogs(packge.(string))
-			sapp := net_getApp(getApps(), packge.(string))
+
+			// local to package invoke directly
+			sapp := net_getApp(GetApps(), packge.(string))
 
 			if len(bugs) > 0 {
 				ajet = true
@@ -410,7 +411,7 @@
 		</method>
 
 		<method name="PluginJS" var="" return="string">
-			plugins := getPlugins()
+			plugins := GetPlugins()
 			jsstring := ""
 			for _, v := range plugins {
 				data, err := ioutil.ReadFile(os.ExpandEnv("$GOPATH") + "/src/" + v + "/index.js")
@@ -426,7 +427,7 @@
 		<method name="FindmyBugs" var="packge" return="(ajet []DebugObj)">
 
 			ajet =  GetLogs(packge.(string))
-			sapp := net_getApp(getApps(), packge.(string))
+			sapp := net_getApp(GetApps(), packge.(string))
 
 			if sapp.Pid != "" {
 				activLog := DebugObj{Time:"Server", Bugs:[]DebugNode{} }			
@@ -601,9 +602,9 @@
 					var dockerfile string
 
 					if strat == "Fast" {
-						dockerfile = fmt.Sprintf(dockerLarge, imageName, port, port)
+						dockerfile = fmt.Sprintf(methods.DockerLarge, imageName, port, port)
 					} else {
-						dockerfile = fmt.Sprintf(dockerSmall, imageName, port, port)
+						dockerfile = fmt.Sprintf(methods.DockerSmall, imageName, port, port)
 					}
 
 					err := ioutil.WriteFile(dockerFilePath, []byte(dockerfile),0700)
@@ -617,7 +618,7 @@
 				</end>
 
 				<end path="/api/composer" type="POST" >
-					generateComposeFile(r)
+					methods.GenerateComposeFile(r)
 					response = "OK"
 				</end>
 
@@ -630,7 +631,7 @@
 					}
 					defer c.Close()
 
-					AddConnection(c)
+					methods.AddConnection(c)
 					for {
 						_, message, err := c.ReadMessage()
 						if err != nil {
@@ -639,18 +640,17 @@
 						}
 
 						if len(message) != 0 {
-							Broadcast(message)
+							methods.Broadcast(message)
 						}
 						
 					}
 
-
-					return true
+					
 				</end>
 				<end path="/api/pkg-bugs" type="GET">
 
-						bugs := GetLogs(r.FormValue("pkg"))
-						sapp := net_getApp(getApps(), r.FormValue("pkg") )
+						bugs := methods.GetLogs(r.FormValue("pkg"))
+						sapp := net_getApp(methods.GetApps(), r.FormValue("pkg") )
 						if len(bugs) == 0 || sapp.Passed {
 							response = "{}"
 						} else {
@@ -660,7 +660,7 @@
 
 				<end path="/api/kanban" type="GET">
 					pkgName := r.FormValue("pkg")
-					response = mResponse(getKanBan(pkgName))
+					response = mResponse(methods.GetKanBan(pkgName))
 				</end>
 
 				<end path="/api/git" type="POST">
@@ -671,11 +671,11 @@
 
 					if cmd == "commit" {
 						mess := r.FormValue("message")
-						response = mResponse(commitGit(pkgName, mess))
+						response = mResponse(methods.CommitGit(pkgName, mess))
 					}
 
 					if cmd == "push" {
-						pushGit(pkgName)
+						methods.PushGit(pkgName)
 						response = mResponse(false)
 					}
 
@@ -686,14 +686,14 @@
 					pkgName := r.FormValue("pkg")
 					payload := r.FormValue("payload")
 
-					saveKanBan(pkgName, payload)
+					methods.SaveKanBan(pkgName, payload)
 
 					response = "OK"
 				</end>
 
 				<end path="/api/empty" type="GET" >
 					
-					ClearLogs(r.FormValue("pkg"))
+					methods.ClearLogs(r.FormValue("pkg"))
 					response = net_bAlert(Alertbs{Type:"success",Text:"Your build logs are cleared." })
 				</end>
 				<end path="/api/get" method="mGet" type="f" >
@@ -703,7 +703,7 @@
 			    mpk := []bson.M{}
 
 
-				apps := getApps()
+				apps := methods.GetApps()
 
 
 for _, v := range apps {
@@ -740,7 +740,7 @@ for _, v := range apps {
 							lpathj := strings.Replace(path, pkgpath + "web", "", -1)
 
 
-							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
+							loca := PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
 
 							loca.CType = "5&path=" + lpathj
 							loca.DType = "6&isDir=Yes&path=" + lpathj
@@ -797,7 +797,7 @@ for _, v := range apps {
 						if file.IsDir() {
 							lpathj := strings.Replace(path, pkgpath, "", -1)
 
-							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-circle", Children: []PkgItem{}}
+							loca  := PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-circle", Children: []PkgItem{}}
 							hasgo := false
 							files, _ := ioutil.ReadDir(path)
 							for _, f := range files {
@@ -835,7 +835,7 @@ for _, v := range apps {
 						if file.IsDir() {
 							lpathj := strings.Replace(path, pkgpath, "", -1)
 
-							var loca PkgItem = PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
+							loca  := PkgItem{AppID: v.Name, Text: lpathj, Icon: "fa fa-folder", Children: []PkgItem{}}
 							hasyml := false
 							files, _ := ioutil.ReadDir(path)
 							for _, f := range files {
@@ -923,7 +923,7 @@ for _, v := range apps {
 			} else if r.FormValue("type") == "1" {
 
 				//get package
-				sapp := net_getApp(getApps(), r.FormValue("id"))
+				sapp := net_getApp(methods.GetApps(), r.FormValue("id"))
 				prefix := "/api/put?type=0&id=" + sapp.Name 	
 
 
@@ -953,15 +953,15 @@ for _, v := range apps {
 					varf := []Inputs{}
 					varf = append(varf, Inputs{Name: "is", Type:"text",Text: "Variable type"})
 					varf = append(varf, Inputs{Name: "name", Type:"text",Text: "Variable name"})
-					editor.CreateVar = rPut{Count:"4",Link:"/api/create?type=0&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=2&pkg=" + sapp.Name }
+					editor.CreateVar = types.RPut{Count:"4",Link:"/api/create?type=0&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=2&pkg=" + sapp.Name }
 
 				   varf = []Inputs{}
 					varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Package path"})
 					
-					editor.CreateImport = rPut{Count:"6",Link:"/api/create?type=1&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=3&pkg=" + sapp.Name  }	
+					editor.CreateImport = types.RPut{Count:"6",Link:"/api/create?type=1&pkg=" + sapp.Name, Inputs : varf,ListLink: "/api/get?type=3&pkg=" + sapp.Name  }	
 					varf = []Inputs{}
 					varf = append(varf, Inputs{Name:"src", Type:"text",Text:"Path to css lib"})
-					editor.Css = rPut{Count:"6", Link:"/api/create?type=2&pkg=" + sapp.Name, Inputs: varf,ListLink: "/api/get?type=4&pkg=" + sapp.Name  }
+					editor.Css = types.RPut{Count:"6", Link:"/api/create?type=2&pkg=" + sapp.Name, Inputs: varf,ListLink: "/api/get?type=4&pkg=" + sapp.Name  }
 					response = net_bPackageEdit(editor)
 				} else {
 					response = ""
@@ -979,7 +979,7 @@ for _, v := range apps {
 						varf := []Inputs{}
 						varf = append(varf, Inputs{Name: "is", Type:"text",Text: "Variable type",Value:v.Type})
 						varf = append(varf, Inputs{Name: "name", Type:"text",Text: "Variable name",Value: v.Name})
-						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=0&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Count:"4",Link:"/api/act?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Inputs:varf })
+						response = response + net_bRPUT(types.RPut{DLink: "/api/delete?type=0&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Count:"4",Link:"/api/act?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Name,Inputs:varf })
 				}
 
 				
@@ -991,18 +991,18 @@ for _, v := range apps {
 						varf := []Inputs{}
 						varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Package path",Value:v.Src})
 	
-						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Src,Count:"6",Link:"/api/act?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v.Src ,Inputs:varf })
+						response = response + net_bRPUT(types.RPut{DLink: "/api/delete?type=1&pkg=" + r.FormValue("pkg") + "&id=" + v.Src,Count:"6",Link:"/api/act?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v.Src ,Inputs:varf })
 				}
 
 			}  else if r.FormValue("type") == "4" {
-				sapp := net_getApp(getApps(), r.FormValue("pkg"))
+				sapp := net_getApp(methods.GetApps(), r.FormValue("pkg"))
 
 				for _,v := range sapp.Css {					
 
 					    varf := []Inputs{}
 						varf = append(varf, Inputs{Name: "src", Type:"text",Text: "Path to css lib",Value:v})
 	
-						response = response + net_bRPUT(rPut{DLink: "/api/delete?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v,Count:"6",Link:"/api/act?type=3&pkg=" + r.FormValue("pkg") + "&id=" + v ,Inputs:varf })
+						response = response + net_bRPUT(types.RPut{DLink: "/api/delete?type=2&pkg=" + r.FormValue("pkg") + "&id=" + v,Count:"6",Link:"/api/act?type=3&pkg=" + r.FormValue("pkg") + "&id=" + v ,Inputs:varf })
 				}
 
 			} else if r.FormValue("type") == "5" {
@@ -1017,7 +1017,7 @@ for _, v := range apps {
 				varf := []Inputs{}
 				varf = append(varf, Inputs{Type:"text", Value:template.Struct ,Name:"struct",Text:"Interface to use with template" })
 
-				response = net_bTemplateEdit(TemplateEdits{SavesTo:"tmpl/" + id[1] + ".tmpl",ID:net_RandTen(),PKG: r.FormValue("space"),Mime:"html", File :  data,Settings: rPut{Link:"/api/put?type=2&id=" + id[1] + "&pkg=" + r.FormValue("space"),Inputs:varf, Count:"6"   } })
+				response = net_bTemplateEdit(TemplateEdits{SavesTo:"tmpl/" + id[1] + ".tmpl",ID:net_RandTen(),PKG: r.FormValue("space"),Mime:"html", File :  data,Settings: types.RPut{Link:"/api/put?type=2&id=" + id[1] + "&pkg=" + r.FormValue("space"),Inputs:varf, Count:"6"   } })
 			} else if r.FormValue("type") == "6" {
 				id := strings.Split(r.FormValue("id"), "@pkg:")
 				filep := os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("space") + "/web" + id[1]
@@ -1081,7 +1081,7 @@ for _, v := range apps {
 				response = net_bWebRootEdittwo(WebRootEdits{SavesTo: function, Faas : true, Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space"), PreviewLink : id[1] })
 
 			}  else if r.FormValue("type") == "7" {
-				sapp := net_getApp(getApps(), r.FormValue("space"))
+				sapp := net_getApp(methods.GetApps(), r.FormValue("space"))
 				response = net_bROC(sROC{Name:r.FormValue("space"),Build: sapp.Passed,Time:sapp.LatestBuild,Pid : sapp.Pid })
 			} else if r.FormValue("type") == "8" {
 
@@ -1135,13 +1135,13 @@ for _, v := range apps {
 
 				varf := []Inputs{}
 				varf = append(varf,Inputs{Name:"path",Type:"text", Text:"Endpoint path"})
-				kput := rPut{ListLink:"/api/get?type=13&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=7&space=" + r.FormValue("space")}
+				kput := types.RPut{ListLink:"/api/get?type=13&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=7&space=" + r.FormValue("space")}
 				response = net_bEndpointEditor(TEditor{CreateForm:kput,PKG:r.FormValue("space")})
 
 			} else if r.FormValue("type") == "12" {
 				varf := []Inputs{}
 				varf = append(varf,Inputs{Name:"name",Type:"text", Text:"Timer name"})
-				kput := rPut{ListLink:"/api/get?type=14&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=8&space=" + r.FormValue("space")}
+				kput := types.RPut{ListLink:"/api/get?type=14&space=" + r.FormValue("space"),Inputs:varf,Count:"6",Link:"/api/put?type=8&space=" + r.FormValue("space")}
 				response = net_bTimerEditor(TEditor{CreateForm:kput,PKG:r.FormValue("space")})
 			} else if r.FormValue("type") == "13" {
 
@@ -1154,7 +1154,7 @@ for _, v := range apps {
 					//varf = append(varf, Inputs{Name:"method", Type:"text",Text:"Endpoint method",Value:v.Method})
 					varf = append(varf, Inputs{Name:"typ", Type:"text",Text:"Request type : GET,POST,PUT,DELETE,f,star...",Value:v.Type})
 
-					response = response + net_bRPUT(rPut{DLink:"/api/delete?type=7&pkg=" + r.FormValue("space") + "&path=" + v.Id ,Link:"/api/put?type=9&id=" + v.Id + "&pkg=" + r.FormValue("space")  ,Count:"12",Inputs:varf})  + addjsstr
+					response = response + net_bRPUT(types.RPut{DLink:"/api/delete?type=7&pkg=" + r.FormValue("space") + "&path=" + v.Id ,Link:"/api/put?type=9&id=" + v.Id + "&pkg=" + r.FormValue("space")  ,Count:"12",Inputs:varf})  + methods.Addjsstr
 					
 
 				}				
@@ -1182,7 +1182,7 @@ for _, v := range apps {
 					varf = append(varf, Inputs{Name:"interval", Type:"number",Text:"Interval",Value:v.Interval})
 					varf = append(varf, Inputs{Name:"unit", Type:"text",Text:"Timer refresh unit",Value:v.Unit})
 					varf = append(varf, Inputs{Name:"method", Type:"text",Text:"Method to execute",Value:v.Method})
-					response = response + net_bRPUT(rPut{DLink:"/api/delete?type=8&pkg=" + r.FormValue("space") + "&name=" + v.Name ,Link:"/api/put?type=10&id=" + v.Name + "&pkg=" + r.FormValue("space"),Count:"2",Inputs:varf}) 
+					response = response + net_bRPUT(types.RPut{DLink:"/api/delete?type=8&pkg=" + r.FormValue("space") + "&name=" + v.Name ,Link:"/api/put?type=10&id=" + v.Name + "&pkg=" + r.FormValue("space"),Count:"2",Inputs:varf}) 
 					
 				}	
 
@@ -1195,7 +1195,7 @@ for _, v := range apps {
 				response = net_bDebugger(DebugObj{PKG:r.FormValue("space"),Username: ""})
 			} else if r.FormValue("type") == "17" {
 
-				var tDebugNode DebugObj
+				var tDebugNode types.DebugObj
 
 				if r.FormValue("id") == "Server" {
 					tDebugNode = DebugObj{Time:"Server",Bugs:[]DebugNode{}}
@@ -1209,7 +1209,7 @@ for _, v := range apps {
 		    			tDebugNode.RawLog = string(rlog)
 		    		}
 				} else {
- 				logs := GetLogs(r.FormValue("space"))
+ 				logs := methods.GetLogs(r.FormValue("space"))
 			
 				for _, logg := range logs {
 					if logg.Time == r.FormValue("id") {
@@ -1267,11 +1267,11 @@ for _, v := range apps {
 				gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 			} else if r.FormValue("type") == "2" {
 				//css
-				apps := getApps()
-				app := net_getApp(getApps(), r.FormValue("pkg"))
+				apps := methods.GetApps()
+				app := net_getApp(methods.GetApps(), r.FormValue("pkg"))
 				app.Css = append(app.Css, r.FormValue("src"))
-				apps = net_updateApp(getApps(), r.FormValue("pkg"), app)
-				saveApps(apps)
+				apps = net_updateApp(methods.GetApps(), r.FormValue("pkg"), app)
+				methods.SaveApps(apps)
 				//Users.Update(bson.M{"uid":me.UID}, me)
 			} else if r.FormValue("type") == "3" {
 				varf := []Inputs{}
@@ -1342,7 +1342,7 @@ for _, v := range apps {
 			} else if r.FormValue("type") == "101" {
 
 				//type pkg id
-				plugins := getPlugins()
+				plugins := methods.GetPlugins()
 				newset := []string{}
 
 				for _,v := range plugins {
@@ -1353,7 +1353,7 @@ for _, v := range apps {
 
 				plugins = newset
 
-				savePlugins(plugins)
+				methods.SavePlugins(plugins)
 
 			} else if r.FormValue("type") == "1" {
 				gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
@@ -1361,7 +1361,7 @@ for _, v := range apps {
 
 					gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 			} else if r.FormValue("type") == "2" {
-				apps := getApps()
+				apps := methods.GetApps()
 				app := net_getApp(apps, r.FormValue("pkg"))
 				temp := []string{}
 				for _,v := range app.Css {
@@ -1371,7 +1371,7 @@ for _, v := range apps {
 				}
 				app.Css = temp
 				apps = net_updateApp(apps, r.FormValue("pkg"), app)
-				saveApps(apps)
+				methods.SaveApps(apps)
 				//Users.Update(bson.M{"uid":me.UID}, me)
 			} else if r.FormValue("type") == "3" {
 				//pkg
@@ -1384,7 +1384,7 @@ for _, v := range apps {
 					os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg"))
 
 					newapps := []App{}
-					apps := getApps()
+					apps := methods.GetApps()
 					for _,v := range apps {
 
 						if v.Name != r.FormValue("pkg") {
@@ -1392,7 +1392,7 @@ for _, v := range apps {
 						}
 
 					}
-					saveApps(newapps)
+					methods.SaveApps(newapps)
 
 					response = net_bAlert(Alertbs{Type:"success",Text:"Success package " + r.FormValue("pkg") + " was removed. Please reload page to close all linked resources.",Redirect: "javascript:updateTree()"})
 				}
@@ -1403,7 +1403,7 @@ for _, v := range apps {
 					response = net_bDelete(DForm{Text:"Are you sure you want to delete the bundle " + r.FormValue("bundle") + " and all of its sub templates" ,Link:"type=4&bundle=" +  r.FormValue("bundle") + "&pkg=" + r.FormValue("pkg")})
 				} else {
 					//delete bundle
-					apps := getApps()
+					apps := methods.GetApps()
 					sapp := net_getApp(apps, r.FormValue("pkg"))
 
 					replac := []string{}
@@ -1418,7 +1418,7 @@ for _, v := range apps {
 					
 					sapp.Groups = replac
 					apps = net_updateApp(apps, sapp.Name,	sapp)
-					saveApps(apps)
+					methods.SaveApps(apps)
 					gos,_ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/gos.gxml")
 					os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") )
 					gos.Delete("bundle", r.FormValue("bundle"))
@@ -1487,8 +1487,8 @@ for _, v := range apps {
 
 				} else {
 					//delete
-					apps := getApps()
-					app := net_getApp(getApps(), r.FormValue("pkg"))
+					apps := methods.GetApps()
+					app := net_getApp(methods.GetApps(), r.FormValue("pkg"))
 					
 					newGroups := []string{}
 
@@ -1500,8 +1500,8 @@ for _, v := range apps {
 
 					app.Groups = newGroups
 
-					apps = net_updateApp(getApps(), r.FormValue("pkg"), app)
-					saveApps(apps)
+					apps = net_updateApp(methods.GetApps(), r.FormValue("pkg"), app)
+					methods.SaveApps(apps)
 
 					os.RemoveAll( os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" +  r.FormValue("path") )
 					os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/" + r.FormValue("path") + ".yml")
@@ -1539,13 +1539,13 @@ for _, v := range apps {
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
 	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Build with GopherSauce", "Existing package", "faas"} })
 	     		
-	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
+	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
 				
 			} else if r.FormValue("type") == "100" {
 	     		inputs := []Inputs{}
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Plugin install path"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "100"})
-	     		response = net_bModal(sModal{Body: "",Title: "PLUGINS",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"ADD",Class:"warning btn-block",Buttons:[]sButton{}, Inputs:inputs }})
+	     		response = net_bModal(sModal{Body: "",Title: "PLUGINS",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"ADD",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
 			} else if r.FormValue("type") == "101" {
 	     		
 	     		response = bPluginList(gosweb.NoStruct{})
@@ -1555,7 +1555,7 @@ for _, v := range apps {
 			
 				
 			if r.FormValue("type") == "0" {
-				apps := getApps()
+				apps := methods.GetApps()
 				app := App{Type:"webapp",Name: r.FormValue("name")}
 				useGos := r.FormValue("usegos")
 
@@ -1596,11 +1596,11 @@ for _, v := range apps {
 			    if err == nil{
 			    	apps = append(apps, app)
 				    //Users.Update(bson.M{"uid": me.UID}, me)
-				    saveApps(apps)
+				    methods.SaveApps(apps)
 			    	response = net_bAlert(Alertbs{Type:"warning",Text:"Success package " + r.FormValue("name") + " was created!",Redirect: "javascript:updateTree()"})
 				}
 			} else 	if r.FormValue("type") == "100" {
-				plugins := getPlugins()
+				plugins := methods.GetPlugins()
 			    plugins = append(plugins, r.FormValue("name") )
 			   
 				
@@ -1610,7 +1610,7 @@ for _, v := range apps {
 			    if err != nil {
 			    	   response = net_bAlert(Alertbs{Type:"warning",Text:"Error, could not find plugin.",Redirect: "#"})
 			    } else {
-			    savePlugins(plugins)
+			    methods.SavePlugins(plugins)
 			    response = net_bAlert(Alertbs{Type:"success",Text:"Success plugin " + r.FormValue("name") + " installed! Reload the page to activate plugin.",Redirect: "javascript:GetPlugins()"})
 				}
 			} else if r.FormValue("type") == "1" {
@@ -1634,7 +1634,7 @@ for _, v := range apps {
 				response = "Import saved!"
 
 			} else if r.FormValue("type") == "3" {
-				apps := getApps()
+				apps := methods.GetApps()
 				app := net_getApp(apps, r.FormValue("pkg"))
 				temp := []string{}
 				for _,v := range app.Css {
@@ -1646,16 +1646,16 @@ for _, v := range apps {
 				}
 				app.Css = temp
 				apps = net_updateApp(apps, r.FormValue("pkg"), app)
-				saveApps(apps)
+				methods.SaveApps(apps)
 				//Users.Update(bson.M{"uid":me.UID}, me)
 			} else if r.FormValue("type") == "4" {
-				apps := getApps()
+				apps := methods.GetApps()
 				app := net_getApp(apps, r.FormValue("pkg"))
 				
 				app.Groups = append(app.Groups, r.FormValue("name"))
 				os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" +  r.FormValue("pkg") + "/tmpl/" + r.FormValue("name") ,0777 );		
 				apps = net_updateApp(apps, r.FormValue("pkg"), app)
-				saveApps(apps)
+				methods.SaveApps(apps)
 				//Users.Update(bson.M{"uid":me.UID}, me)	
 			} else if r.FormValue("type") == "5" {
 				//app := net_getApp(me.Apps, r.FormValue("pkg"))
@@ -1736,11 +1736,11 @@ for _, v := range apps {
 					response = net_bAlert(Alertbs{Type:"danger",Text:"Failed to add function: " + err.Error() + logFull})
 				} else {
 					
-					apps := getApps()
-					app := net_getApp(getApps(), r.FormValue("pkg"))
+					apps := methods.GetApps()
+					app := net_getApp(methods.GetApps(), r.FormValue("pkg"))
 					app.Groups = append(app.Groups, r.FormValue("name"))
-					apps = net_updateApp(getApps(), r.FormValue("pkg"), app)
-					saveApps(apps)
+					apps = net_updateApp(methods.GetApps(), r.FormValue("pkg"), app)
+					methods.SaveApps(apps)
 					response = net_bAlert(Alertbs{Type:"success",Text:"Operation succeeded, one moment, generating function source.<script>setTimeout(updateTree , 8200)</script>"})
 				}	
 
@@ -1991,7 +1991,7 @@ for _, v := range apps {
 							}
 						}
 
-						AddtoLogs(debuglog)
+						methods.AddtoLogs(debuglog)
 			response = net_bAlert(Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
 
 
@@ -2013,28 +2013,28 @@ for _, v := range apps {
 								if linedt[0] == "./application.go" {
 									if len(linedt) > 2 {
 									il, _ := strconv.Atoi(linedt[1])
-									actline := FindString("./application.go", il )
+									actline := methods.FindString("./application.go", il )
 									actline = strings.TrimSpace(actline)
 										//find line
-										inStructs := FindLine("./structs.dsl", actline)
+										inStructs := methods.FindLine("./structs.dsl", actline)
 										if inStructs == -1 {
 
-											inMethods := FindLine("./methods.dsl", actline)
+											inMethods := methods.FindLine("./methods.dsl", actline)
 												if inMethods == -1 {
 
 														gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
 
-													inMain := FindinString(gos.Main, actline)
+													inMain := methods.FindinString(gos.Main, actline)
 
 													if inMain == -1 {
 
-													inInit := FindinString(gos.
+													inInit := methods.FindinString(gos.
 														Init_Func, actline)
 													if inInit == -1 {
 													//	fmt.Println(actline)
 													 for _, v := range gos.Endpoints.Endpoints {
 
-															inEndpoint := FindinString(v.Method, actline)
+															inEndpoint := methods.FindinString(v.Method, actline)
 															if inEndpoint != -1 {
 																enode := DebugNode{}
 																enode.Action = "service:" + v.Path + " - " + v.Type  + ":" + strconv.Itoa(inEndpoint) + ":" + v.Id
@@ -2090,7 +2090,7 @@ for _, v := range apps {
 							}
 						}
 
-						AddtoLogs(debuglog)
+						methods.AddtoLogs(debuglog)
 			response = net_bAlert(Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
 
 		
@@ -2100,13 +2100,13 @@ for _, v := range apps {
 
 
 
-					apps := getApps()
+					apps := methods.GetApps()
 					sapp := net_getApp(apps, r.FormValue("pkg"))
 
 					sapp.Passed = passed
 					sapp.LatestBuild = time.Now().String()
 					apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
-					saveApps(apps)	
+					methods.SaveApps(apps)	
 					
 			//Users.Update(bson.M{"uid":me.UID}, me)
 				</end>
@@ -2117,7 +2117,7 @@ for _, v := range apps {
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    		os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
-		    		apps := getApps()
+		    		apps := methods.GetApps()
 					sapp := net_getApp(apps, r.FormValue("pkg"))
 		    		
 					if sapp.Passed {
@@ -2158,7 +2158,7 @@ for _, v := range apps {
 					
 				//DebugLogs.Insert(dObj)
 				apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
-				saveApps(apps)	
+				methods.SaveApps(apps)	
 					
 			//Users.Update(bson.M{"uid":me.UID}, me)
 				</end>
@@ -2169,7 +2169,7 @@ for _, v := range apps {
 			gp := os.ExpandEnv("$GOPATH")
 			
 		    	os.Chdir( gp + "/src/" +  r.FormValue("pkg") )
-		    	apps := getApps()
+		    	apps := methods.GetApps()
 				sapp := net_getApp(apps, r.FormValue("pkg"))
 		    		
 				if sapp.Pid == "" {
@@ -2182,7 +2182,7 @@ for _, v := range apps {
 					
 				//DebugLogs.Insert(dObj)
 				apps = net_updateApp(apps, r.FormValue("pkg"), sapp)
-				saveApps(apps)	
+				methods.SaveApps(apps)	
 					
 			//Users.Update(bson.M{"uid":me.UID}, me)
 				</end>
@@ -2210,7 +2210,7 @@ for _, v := range apps {
 			zipname := strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".binary.zip"
 			if Windows {
 				bPath[len(bPath) - 1]  += ".exe"
-				zipit(bPath[len(bPath) - 1], zipname )
+				methods.Zipit(bPath[len(bPath) - 1], zipname )
 			} else {
 				core.RunCmdB("zip -r " + zipname  + " " + bPath[len(bPath) - 1] )
 			}
@@ -2240,7 +2240,7 @@ for _, v := range apps {
 			zipname := strings.Replace(r.FormValue("pkg"), "/",".",-1) + ".zip"
 			if Windows {
 				pkgpath = strings.Replace(pkgpath, "/", "\\", -1)
-				zipit(pkgpath, zipname)
+				methods.Zipit(pkgpath, zipname)
 			} else {
 				core.RunCmdB("zip -r " + zipname + " " +  pkgpath + "/" )
 			}
@@ -2379,8 +2379,8 @@ for _, v := range apps {
 					defer c.Close()
 
 					ctx := exec.InteractiveExec("bash", "-i")
-			        r := reader{Conn : c}
-			        go ctx.Receive(&r, 5*time.Hour)
+			        reader :=  methods.Reader{Conn : c}
+			        go ctx.Receive(&reader, 5*time.Hour)
 			        
 
 					for {
@@ -2404,8 +2404,8 @@ for _, v := range apps {
 								ctx.Cancel()
 								ctx.Stop()
 								ctx = exec.InteractiveExec("bash", "-i")
-								r := reader{Conn : c}
-						        go ctx.Receive(&r, 5*time.Hour)
+								reader = methods.Reader{Conn : c}
+						        go ctx.Receive(&reader, 5*time.Hour)
 							} else {
 								ctx.Send(msg)
 							}
@@ -2415,8 +2415,6 @@ for _, v := range apps {
 						
 					}
 
-
-					return true
 				</end> 
 				<!-- Auth -->
 	 			

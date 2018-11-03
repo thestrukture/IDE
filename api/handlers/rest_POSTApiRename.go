@@ -1,0 +1,13 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/gorilla/sessions"
+)
+
+func POSTApiRename(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	callmet = true
+	return
+}

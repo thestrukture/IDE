@@ -1,0 +1,21 @@
+package handlers
+
+import (
+	"html"
+	"net/http"
+	"os"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+)
+
+func POSTApiTester(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	gp := os.ExpandEnv("$GOPATH")
+	os.Chdir(gp + "/src/" + r.FormValue("pkg"))
+	logfull, _ := core.RunCmdSmart("gos " + r.FormValue("mode") + " " + r.FormValue("c"))
+	response = html.EscapeString(logfull)
+
+	callmet = true
+	return
+}

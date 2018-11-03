@@ -1,0 +1,36 @@
+package handlers
+
+import (
+	"net/http"
+
+	gosweb "github.com/cheikhshift/gos/web"
+	"github.com/gorilla/sessions"
+
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	types "github.com/thestrukture/IDE/types"
+)
+
+func POSTApiNew(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	if r.FormValue("type") == "0" {
+		inputs := []types.Inputs{}
+		inputs = append(inputs, types.Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
+		inputs = append(inputs, types.Inputs{Type: "hidden", Name: "type", Value: "0"})
+		inputs = append(inputs, types.Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Build with GopherSauce", "Existing package", "faas"}})
+
+		response = templates.Modal(types.SModal{Body: "", Title: "Add Package", Color: "#ededed", Form: types.Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []types.SButton{}, Inputs: inputs}})
+
+	} else if r.FormValue("type") == "100" {
+		inputs := []types.Inputs{}
+		inputs = append(inputs, types.Inputs{Type: "text", Name: "name", Misc: "required", Text: "Plugin install path"})
+		inputs = append(inputs, types.Inputs{Type: "hidden", Name: "type", Value: "100"})
+		response = templates.Modal(types.SModal{Body: "", Title: "PLUGINS", Color: "#ededed", Form: types.Forms{Link: "/api/act", CTA: "ADD", Class: "warning btn-block", Buttons: []types.SButton{}, Inputs: inputs}})
+	} else if r.FormValue("type") == "101" {
+
+		response = templates.PluginList(gosweb.NoStruct{})
+	}
+
+	callmet = true
+	return
+}

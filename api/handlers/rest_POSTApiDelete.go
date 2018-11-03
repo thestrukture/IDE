@@ -1,0 +1,212 @@
+package handlers
+
+import (
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	methods "github.com/thestrukture/IDE/api/methods"
+
+	types "github.com/thestrukture/IDE/types"
+)
+
+func POSTApiDelete(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	if r.FormValue("type") == "0" {
+
+		//type pkg id
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		gos.Delete("var", r.FormValue("id"))
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "101" {
+
+		//type pkg id
+		plugins := methods.GetPlugins()
+		newset := []string{}
+
+		for _, v := range plugins {
+			if v != r.FormValue("pkg") {
+				newset = append(newset, v)
+			}
+		}
+
+		plugins = newset
+
+		methods.SavePlugins(plugins)
+
+	} else if r.FormValue("type") == "1" {
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		gos.Delete("import", r.FormValue("id"))
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+	} else if r.FormValue("type") == "2" {
+		apps := methods.GetApps()
+		app := methods.GetApp(apps, r.FormValue("pkg"))
+		temp := []string{}
+		for _, v := range app.Css {
+			if v != r.FormValue("id") {
+				temp = append(temp, v)
+			}
+		}
+		app.Css = temp
+		apps = methods.UpdateApp(apps, r.FormValue("pkg"), app)
+		methods.SaveApps(apps)
+		//Users.Update(bson.M{"uid":me.UID}, me)
+	} else if r.FormValue("type") == "3" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the package " + r.FormValue("pkg"), Link: "type=3&pkg=" + r.FormValue("pkg")})
+
+		} else {
+			//delete
+			os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg"))
+
+			newapps := []types.App{}
+			apps := methods.GetApps()
+			for _, v := range apps {
+
+				if v.Name != r.FormValue("pkg") {
+					newapps = append(newapps, v)
+				}
+
+			}
+			methods.SaveApps(newapps)
+
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success package " + r.FormValue("pkg") + " was removed. Please reload page to close all linked resources.", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "4" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the bundle " + r.FormValue("bundle") + " and all of its sub templates", Link: "type=4&bundle=" + r.FormValue("bundle") + "&pkg=" + r.FormValue("pkg")})
+		} else {
+			//delete bundle
+			apps := methods.GetApps()
+			sapp := methods.GetApp(apps, r.FormValue("pkg"))
+
+			replac := []string{}
+
+			for _, v := range sapp.Groups {
+
+				if r.FormValue("bundle") != v {
+					replac = append(replac, v)
+				}
+
+			}
+
+			sapp.Groups = replac
+			apps = methods.UpdateApp(apps, sapp.Name, sapp)
+			methods.SaveApps(apps)
+			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+			os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle"))
+			gos.Delete("bundle", r.FormValue("bundle"))
+
+			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success bundle was removed!", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "5" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the template " + r.FormValue("tmpl"), Link: "type=5&tmpl=" + r.FormValue("tmpl") + "&pkg=" + r.FormValue("pkg")})
+		} else {
+			//delete
+
+			os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/tmpl/" + r.FormValue("tmpl") + ".tmpl")
+
+			gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+			parsedStr := strings.Split(r.FormValue("tmpl"), "/")
+			gos.Delete("template", parsedStr[len(parsedStr)-1])
+
+			gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success template " + r.FormValue("tmpl") + " was removed!", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "6" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the web resource at " + r.FormValue("path"), Link: "type=6&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
+
+		} else {
+			//delete
+			if r.FormValue("isDir") == "Yes" {
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
+			} else {
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("path"))
+			}
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " was removed!", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "60" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the resource at " + r.FormValue("path"), Link: "type=60&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
+
+		} else {
+			//delete
+			if r.FormValue("isDir") == "Yes" {
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+			} else {
+				os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+			}
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success resource at " + r.FormValue("path") + " removed!", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "62" {
+		//pkg
+		if r.FormValue("conf") != "do" {
+			response = templates.Delete(types.DForm{Text: "Are you sure you want to delete the function " + r.FormValue("path"), Link: "type=62&conf=do&path=" + r.FormValue("path") + "&pkg=" + r.FormValue("pkg")})
+
+		} else {
+			//delete
+			apps := methods.GetApps()
+			app := methods.GetApp(methods.GetApps(), r.FormValue("pkg"))
+
+			newGroups := []string{}
+
+			for _, group := range app.Groups {
+				if group != r.FormValue("path") {
+					newGroups = append(newGroups, group)
+				}
+			}
+
+			app.Groups = newGroups
+
+			apps = methods.UpdateApp(methods.GetApps(), r.FormValue("pkg"), app)
+			methods.SaveApps(apps)
+
+			os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path"))
+			os.RemoveAll(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/" + r.FormValue("path") + ".yml")
+
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success, function " + r.FormValue("path") + " removed!", Redirect: "javascript:updateTree()"})
+		}
+
+	} else if r.FormValue("type") == "7" {
+		//type pkg path name
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		gos.DeleteEnd(r.FormValue("path"))
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "8" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		gos.Delete("timer", r.FormValue("name"))
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+	} else if r.FormValue("type") == "9" {
+
+	}
+
+	callmet = true
+	return
+}

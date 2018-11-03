@@ -1,0 +1,27 @@
+package methods
+
+import (
+	"reflect"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/thestrukture/IDE/types"
+)
+
+//
+func GetTemplate(args ...interface{}) core.Template {
+	templates := args[0]
+	name := args[1]
+
+	s := reflect.ValueOf(templates)
+	slice := make([]types.App, s.Len())
+	for i, _ := range slice {
+		v := s.Index(i).Interface().(core.Template)
+
+		if v.Name == name.(string) {
+			return v
+		}
+	}
+
+	return core.Template{}
+
+}

@@ -1,0 +1,24 @@
+package methods
+
+//
+func AnyBugs(args ...interface{}) (ajet bool) {
+	packge := args[0]
+
+	ajet = false //,err := DebugLogs.Find(bson.M{"pkg":packge.(string), "username":usernam.(string)}).Count()
+
+	bugs := GetLogs(packge.(string))
+
+	// local to package invoke directly
+	sapp := GetApp(GetApps(), packge.(string))
+
+	if len(bugs) > 0 {
+		ajet = true
+	}
+
+	if sapp.Pid != "" {
+		ajet = true
+	}
+
+	return
+
+}

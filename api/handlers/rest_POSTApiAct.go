@@ -1,0 +1,229 @@
+package handlers
+
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	methods "github.com/thestrukture/IDE/api/methods"
+
+	types "github.com/thestrukture/IDE/types"
+)
+
+func POSTApiAct(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	if r.FormValue("type") == "0" {
+		apps := methods.GetApps()
+		app := types.App{Type: "webapp", Name: r.FormValue("name")}
+		useGos := r.FormValue("usegos")
+
+		var err error
+
+		dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name")
+
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if strings.Contains(useGos, "Scratch") {
+				app.Type = "app"
+				err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
+
+				if err != nil {
+					response = templates.Alert(types.Alertbs{Type: "danger", Text: "Error creating package " + r.FormValue("name") + ":" + err.Error(), Redirect: "javascript:console.log('error!')"})
+				}
+
+			} else if strings.Contains(useGos, "faas") {
+
+				app.Type = "faas"
+
+				app.Groups = []string{}
+
+				err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
+
+				if err != nil {
+					response = templates.Alert(types.Alertbs{Type: "danger", Text: "Error creating package " + r.FormValue("name") + ":" + err.Error(), Redirect: "javascript:console.log('error!')"})
+				}
+
+			} else {
+				core.RunCmdB("gos make " + app.Name)
+			}
+		} else {
+			app.Type = "app"
+		}
+
+		if err == nil {
+			apps = append(apps, app)
+			//Users.Update(bson.M{"uid": me.UID}, me)
+			methods.SaveApps(apps)
+			response = templates.Alert(types.Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
+		}
+	} else if r.FormValue("type") == "100" {
+		plugins := methods.GetPlugins()
+		plugins = append(plugins, r.FormValue("name"))
+
+		//Users.Update(bson.M{"uid": me.UID}, me)
+
+		_, err := core.RunCmdSmart("go get " + r.FormValue("name"))
+		if err != nil {
+			response = templates.Alert(types.Alertbs{Type: "warning", Text: "Error, could not find plugin.", Redirect: "#"})
+		} else {
+			methods.SavePlugins(plugins)
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Success plugin " + r.FormValue("name") + " installed! Reload the page to activate plugin.", Redirect: "javascript:GetPlugins()"})
+		}
+	} else if r.FormValue("type") == "1" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		//update va
+		gos.Update("var", r.FormValue("id"), core.GlobalVariables{Name: r.FormValue("name"), Type: r.FormValue("is")})
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		response = "Variable saved!"
+
+	} else if r.FormValue("type") == "2" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		//update var
+		gos.Update("import", r.FormValue("id"), core.Import{Src: r.FormValue("src")})
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		response = "Import saved!"
+
+	} else if r.FormValue("type") == "3" {
+		apps := methods.GetApps()
+		app := methods.GetApp(apps, r.FormValue("pkg"))
+		temp := []string{}
+		for _, v := range app.Css {
+			if v != r.FormValue("id") {
+				temp = append(temp, v)
+			} else {
+				temp = append(temp, r.FormValue("src"))
+			}
+		}
+		app.Css = temp
+		apps = methods.UpdateApp(apps, r.FormValue("pkg"), app)
+		methods.SaveApps(apps)
+		//Users.Update(bson.M{"uid":me.UID}, me)
+	} else if r.FormValue("type") == "4" {
+		apps := methods.GetApps()
+		app := methods.GetApp(apps, r.FormValue("pkg"))
+
+		app.Groups = append(app.Groups, r.FormValue("name"))
+		os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/tmpl/"+r.FormValue("name"), 0777)
+		apps = methods.UpdateApp(apps, r.FormValue("pkg"), app)
+		methods.SaveApps(apps)
+		//Users.Update(bson.M{"uid":me.UID}, me)
+	} else if r.FormValue("type") == "5" {
+		//app := methods.GetApp(me.Apps, r.FormValue("pkg"))
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		//update var
+		os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/tmpl/" + r.FormValue("bundle") + "/" + r.FormValue("name") + ".tmpl")
+		gos.AddS("template", core.Template{Name: r.FormValue("name"), Bundle: r.FormValue("bundle"), TemplateFile: r.FormValue("bundle") + "/" + r.FormValue("name")})
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+	} else if r.FormValue("type") == "6" {
+
+		if r.FormValue("fmode") == "touch" {
+
+			os.Create(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/web" + r.FormValue("prefix") + "/" + r.FormValue("path"))
+
+		} else if r.FormValue("fmode") == "dir" {
+			fmt.Println(os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web"+r.FormValue("prefix")+"/"+r.FormValue("path"), 0777))
+		} else if r.FormValue("fmode") == "upload" {
+			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web"+r.FormValue("prefix")+"/"+r.FormValue("path"), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+		}
+
+	} else if r.FormValue("type") == "60" {
+
+		if r.FormValue("fmode") == "touch" {
+			addstr := ""
+			if !strings.Contains(r.FormValue("path"), ".go") {
+				addstr = ".go"
+			}
+			_, err := os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
+
+			if err != nil {
+				npath := strings.Split(r.FormValue("path"), "/")
+				os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), strings.Join(npath[:len(npath)-1], "/")), 0777)
+				os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
+
+			}
+
+		} else if r.FormValue("fmode") == "dir" {
+			os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), 0777)
+		} else if r.FormValue("fmode") == "upload" {
+			ioutil.WriteFile(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+		}
+
+	} else if r.FormValue("type") == "61" {
+
+		if r.FormValue("fmode") == "touch" {
+			addstr := ""
+			if !strings.Contains(r.FormValue("path"), ".yml") {
+				addstr = ".yml"
+			}
+			_, err := os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
+
+			if err != nil {
+				npath := strings.Split(r.FormValue("path"), "/")
+				os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), strings.Join(npath[:len(npath)-1], "/")), 0777)
+				os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
+
+			}
+
+		} else if r.FormValue("fmode") == "dir" {
+			os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), 0777)
+		} else if r.FormValue("fmode") == "upload" {
+			ioutil.WriteFile(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")), core.Decode64(nil, []byte(r.FormValue("basesix"))), 0777)
+		}
+
+	} else if r.FormValue("type") == "62" {
+
+		os.Chdir(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg"))
+
+		name := strings.ToLower(strings.Replace(r.FormValue("name"), "/", "_", -1))
+
+		ioutil.WriteFile("./faas-gen.sh", []byte("#!/bin/sh\n\nfaas-cli new --lang go "+name+" &>faas-log.txt &disown"), 0700)
+
+		logFull, err := core.RunCmdSmart("sh ./faas-gen.sh")
+
+		if err != nil {
+			response = templates.Alert(types.Alertbs{Type: "danger", Text: "Failed to add function: " + err.Error() + logFull})
+		} else {
+
+			apps := methods.GetApps()
+			app := methods.GetApp(methods.GetApps(), r.FormValue("pkg"))
+			app.Groups = append(app.Groups, r.FormValue("name"))
+			apps = methods.UpdateApp(methods.GetApps(), r.FormValue("pkg"), app)
+			methods.SaveApps(apps)
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Operation succeeded, one moment, generating function source.<script>setTimeout(updateTree , 8200)</script>"})
+		}
+
+	} else if r.FormValue("type") == "7" {
+		err := os.Rename(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web"+r.FormValue("prefix"), os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web/"+r.FormValue("path"))
+
+		if err != nil {
+			response = templates.Alert(types.Alertbs{Type: "danger", Text: "Failed to move resource : " + err.Error()})
+		} else {
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Operation succeeded"})
+		}
+
+	} else if r.FormValue("type") == "70" {
+		err := os.Rename(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix")), filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), "/", r.FormValue("path")))
+		if err != nil {
+			response = templates.Alert(types.Alertbs{Type: "danger", Text: "Failed to move resource : " + err.Error()})
+		} else {
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Operation succeeded"})
+		}
+	}
+
+	callmet = true
+	return
+}

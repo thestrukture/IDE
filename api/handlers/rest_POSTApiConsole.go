@@ -1,0 +1,41 @@
+package handlers
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+)
+
+func POSTApiConsole(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	if strings.Contains(r.FormValue("command"), "cd") {
+		parts := strings.Fields(r.FormValue("command"))
+
+		if len(parts) == 1 {
+			os.Chdir("")
+		} else {
+			os.Chdir(parts[1])
+		}
+		if dir, err := os.Getwd(); err != nil {
+			response = "Changed directory to " + dir
+		}
+
+	} else {
+		data, err := core.RunCmdSmart(r.FormValue("command"))
+		if err != nil {
+			response = fmt.Sprintf("Error:: %s", err) + "" + data
+		} else {
+			response = data
+		}
+	}
+	w.Write([]byte(response))
+
+	response = ""
+
+	callmet = true
+	return
+}

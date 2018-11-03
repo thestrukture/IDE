@@ -1,0 +1,189 @@
+package handlers
+
+import (
+	"crypto/sha512"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	types "github.com/thestrukture/IDE/types"
+)
+
+func POSTApiPut(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	me := types.SoftUser{Email: "Strukture user", Username: "Strukture user"}
+
+	if r.FormValue("type") == "0" {
+
+		//fmt.Println(m)
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("id") + "/gos.gxml")
+
+		gos.Set(r.FormValue("put"), r.FormValue("var"))
+		//   fmt.Println(gos)
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("id") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "1" {
+		ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/"+r.FormValue("target"), []byte(r.FormValue("data")), 0644)
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: r.FormValue("target") + " saved!"})
+	} else if r.FormValue("type") == "2" {
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		gos.Update("template", r.FormValue("id"), r.FormValue("struct"))
+		// fmt.Println(gos)
+
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		response = "Template interface saved!"
+	} else if r.FormValue("type") == "3" {
+		ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+r.FormValue("pkg")+"/web"+r.FormValue("target"), []byte(r.FormValue("data")), 0777)
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: r.FormValue("target") + " saved!"})
+	} else if r.FormValue("type") == "30" {
+		ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+filepath.Join(r.FormValue("pkg"), r.FormValue("target")), []byte(r.FormValue("data")), 0777)
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: r.FormValue("target") + " saved!"})
+	} else if r.FormValue("type") == "4" {
+
+		filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/structs.dsl"
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		ioutil.WriteFile(filep, []byte(r.FormValue("data")), 0644)
+		//marhal and add
+		vgos := core.CreateVGos(filep)
+		//fmt.Println(vgos,"Gos")
+		gos.MStructs(vgos.Structs)
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: "Interfaces saved!"})
+
+	} else if r.FormValue("type") == "5" {
+
+		filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/objects.dsl"
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		ioutil.WriteFile(filep, []byte(r.FormValue("data")), 0644)
+		//marhal and add
+		vgos := core.CreateVGos(filep)
+		//fmt.Println(vgos,"Gos")
+		gos.MObjects(vgos.Objects)
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: "Objects saved!"})
+
+	} else if r.FormValue("type") == "6" {
+
+		filep := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/methods.dsl"
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		ioutil.WriteFile(filep, []byte(r.FormValue("data")), 0644)
+		//marhal and add
+		vgos := core.CreateVGos(filep)
+		//fmt.Println(vgos,"Gos")
+		gos.MMethod(vgos.Methods)
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: "Pipelines saved!"})
+
+	} else if r.FormValue("type") == "7" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/gos.gxml")
+		//write file
+
+		gos.Add("end", "", r.FormValue("path"))
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "8" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/gos.gxml")
+		//write file
+
+		gos.Add("timer", "", r.FormValue("name"))
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("space") + "/gos.gxml")
+	} else if r.FormValue("type") == "9" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+
+		gos.Update("end", r.FormValue("id"), core.Endpoint{Path: r.FormValue("path"), Type: r.FormValue("typ")})
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = "OK"
+
+	} else if r.FormValue("type") == "13r" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+
+		gos.UpdateMethod(r.FormValue("target"), r.FormValue("data"))
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = templates.Alert(types.Alertbs{Type: "warning", Text: "Endpoint code saved!"})
+
+	} else if r.FormValue("type") == "10" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+
+		gos.Update("timer", r.FormValue("id"), core.Timer{Name: r.FormValue("name"), Method: r.FormValue("method"), Unit: r.FormValue("unit"), Interval: r.FormValue("interval")})
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+		response = "OK"
+	} else if r.FormValue("type") == "11" {
+
+		hasher := sha512.New512_256()
+
+		if string(hasher.Sum([]byte(r.FormValue("cpassword")))) == string(me.Password) {
+			me.Password = hasher.Sum([]byte(r.FormValue("npassword")))
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Password updated"})
+		} else {
+			response = templates.Alert(types.Alertbs{Type: "danger", Text: "Error incorrect current password"})
+		}
+
+	} else if r.FormValue("type") == "12" {
+		me.Email = r.FormValue("email")
+		response = templates.Alert(types.Alertbs{Type: "success", Text: "Email updated"})
+	} else if r.FormValue("type") == "13" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		gos.Main = r.FormValue("data")
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "14" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		gos.Init_Func = r.FormValue("data")
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "15" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		gos.Session = r.FormValue("data")
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "16" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		gos.Package = r.FormValue("var")
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	} else if r.FormValue("type") == "17" {
+
+		gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+		//write file
+		gos.Shutdown = r.FormValue("data")
+		gos.PSaveGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+	}
+
+	callmet = true
+	return
+}

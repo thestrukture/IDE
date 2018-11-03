@@ -1,0 +1,14 @@
+package methods
+
+import "github.com/thestrukture/IDE/types"
+
+//
+func BindMisc(args ...interface{}) types.Dex {
+	misc := args[0]
+	nav := args[1]
+
+	Nav := nav.(types.Dex)
+	Nav.Misc = misc.(string)
+	return Nav
+
+}

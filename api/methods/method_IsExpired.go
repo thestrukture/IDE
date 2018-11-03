@@ -1,0 +1,20 @@
+package methods
+
+import "time"
+
+//
+func IsExpired(args ...interface{}) bool {
+	current := args[0]
+	strip := args[1]
+
+	if time.Now().Unix() > current.(int64) {
+		if strip.(string) == "" {
+			return true
+		} else {
+			return false
+		}
+	}
+
+	return false
+
+}

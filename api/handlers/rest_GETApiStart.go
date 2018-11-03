@@ -1,0 +1,70 @@
+package handlers
+
+import (
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	methods "github.com/thestrukture/IDE/api/methods"
+
+	"github.com/thestrukture/IDE/api/globals"
+	types "github.com/thestrukture/IDE/types"
+)
+
+func GETApiStart(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	gp := os.ExpandEnv("$GOPATH")
+
+	os.Chdir(gp + "/src/" + r.FormValue("pkg"))
+	apps := methods.GetApps()
+	sapp := methods.GetApp(apps, r.FormValue("pkg"))
+
+	if sapp.Passed {
+
+		if sapp.Pid != "" {
+			core.RunCmdB("kill -3 " + sapp.Pid)
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Build stopped."})
+		}
+
+		pkSpl := strings.Split(r.FormValue("pkg"), "/")
+		if globals.Windows {
+			go core.RunCmd("cmd /C gos --run") //live reload on windows...
+		} else {
+			shscript := `#!/bin/bash  
+									cmd="./` + pkSpl[len(pkSpl)-1] + ` "
+									eval "${cmd}" >main.log &disown
+									exit 0`
+
+			ioutil.WriteFile("runsc", []byte(shscript), 0777)
+			go core.RunCmdSmart("sh runsc &>/dev/null")
+		}
+
+		time.Sleep(time.Second * 5)
+		raw, _ := ioutil.ReadFile("main.log")
+		lines := strings.Split(string(raw), "\n")
+		sapp.Pid = lines[0]
+		if globals.Windows {
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Server up"})
+		} else {
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Your server is up at PID : " + sapp.Pid})
+		}
+	} else {
+		response = templates.Alert(types.Alertbs{Type: "danger", Text: "Your latest build failed."})
+
+	}
+
+	//DebugLogs.Insert(dObj)
+	apps = methods.UpdateApp(apps, r.FormValue("pkg"), sapp)
+	methods.SaveApps(apps)
+
+	//Users.Update(bson.M{"uid":me.UID}, me)
+
+	callmet = true
+	return
+}

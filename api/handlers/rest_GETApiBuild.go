@@ -1,0 +1,183 @@
+package handlers
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/cheikhshift/gos/core"
+	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
+
+	methods "github.com/thestrukture/IDE/api/methods"
+
+	types "github.com/thestrukture/IDE/types"
+)
+
+func GETApiBuild(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
+
+	gp := os.ExpandEnv("$GOPATH")
+
+	os.Chdir(gp + "/src/" + r.FormValue("pkg"))
+	os.Remove(gp + "/src/" + r.FormValue("pkg") + "/bindata.go")
+	os.Remove(gp + "/src/" + r.FormValue("pkg") + "/application.go")
+
+	var logBuilt string
+	passed := false
+
+	if _, err := os.Stat("./gos.gxml"); os.IsNotExist(err) {
+		logBuilt, _ = core.RunCmdSmart("go build")
+		if logBuilt != "" {
+			passed = false
+		}
+	} else {
+		logBuilt, _ = core.RunCmdSmart("gos --run --buildcheck")
+	}
+	fmt.Println(logBuilt)
+
+	if !strings.Contains(logBuilt, "Your build failed,") || !passed {
+		logBuilt, _ = core.RunCmdSmart("go build")
+		if logBuilt != "" {
+
+			debuglog := types.DebugObj{r.FormValue("pkg"), methods.RandTen(), "", logBuilt, time.Now().String(), []types.DebugNode{}}
+
+			logs := strings.Split(logBuilt, "\n")
+
+			for linen, log := range logs {
+				if linen != 0 {
+					linedt := strings.Split(log, ":")
+					//	fmt.Println(len(linedt))
+					dnode := types.DebugNode{}
+					//fmt.Println(linedt)
+
+					//src
+					if len(linedt) > 2 {
+						dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
+						dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
+						dnode.Line = strings.Join(linedt[2:], " - ")
+						debuglog.Bugs = append(debuglog.Bugs, dnode)
+					}
+
+				}
+			}
+
+			methods.AddtoLogs(debuglog)
+			response = templates.Alert(types.Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
+
+		} else {
+			passed = true
+			response = templates.Alert(types.Alertbs{Type: "success", Text: "Your build passed!"})
+		}
+	} else {
+		debuglog := types.DebugObj{r.FormValue("pkg"), methods.RandTen(), "", logBuilt, time.Now().String(), []types.DebugNode{}}
+		fPart := strings.Split(logBuilt, "Full compiler build log :")
+		logs := strings.Split(fPart[1], "\n")
+
+		for linen, log := range logs {
+			if linen != 0 {
+				linedt := strings.Split(log, ":")
+				//	fmt.Println(len(linedt))
+				dnode := types.DebugNode{}
+				//	fmt.Println(linedt)
+				if linedt[0] == "./application.go" {
+					if len(linedt) > 2 {
+						il, _ := strconv.Atoi(linedt[1])
+						actline := methods.FindString("./application.go", il)
+						actline = strings.TrimSpace(actline)
+						//find line
+						inStructs := methods.FindLine("./structs.dsl", actline)
+						if inStructs == -1 {
+
+							inMethods := methods.FindLine("./methods.dsl", actline)
+							if inMethods == -1 {
+
+								gos, _ := core.PLoadGos(os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("pkg") + "/gos.gxml")
+
+								inMain := methods.FindinString(gos.Main, actline)
+
+								if inMain == -1 {
+
+									inInit := methods.FindinString(gos.
+										Init_Func, actline)
+									if inInit == -1 {
+										//	fmt.Println(actline)
+										for _, v := range gos.Endpoints.Endpoints {
+
+											inEndpoint := methods.FindinString(v.Method, actline)
+											if inEndpoint != -1 {
+												enode := types.DebugNode{}
+												enode.Action = "service:" + v.Path + " - " + v.Type + ":" + strconv.Itoa(inEndpoint) + ":" + v.Id
+												enode.Line = strings.Join(linedt[2:], " - ")
+												enode.CTA = "Update webservice " + v.Path
+												debuglog.Bugs = append(debuglog.Bugs, enode)
+											}
+										}
+									} else {
+										linestring := strconv.Itoa(inInit)
+										dnode.Action = "init:" + linestring
+										dnode.CTA = "Update Init()"
+										dnode.Line = strings.Join(linedt[2:], " - ")
+										debuglog.Bugs = append(debuglog.Bugs, dnode)
+									}
+
+								} else {
+									linestring := strconv.Itoa(inMain)
+									dnode.Action = "main:" + linestring
+									dnode.CTA = "Update main()"
+									dnode.Line = strings.Join(linedt[2:], " - ")
+									debuglog.Bugs = append(debuglog.Bugs, dnode)
+								}
+
+							} else {
+								linestring := strconv.Itoa(inMethods)
+								dnode.Action = "meth:" + linestring
+								dnode.CTA = "Update pipelines."
+								dnode.Line = strings.Join(linedt[2:], " - ")
+								debuglog.Bugs = append(debuglog.Bugs, dnode)
+							}
+
+						} else {
+							linestring := strconv.Itoa(inStructs)
+							dnode.Action = "structs:" + linestring
+							dnode.CTA = "Update interfaces."
+							dnode.Line = strings.Join(linedt[2:], " - ")
+							debuglog.Bugs = append(debuglog.Bugs, dnode)
+						}
+
+					}
+				} else {
+					//src
+					if len(linedt) > 2 {
+						dnode.Action = "edit:" + linedt[0] + ":" + linedt[1]
+						dnode.CTA = "Update " + linedt[0] + " on line " + linedt[1]
+						dnode.Line = strings.Join(linedt[2:], " - ")
+						debuglog.Bugs = append(debuglog.Bugs, dnode)
+					}
+				}
+
+			}
+		}
+
+		methods.AddtoLogs(debuglog)
+		response = templates.Alert(types.Alertbs{Type: "danger", Text: "Your build failed, checkout the logs to see why!"})
+
+	}
+
+	//DebugLogs.Insert(dObj)
+
+	apps := methods.GetApps()
+	sapp := methods.GetApp(apps, r.FormValue("pkg"))
+
+	sapp.Passed = passed
+	sapp.LatestBuild = time.Now().String()
+	apps = methods.UpdateApp(apps, r.FormValue("pkg"), sapp)
+	methods.SaveApps(apps)
+
+	//Users.Update(bson.M{"uid":me.UID}, me)
+
+	callmet = true
+	return
+}
