@@ -5,7 +5,7 @@ engines:
   gofmt:
     enabled: true
   duplication:
-    enabled: true
+    enabled: false
     config:
       languages:
       - go
