@@ -1,0 +1,16 @@
+---
+engines:
+  golint:
+    enabled: true
+  gofmt:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - go
+ratings:
+  paths:
+  - "**.go"
+exclude_paths:
+- web/
