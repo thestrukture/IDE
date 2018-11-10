@@ -214,7 +214,7 @@ func DebugTemplatePath(tmpl string, intrf interface{}) {
 				outp := new(bytes.Buffer)
 				t := template.New("PageWrapper")
 				t = t.Funcs(TemplateFuncStore)
-				t, _ = t.Parse(string([]byte(fmt.Sprintf("%s%s", linebuffer))))
+				t, _ = t.Parse(string([]byte(fmt.Sprintf("%s", linebuffer))))
 				lastline = i
 				linestring = line
 				erro := t.Execute(outp, intrf)
