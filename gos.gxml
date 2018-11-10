@@ -515,11 +515,12 @@
 	     	   <template name="Login" tmpl="ui/login" struct="Dex" desc="Login Prompt" />
 	     	   <template name="Modal" tmpl="ui/modal" struct="sModal" desc="Modal" />
 	     	   <template name="xButton" tmpl="ui/sbutton" struct="sButton" desc="Button Gen" />
-	     	    <template name="jButton" tmpl="ui/user/forms/jbutton" struct="sButton" desc="Button Gen" />
+	     	   <template name="jButton" tmpl="ui/user/forms/jbutton" struct="sButton" desc="Button Gen" />
 
-	     	       <template name="PUT" tmpl="ui/user/forms/aput" struct="Aput" desc="Button Gen" />
+	     	   <template name="PUT" tmpl="ui/user/forms/aput" struct="Aput" desc="Button Gen" />
 
-	     	        <template name="Group" tmpl="ui/user/forms/tab" struct="sTab" desc="Button Gen" />
+	     	   <template name="Group" tmpl="ui/user/forms/tab" struct="sTab" desc="Button Gen" />
+
 
 	     	   <template name="Register" tmpl="ui/register" struct="Dex" desc="Register Prompt" />
 	     	   <template name="Alert" tmpl="ui/alert" struct="Alertbs" desc="Amovible alert" />
