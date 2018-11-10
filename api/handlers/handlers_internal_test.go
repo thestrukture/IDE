@@ -4,6 +4,7 @@ package handlers
 
 import (
 	"testing"
+
 	"github.com/cheikhshift/gos/onyx"
 )
 
@@ -11,7 +12,7 @@ func TestfApiGet(t *testing.T) {
 
 	h := MakeHandler(Handler)
 
-	req,err := onyx.NewRequest("GET", "/api/get")
+	req, err := onyx.NewRequest("GET", "/api/get")
 
 	if err != nil {
 		panic(err)

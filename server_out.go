@@ -7,14 +7,12 @@ import (
 	"github.com/thestrukture/IDE/api/handlers"
 	sessionStore "github.com/thestrukture/IDE/api/sessions"
 	"github.com/thestrukture/IDE/types"
-	"context"
 	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/sessions"
@@ -54,23 +52,22 @@ func main() {
 	h := &http.Server{Addr: port}
 
 	go func() {
-		errgos := h.ListenAndServe()
-		if errgos != nil {
-			log.Fatal(errgos)
+		<-stop
+		log.Println("\nShutting down the server...")
+		err := h.Close()
+
+		if err != nil {
+			panic(err)
 		}
+
+		Shutdown()
+		log.Println("Server gracefully stopped")
 	}()
 
-	<-stop
-
-	log.Println("\nShutting down the server...")
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-
-	h.Shutdown(ctx)
-
-	Shutdown()
-
-	log.Println("Server gracefully stopped")
+	errgos := h.ListenAndServe()
+	if errgos != nil {
+		log.Fatal(errgos)
+	}
 
 }
 

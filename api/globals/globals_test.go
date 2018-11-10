@@ -8,7 +8,6 @@ import (
 
 func TestWindows(t *testing.T) {
 
-	
 }
 
 func TestAutocompletePath(t *testing.T) {
@@ -17,7 +16,6 @@ func TestAutocompletePath(t *testing.T) {
 
 func TestUpgrader(t *testing.T) {
 
-	
 }
 
 func TestPortCount(t *testing.T) {

@@ -3,16 +3,16 @@
 package methods
 
 import (
-	"github.com/thestrukture/IDE/types"
-	"testing"
 	"strings"
+	"testing"
+
+	"github.com/thestrukture/IDE/types"
 )
 
 func TestBindMisc(t *testing.T) {
 
 	expectedDex := types.Dex{Misc: "Foo"}
 
-	
 	dex := types.Dex{Misc: "bar"}
 
 	dex = BindMisc("Foo", dex)
@@ -30,13 +30,12 @@ func TestListPlugins(t *testing.T) {
 	if list == nil {
 		t.Error("Expected ", []string{}, " got ", list)
 	}
-	
+
 }
 
 func TestBindID(t *testing.T) {
 	expectedDex := types.Dex{Misc: "ID"}
 
-	
 	dex := types.Dex{Misc: "bar"}
 
 	dex = BindMisc("ID", dex)
@@ -53,7 +52,7 @@ func TestRandTen(t *testing.T) {
 	randomTen := RandTen()
 
 	if len(randomTen) != expectedLength {
-		t.Error("Expected length ", expectedLength, " got ", len(randomTen) )
+		t.Error("Expected length ", expectedLength, " got ", len(randomTen))
 	}
 
 }
@@ -69,7 +68,6 @@ func TestFragmentize(t *testing.T) {
 	}
 }
 
-
 func TestParseLog(t *testing.T) {
 
 	expectedString := "The line is located in your package template pipelines at line: 22"
@@ -81,12 +79,7 @@ func TestParseLog(t *testing.T) {
 	}
 }
 
-
 func TestAnyBugs(t *testing.T) {
-
-
-
-
 
 }
 func TestPluginJS(t *testing.T) {
@@ -106,7 +99,6 @@ func TestPluginJS(t *testing.T) {
 
 }
 
-
 func TestFindmyBugs(t *testing.T) {
 
 	bugList := FindmyBugs("Foo")
@@ -115,7 +107,6 @@ func TestFindmyBugs(t *testing.T) {
 		t.Error("Expected ", []types.DebugObj{}, " got ", bugList)
 	}
 }
-
 
 func TestIsExpired(t *testing.T) {
 

@@ -4,6 +4,7 @@ package templates
 
 import (
 	"testing"
+
 	"github.com/cheikhshift/gos/onyx"
 	"github.com/cheikhshift/gos/web"
 	"github.com/thestrukture/IDE/types"
@@ -49,7 +50,6 @@ func TestPluginList(t *testing.T) {
 }
 func TestLogin(t *testing.T) {
 
-
 }
 
 func TestModal(t *testing.T) {
@@ -72,7 +72,7 @@ func TestxButton(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestjButton(t *testing.T) {
 
@@ -83,7 +83,7 @@ func TestjButton(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestPUT(t *testing.T) {
 
@@ -108,8 +108,6 @@ func TestGroup(t *testing.T) {
 }
 func TestRegister(t *testing.T) {
 
-
-	
 }
 func TestAlert(t *testing.T) {
 
@@ -120,7 +118,7 @@ func TestAlert(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestStructEditor(t *testing.T) {
 
@@ -138,7 +136,7 @@ func TestMethodEditor(t *testing.T) {
 	defer onyx.DetectPanic(t, "MethodEditor")
 
 	res := MethodEditor(types.VHuf{})
-	
+
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
@@ -154,7 +152,6 @@ func TestObjectEditor(t *testing.T) {
 	}
 }
 
-
 func TestEndpointEditor(t *testing.T) {
 
 	defer onyx.DetectPanic(t, "EndpointEditor")
@@ -164,7 +161,7 @@ func TestEndpointEditor(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestTimerEditor(t *testing.T) {
 
@@ -172,13 +169,11 @@ func TestTimerEditor(t *testing.T) {
 
 	res := TimerEditor(types.TEditor{})
 
-
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
-}
 
+}
 
 func TestFSC(t *testing.T) {
 
@@ -189,7 +184,7 @@ func TestFSC(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestMV(t *testing.T) {
 
@@ -200,7 +195,7 @@ func TestMV(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestRM(t *testing.T) {
 
@@ -211,18 +206,18 @@ func TestRM(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestWebRootEdit(t *testing.T) {
 
 	defer onyx.DetectPanic(t, "WebRootEdit")
 
 	res := WebRootEdit(types.WebRootEdits{})
-	
+
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestWebRootEdittwo(t *testing.T) {
 
@@ -233,7 +228,7 @@ func TestWebRootEdittwo(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestuSettings(t *testing.T) {
 
@@ -244,7 +239,7 @@ func TestuSettings(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestForm(t *testing.T) {
 
@@ -255,7 +250,7 @@ func TestForm(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestSWAL(t *testing.T) {
 
@@ -266,14 +261,14 @@ func TestSWAL(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestROC(t *testing.T) {
 
 	defer onyx.DetectPanic(t, "ROC")
 
 	res := ROC(types.SROC{})
-	
+
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
@@ -307,7 +302,7 @@ func TestDelete(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestWelcome(t *testing.T) {
 	defer onyx.DetectPanic(t, "Welcome")
@@ -361,7 +356,6 @@ func TestInput(t *testing.T) {
 }
 func TestDebuggerNode(t *testing.T) {
 
-
 }
 func TestSubmit(t *testing.T) {
 
@@ -387,16 +381,11 @@ func TestLogo(t *testing.T) {
 }
 func TestNavbar(t *testing.T) {
 
-
 }
 func TestNavCustom(t *testing.T) {
 
-
-
 }
 func TestNavMain(t *testing.T) {
-
-
 
 }
 func TestNavPKG(t *testing.T) {
@@ -419,7 +408,7 @@ func TestCrashedPage(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestEndpointTesting(t *testing.T) {
 
@@ -430,7 +419,7 @@ func TestEndpointTesting(t *testing.T) {
 	if res == "" {
 		panic(errors.New("Render returned an empty string."))
 	}
-	
+
 }
 func TestKanBan(t *testing.T) {
 
@@ -454,8 +443,6 @@ func TestDocker(t *testing.T) {
 	}
 }
 
-
 func TestNavPromo(t *testing.T) {
 
-	
 }

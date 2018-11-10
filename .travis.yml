@@ -6,13 +6,16 @@ env:
 
 go:
   - 1.10
-  
+
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 
 script:
+  - go install github.com/cheikhshift/gos
+  - gos deps
+  - gos --export
   - go test -coverprofile c.out ./...
 
 after_script:

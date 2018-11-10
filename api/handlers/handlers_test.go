@@ -4,53 +4,49 @@ package handlers
 
 import (
 	"testing"
+
 	"github.com/cheikhshift/gos/onyx"
 )
 
 func TestPOSTApiDockerfile(t *testing.T) {
 
-
 }
 
 func TestPOSTApiComposer(t *testing.T) {
-
 
 }
 
 func TestApiSocket(t *testing.T) {
 
-	
 }
 
 func TestGETApiPkgBugs(t *testing.T) {
-
 
 }
 
 func TestGETApiKanban(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequest("GET", "/api/kanban")
+
+	req, err := onyx.NewRequest("GET", "/api/kanban")
 
 	if err != nil {
 		panic(err)
 	}
 
 	onyx.Handle(req, h, t)
-	
+
 }
 
 func TestPOSTApiGit(t *testing.T) {
-
 
 }
 
 func TestPOSTApiKanban(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/kanban", `{}`)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/kanban", `{}`)
 
 	if err != nil {
 		panic(err)
@@ -63,8 +59,8 @@ func TestPOSTApiKanban(t *testing.T) {
 func TestGETApiEmpty(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequest("GET", "/api/empty")
+
+	req, err := onyx.NewRequest("GET", "/api/empty")
 
 	if err != nil {
 		panic(err)
@@ -76,8 +72,8 @@ func TestGETApiEmpty(t *testing.T) {
 func TestPOSTApiTester(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/tester/", `pkg=test&mode=foo&c=x`)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/tester/", `pkg=test&mode=foo&c=x`)
 
 	onyx.Header(req, "Content-Type", "application/x-www-form-urlencoded")
 
@@ -92,8 +88,8 @@ func TestPOSTApiTester(t *testing.T) {
 func TestPOSTApiCreate(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/create", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/create", ``)
 
 	if err != nil {
 		panic(err)
@@ -105,8 +101,8 @@ func TestPOSTApiCreate(t *testing.T) {
 func TestPOSTApiDelete(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/delete", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/delete", ``)
 
 	if err != nil {
 		panic(err)
@@ -118,8 +114,8 @@ func TestPOSTApiDelete(t *testing.T) {
 func TestPOSTApiRename(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/rename", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/rename", ``)
 
 	if err != nil {
 		panic(err)
@@ -131,8 +127,8 @@ func TestPOSTApiRename(t *testing.T) {
 func TestPOSTApiNew(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/new", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/new", ``)
 
 	if err != nil {
 		panic(err)
@@ -144,8 +140,8 @@ func TestPOSTApiNew(t *testing.T) {
 func TestPOSTApiAct(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/act", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/act", ``)
 
 	if err != nil {
 		panic(err)
@@ -157,8 +153,8 @@ func TestPOSTApiAct(t *testing.T) {
 func TestPOSTApiPut(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/put", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/put", ``)
 
 	if err != nil {
 		panic(err)
@@ -169,34 +165,29 @@ func TestPOSTApiPut(t *testing.T) {
 
 func TestGETApiBuild(t *testing.T) {
 
-	
 }
 
 func TestGETApiStart(t *testing.T) {
-
 
 }
 
 func TestGETApiStop(t *testing.T) {
 
-
 }
 
 func TestGETApiBin(t *testing.T) {
 
-
 }
 
 func TestGETApiExport(t *testing.T) {
-
 
 }
 
 func TestApiComplete(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/complete", ``)
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/complete", ``)
 
 	if err != nil {
 		panic(err)
@@ -208,8 +199,8 @@ func TestApiComplete(t *testing.T) {
 func TestPOSTApiConsole(t *testing.T) {
 
 	h := MakeHandler(Handler)
-	
-	req,err := onyx.NewRequestWithBody("POST", "/api/console", "command=ls")
+
+	req, err := onyx.NewRequestWithBody("POST", "/api/console", "command=ls")
 
 	onyx.Header(req, "Content-Type", "application/x-www-form-urlencoded")
 
@@ -221,6 +212,5 @@ func TestPOSTApiConsole(t *testing.T) {
 }
 
 func TestApiTerminal_realtime(t *testing.T) {
-
 
 }
