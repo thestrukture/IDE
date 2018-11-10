@@ -1,7 +1,7 @@
 # Strukture IDE Beta II
 [![Build Status](https://travis-ci.org/thestrukture/IDE.svg?branch=master)](https://travis-ci.org/thestrukture/IDE)
 [![GoDoc](https://godoc.org/github.com/thestrukture/IDE/api?status.svg)](https://godoc.org/github.com/thestrukture/IDE/api)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/ce2ca5cbfa9b7fb15ec0/test_coverage)](https://codeclimate.com/github/thestrukture/IDE/test_coverage)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/test_coverage)](https://codeclimate.com/github/thestrukture/IDE/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/maintainability)](https://codeclimate.com/github/thestrukture/IDE/maintainability)
 
 Go lang IDE server. Built with [GopherSauce](http://gophersauce.com)
