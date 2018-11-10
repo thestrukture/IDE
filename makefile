@@ -14,6 +14,7 @@ build:
 		$(GOBUILD) -o $(BINARY_NAME) -v       
 test: 
 		$(GOTEST) -bench=. -benchmem
+		$(GOTEST) ./...
 clean: 
 		$(GOCLEAN)
 		rm -f bindata.*
