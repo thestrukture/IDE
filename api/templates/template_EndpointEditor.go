@@ -3,17 +3,12 @@
 package templates
 
 import (
-	"github.com/thestrukture/IDE/api/assets"
 	"github.com/thestrukture/IDE/types"
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"html"
-	"html/template"
 	"log"
-
-	"github.com/fatih/color"
 )
+
+// Template path
+var templateIDEndpointEditor = "tmpl/editor/endpoints.tmpl"
 
 //
 // Renders HTML of template
@@ -22,128 +17,38 @@ func EndpointEditor(d types.TEditor) string {
 	return netbEndpointEditor(d)
 }
 
-// recovery function used to log a
-// panic.
-func templateFNEndpointEditor(localid string, d interface{}) {
-	if n := recover(); n != nil {
-		color.Red(fmt.Sprintf("Error loading template in path (editor/endpoints) : %s", localid))
-		// log.Println(n)
-		DebugTemplatePath(localid, d)
-	}
-}
-
-var templateIDEndpointEditor = "tmpl/editor/endpoints.tmpl"
-
 // Render template with JSON string as
 // data.
 func netEndpointEditor(args ...interface{}) string {
 
-	localid := templateIDEndpointEditor
-	var d *types.TEditor
-	defer templateFNEndpointEditor(localid, d)
-	if len(args) > 0 {
-		jso := args[0].(string)
-		var jsonBlob = []byte(jso)
-		err := json.Unmarshal(jsonBlob, d)
-		if err != nil {
-			return err.Error()
-		}
-	} else {
-		d = &types.TEditor{}
-	}
-
-	output := new(bytes.Buffer)
-
-	if _, ok := templateCache.Get(localid); !ok || !Prod {
-
-		body, er := assets.Asset(localid)
-		if er != nil {
-			return ""
-		}
-		var localtemplate = template.New("EndpointEditor")
-		localtemplate.Funcs(TemplateFuncStore)
-		var tmpstr = string(body)
-		localtemplate.Parse(tmpstr)
-		body = nil
-		templateCache.Put(localid, localtemplate)
-	}
-
-	erro := templateCache.JGet(localid).Execute(output, d)
-	if erro != nil {
-		color.Red(fmt.Sprintf("Error processing template %s", localid))
-		DebugTemplatePath(localid, d)
-	}
-	var outps = output.String()
-	var outpescaped = html.UnescapeString(outps)
-	d = nil
-	output.Reset()
-	output = nil
-	args = nil
-	return outpescaped
-
-}
-
-// alias of template render function.
-func bEndpointEditor(d types.TEditor) string {
+	// Get data from JSON
+	var d = netcEndpointEditor(args...)
 	return netbEndpointEditor(d)
-}
 
-//
+}
 
 // template render function
 func netbEndpointEditor(d types.TEditor) string {
 	localid := templateIDEndpointEditor
-	defer templateFNEndpointEditor(localid, d)
-	output := new(bytes.Buffer)
+	name := "EndpointEditor"
+	defer templateRecovery(name, localid, &d)
 
-	if _, ok := templateCache.Get(localid); !ok || !Prod {
-
-		body, er := assets.Asset(localid)
-		if er != nil {
-			return ""
-		}
-		var localtemplate = template.New("EndpointEditor")
-		localtemplate.Funcs(TemplateFuncStore)
-		var tmpstr = string(body)
-		localtemplate.Parse(tmpstr)
-		body = nil
-		templateCache.Put(localid, localtemplate)
-	}
-
-	erro := templateCache.JGet(localid).Execute(output, d)
-	if erro != nil {
-		log.Println(erro)
-	}
-	var outps = output.String()
-	var outpescaped = html.UnescapeString(outps)
-	d = types.TEditor{}
-	output.Reset()
-	output = nil
-	return outpescaped
+	// render and return template result
+	return executeTemplate(name, localid, &d)
 }
 
 // Unmarshal a json string to the template's struct
 // type
 func netcEndpointEditor(args ...interface{}) (d types.TEditor) {
+
 	if len(args) > 0 {
-		var jsonBlob = []byte(args[0].(string))
-		err := json.Unmarshal(jsonBlob, &d)
+		jsonData := args[0].(string)
+		err := parseJSON(jsonData, &d)
 		if err != nil {
 			log.Println("error:", err)
 			return
 		}
-	} else {
-		d = types.TEditor{}
 	}
-	return
-}
 
-// Create a struct variable of template.
-func cEndpointEditor(args ...interface{}) (d types.TEditor) {
-	if len(args) > 0 {
-		d = netcEndpointEditor(args[0])
-	} else {
-		d = netcEndpointEditor()
-	}
 	return
 }

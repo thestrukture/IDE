@@ -5,9 +5,10 @@ package templates
 import (
 	"testing"
 
+	"github.com/thestrukture/IDE/types"
+
 	"github.com/cheikhshift/gos/onyx"
 	"github.com/cheikhshift/gos/web"
-	"github.com/thestrukture/IDE/types"
 
 	"errors"
 )
