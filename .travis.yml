@@ -13,7 +13,9 @@ before_script:
   - ./cc-test-reporter before-build
 
 script:
-  - go build
+  - go get github.com/cheikhshift/gos
+  - gos deps
+  - gos --export
   - go test -coverprofile c.out ./...
 
 after_script:
