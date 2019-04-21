@@ -3,6 +3,8 @@ language: go
 env:
   global:
     CC_TEST_REPORTER_ID=cca64f93d052091696d140b09793a85776a27af18027f13ac2cb74b02d85cd70
+  GO111MODULE:
+    on
 
 go:
   - "1.11"
