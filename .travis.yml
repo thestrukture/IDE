@@ -15,7 +15,7 @@ before_script:
   - ./cc-test-reporter before-build
 
 script:
-  - go install
+  - go get github.com/thestrukture/IDE
   - go test -coverprofile c.out ./...
 
 after_script:
