@@ -13,11 +13,10 @@ before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
-  - GO111MODULE=on go get -v github.com/thestrukture/IDE
 
 script:
-  - go build
-  - go test -coverprofile c.out ./...
+  - GO111MODULE=on go build
+  - GO111MODULE=on go test -coverprofile c.out ./...
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
