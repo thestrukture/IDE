@@ -13,13 +13,10 @@ before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
+  - GO111MODULE=on go get -v github.com/thestrukture/IDE
 
 script:
-  # GET IDE dependencies
-  - go get github.com/opentracing/opentracing-go
-  - go get sourcegraph.com/sourcegraph/appdash
-  # END GET DEPS
-  - go get github.com/thestrukture/IDE
+  - go build
   - go test -coverprofile c.out ./...
 
 after_script:
