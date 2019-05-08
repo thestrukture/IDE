@@ -15,6 +15,10 @@ before_script:
   - ./cc-test-reporter before-build
 
 script:
+  # GET IDE dependencies
+  - go get github.com/opentracing/opentracing-go
+  - go get sourcegraph.com/sourcegraph/appdash
+  # END GET DEPS
   - go get github.com/thestrukture/IDE
   - go test -coverprofile c.out ./...
 
