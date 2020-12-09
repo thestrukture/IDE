@@ -10,7 +10,7 @@
 	{{with .Bugs}}
 			{{range .}}
 			<div class="list-group-item"><p class="text-muted pull-right"><i class="fa fa-warning"></i></p> <p>{{.Line}}</p>
-				<p class="reference" data-link="{{.Action}}" >{{parseLog .Action}}</p>
+				<p class="reference" data-link="{{.Action}}" >{{ParseLog .Action}}</p>
 				<p ><label class="label label-big label-warning" >{{.CTA}}</label></p>
 			</div>
 		{{end}}
