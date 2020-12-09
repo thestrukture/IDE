@@ -3,13 +3,13 @@
 package handlers
 
 import (
-	templates "github.com/thestrukture/IDE/api/templates"
 	"log"
 	"net/http"
 	"strings"
 
 	gosweb "github.com/cheikhshift/gos/web"
 	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
 
 	sessionStore "github.com/thestrukture/IDE/api/sessions"
 )

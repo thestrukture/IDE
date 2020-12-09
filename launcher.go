@@ -3,9 +3,6 @@
 package main
 
 import (
-	"github.com/thestrukture/IDE/api/globals"
-	"github.com/thestrukture/IDE/api/methods"
-	"github.com/thestrukture/IDE/types"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +12,9 @@ import (
 
 	"github.com/cheikhshift/gos/core"
 	"github.com/fatih/color"
+	"github.com/thestrukture/IDE/api/globals"
+	"github.com/thestrukture/IDE/api/methods"
+	"github.com/thestrukture/IDE/types"
 )
 
 func LaunchServer() {

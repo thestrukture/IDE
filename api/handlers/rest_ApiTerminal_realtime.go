@@ -3,8 +3,6 @@
 package handlers
 
 import (
-	"github.com/thestrukture/IDE/api/globals"
-	methods "github.com/thestrukture/IDE/api/methods"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +10,8 @@ import (
 
 	"github.com/adlane/exec"
 	"github.com/gorilla/sessions"
+	"github.com/thestrukture/IDE/api/globals"
+	methods "github.com/thestrukture/IDE/api/methods"
 )
 
 //

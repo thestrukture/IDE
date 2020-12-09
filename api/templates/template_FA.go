@@ -3,8 +3,9 @@
 package templates
 
 import (
-	"github.com/thestrukture/IDE/types"
 	"log"
+
+	"github.com/thestrukture/IDE/types"
 )
 
 // Template path

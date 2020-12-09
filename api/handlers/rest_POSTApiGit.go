@@ -3,10 +3,10 @@
 package handlers
 
 import (
-	methods "github.com/thestrukture/IDE/api/methods"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	methods "github.com/thestrukture/IDE/api/methods"
 )
 
 //

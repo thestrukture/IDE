@@ -3,7 +3,6 @@
 package templates
 
 import (
-	"github.com/thestrukture/IDE/api/assets"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"log"
 
 	"github.com/fatih/color"
+	"github.com/thestrukture/IDE/api/assets"
 )
 
 // Unmarshal JSON to specified pointer interface.

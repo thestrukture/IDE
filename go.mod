@@ -1,5 +1,7 @@
 module github.com/thestrukture/IDE
 
+go 1.15
+
 require (
 	github.com/adlane/exec v0.0.0-20171006170040-bf2ccecd9b4d
 	github.com/asaskevich/govalidator v0.0.0-20180315120708-ccb8e960c48f // indirect

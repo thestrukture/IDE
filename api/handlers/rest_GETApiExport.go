@@ -3,8 +3,6 @@
 package handlers
 
 import (
-	"github.com/thestrukture/IDE/api/globals"
-	methods "github.com/thestrukture/IDE/api/methods"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +11,8 @@ import (
 
 	"github.com/cheikhshift/gos/core"
 	"github.com/gorilla/sessions"
+	"github.com/thestrukture/IDE/api/globals"
+	methods "github.com/thestrukture/IDE/api/methods"
 )
 
 //

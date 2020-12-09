@@ -3,7 +3,6 @@
 package handlers
 
 import (
-	templates "github.com/thestrukture/IDE/api/templates"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/cheikhshift/gos/core"
 	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
 
 	methods "github.com/thestrukture/IDE/api/methods"
 

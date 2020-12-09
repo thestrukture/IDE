@@ -3,7 +3,6 @@
 package handlers
 
 import (
-	"github.com/thestrukture/IDE/api/globals"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/cheikhshift/gos/core"
 	"github.com/gorilla/sessions"
+	"github.com/thestrukture/IDE/api/globals"
 	"gopkg.in/mgo.v2/bson"
 )
 

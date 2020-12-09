@@ -3,7 +3,6 @@
 package handlers
 
 import (
-	methods "github.com/thestrukture/IDE/api/methods"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/sessions"
+	methods "github.com/thestrukture/IDE/api/methods"
 )
 
 //

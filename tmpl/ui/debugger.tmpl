@@ -5,7 +5,7 @@
 	<div class="col-xs-6 full-height over-flow-fix" style="background: #efefef;border-right:1px #999 dotted;padding-left:29px;">
 	
 		<label style="font-weight:bold;color:#666;"><i class="fa fa-list"></i> Logs</label>
-		{{if anyBugs .PKG .Username}}
+		{{if AnyBugs .PKG .Username}}
 			
 			<div class="list-group">
 				{{with FindmyBugs .PKG .Username}}
@@ -14,9 +14,9 @@
 					{{end}}
 				{{end}}
 			</div>
-			{{else}}
+		{{else}}
 			<div class="card card-inset "><p>No bug logs found within this project</p></div>
-			{{end}}
+		{{end}}
 		
 
 	</div>

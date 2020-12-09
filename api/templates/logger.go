@@ -3,14 +3,15 @@
 package templates
 
 import (
-	"github.com/thestrukture/IDE/api/assets"
-	sessionStore "github.com/thestrukture/IDE/api/sessions"
 	"bytes"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/thestrukture/IDE/api/assets"
+	sessionStore "github.com/thestrukture/IDE/api/sessions"
 )
 
 var Prod = true

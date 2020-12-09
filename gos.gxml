@@ -390,7 +390,7 @@
 			return actionText
 		</method>
 
-		<method name="anyBugs" var="packge" return="(ajet bool)" >
+		<method name="AnyBugs" var="packge" return="(ajet bool)" >
 
 			ajet = false //,err := DebugLogs.Find(bson.M{"pkg":packge.(string), "username":usernam.(string)}).Count()
 
@@ -574,7 +574,7 @@
 	     	     <template name="Input" tmpl="ui/input" struct="Inputs" desc="Input Gen" />
 
 	     	     <template name="DebuggerNode" tmpl="ui/debugnode" struct="DebugObj" desc="Input Gen" />
-
+ 
 	     	     <template name="Button" tmpl="ui/button" struct="Dex" desc="Button Gen" />
 				 <template name="Submit" tmpl="ui/submit" struct="Dex" desc="Submit Gen" />
 				 <template name="Logo" tmpl="logo" struct="Dex" desc="Strukture logo" />
@@ -1193,7 +1193,7 @@ for _, v := range apps {
 					response = net_bModal(sModal{Title:"Account settings",Body:tempx,Color:"orange"})
 			}  else if r.FormValue("type") == "16" { 
 
-				response = net_bDebugger(DebugObj{PKG:r.FormValue("space"),Username: ""})
+				response = netbDebugger(DebugObj{PKG:r.FormValue("space"),Username: "" })
 			} else if r.FormValue("type") == "17" {
 
 				var tDebugNode types.DebugObj

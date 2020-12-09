@@ -3,12 +3,12 @@
 package handlers
 
 import (
-	"github.com/thestrukture/IDE/api/globals"
-	methods "github.com/thestrukture/IDE/api/methods"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/thestrukture/IDE/api/globals"
+	methods "github.com/thestrukture/IDE/api/methods"
 )
 
 //

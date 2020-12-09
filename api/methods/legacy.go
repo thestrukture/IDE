@@ -475,6 +475,7 @@ func GetLogs(pkg string) []types.DebugObj {
 	if err != nil {
 		//fmt.Println(err.Error())
 		// os.Exit(1)
+		c = []types.DebugObj{}
 	} else {
 		json.Unmarshal(raw, &c)
 	}
@@ -523,6 +524,7 @@ func AddtoLogs(log types.DebugObj) {
 	if err != nil {
 		//fmt.Println(err.Error())
 		// os.Exit(1)
+
 	} else {
 		json.Unmarshal(raw, &c)
 	}

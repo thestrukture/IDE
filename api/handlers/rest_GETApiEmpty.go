@@ -3,10 +3,10 @@
 package handlers
 
 import (
-	templates "github.com/thestrukture/IDE/api/templates"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	templates "github.com/thestrukture/IDE/api/templates"
 
 	methods "github.com/thestrukture/IDE/api/methods"
 

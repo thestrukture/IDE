@@ -3,10 +3,10 @@
 package methods
 
 import (
-	"github.com/thestrukture/IDE/types"
 	"reflect"
 
 	"github.com/cheikhshift/gos/core"
+	"github.com/thestrukture/IDE/types"
 )
 
 //
