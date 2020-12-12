@@ -425,6 +425,25 @@
 
             if(working)
               term.set_prompt('>')
+
+            if(event.data.includes("(dlv)")){
+              window.$startMap = true;
+              term.set_prompt('>')
+            }
+
+
+            if(window.$awaitDelve && window.$startMap){
+              var br = window.$breakpoints[ window.$arrayIndex ];
+              if(!br)
+                delete window.$awaitDelve
+              else {
+
+                socketTerminal.send(br + "\n");
+                window.$arrayIndex++;
+              }
+              
+
+            }
     });
 
     jQuery(function($, undefined) {
@@ -678,10 +697,33 @@
                                 StartServer($node.original.appid);
                               }
                           };
-                           menu["Stop"] = {
+                          
+                          menu["Stop"] = {
                               "label": "Stop",
                               "action": function (obj) {
                                 StopServer($node.original.appid);
+                              }
+                          };
+
+                          menu["Debug"] = {
+                              "label": "Launch Delve",
+                              "action": function (obj) {
+                                
+                                socketTerminal.send('cd $GOPATH/src/' + $node.original.appid + "\n");
+
+           
+                                setTimeout(() => {
+                                  
+                                    $.ajax({url:"/api/breakpoints", data: { id : $node.original.appid } ,type:"POST",success:function(html){
+                                       completeDelvLaunch(html, $node.original.appid);
+                                      },error:function(e){
+                                        completeDelvLaunch(e.responseText, $node.original.appid);
+                                      }
+                                    });
+
+                                 
+
+                                }, 2000)
                               }
                           };
                       }
@@ -723,6 +765,51 @@
               }
           });
     });
+
+
+    function completeDelvLaunch(data, appid){
+      var keys = Object.keys(data);
+      var breakpoints = [];
+
+      for (var i = keys.length - 1; i >= 0; i--) {
+        var k = keys[i];
+        var brs = JSON.parse(data[k]);
+        if(k[0] == "/"){
+          
+          k = k.substr(1, k.length);
+        }
+
+  
+        for(var v = 0; v < brs.length;v++){
+
+          var ent = brs[v];
+
+          if(ent){
+            breakpoints.push(`break ${k.replace("-breakpoints", "")}:${v + 1}`);
+          }
+
+
+        }
+
+      }
+
+      window.$awaitDelve = true;
+      window.$breakpoints = breakpoints;
+      window.$arrayIndex = 0;
+      window.$startMap = false;
+
+      setTimeout(() => {
+         socketTerminal.send('dlv debug --allow-non-terminal-interactive ' + appid + " \n");
+      }, 3500)
+     
+
+      if(!$(".terminal-side").hasClass('active')){
+          $(".terminal-side").addClass('active');
+          $(".terminal-side").css('display','block');
+      }
+
+     
+    }
 
       function makeid()
       {

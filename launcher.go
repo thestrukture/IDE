@@ -77,6 +77,11 @@ func LaunchServer() {
 		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
 	}
 
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/go-delve/delve/cmd/dlv"); os.IsNotExist(err) {
+		fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
+		core.RunCmdSmart("go get github.com/go-delve/delve/cmd/dlv")
+	}
+
 	globals.AutocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
 
 	if _, err := os.Stat(globals.AutocompletePath); os.IsNotExist(err) {

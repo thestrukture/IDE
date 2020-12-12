@@ -214,3 +214,8 @@ func TestPOSTApiConsole(t *testing.T) {
 func TestApiTerminal_realtime(t *testing.T) {
 
 }
+
+func TestPOSTApiBreakpoints(t *testing.T) {
+
+	t.Error("Test for handler POSTApiBreakpoints not implemented!!")
+}

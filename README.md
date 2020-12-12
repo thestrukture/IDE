@@ -4,7 +4,7 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/test_coverage)](https://codeclimate.com/github/thestrukture/IDE/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/maintainability)](https://codeclimate.com/github/thestrukture/IDE/maintainability)
 
-Go lang IDE server. Built with [GopherSauce](http://gophersauce.com)
+Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 
 ## About project
 The strukture is an open source IDE. It is designed to build web applications, with the organizational help of [GopherSauce](http://gophersauce.com). The IDE runs as a server and is accessed via web browser. Being a web server, the IDE is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
@@ -19,8 +19,8 @@ The strukture is an open source IDE. It is designed to build web applications, w
 - Build docker images (Must have docker running on host) . 
 
 ## Requirements
-- Go v1.10+.
-- [GopherSauce](http://gophersauce.com) if using `makefile`.
+- Go v1.13+.
+
 
 ## Install
 

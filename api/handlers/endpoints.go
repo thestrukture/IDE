@@ -91,6 +91,10 @@ func ApiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 		response, callmet = POSTApiAct(w, r, session)
 
+	} else if isURL := (r.URL.Path == "/api/breakpoints" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+
+		response, callmet = POSTApiBreakpoints(w, r, session)
+
 	} else if isURL := (r.URL.Path == "/api/put" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
 
 		response, callmet = POSTApiPut(w, r, session)
