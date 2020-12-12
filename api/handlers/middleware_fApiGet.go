@@ -73,8 +73,9 @@ func fApiGet(w http.ResponseWriter, r *http.Request, session *sessions.Session) 
 							files, _ := ioutil.ReadDir(path)
 
 							for _, f := range files {
-								if !f.IsDir() {
+								if !f.IsDir() && !strings.Contains(f.Name(), "go-breakpoints") {
 									var mjk string
+
 									mjk = strings.Replace(path, pkgpath+"web", "", -1) + "/" + f.Name()
 									if globals.Windows {
 										mjk = strings.Replace(mjk, "/", "\\", -1)
@@ -116,7 +117,7 @@ func fApiGet(w http.ResponseWriter, r *http.Request, session *sessions.Session) 
 						hasgo := false
 						files, _ := ioutil.ReadDir(path)
 						for _, f := range files {
-							if !f.IsDir() && strings.Contains(f.Name(), ".go") {
+							if !f.IsDir() && strings.Contains(f.Name(), ".go") && !strings.Contains(f.Name(), ".go-breakpoints") {
 
 								var mjk string
 								mjk = strings.Replace(path, pkgpath, "", -1) + "/" + f.Name()
