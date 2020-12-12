@@ -97,7 +97,7 @@ func fApiGet(w http.ResponseWriter, r *http.Request, session *sessions.Session) 
 					appCo = append(appCo, types.PkgItem{AppID: v.Name, Text: "Template bundles", Icon: "fa fa-pencil-square", CType: "3", Children: Childtm})
 					appCo = append(appCo, types.PkgItem{AppID: v.Name, Text: "Web Resources", CType: "5&path=/", Children: folders, Icon: "fa fa-folder"})
 
-					appCo = append(appCo, types.PkgItem{AppID: v.Name, Type: "18", Text: "Testing", Icon: "fa fa-flask"})
+					//appCo = append(appCo, types.PkgItem{AppID:v.Name,Type:"18",Text: "Testing",Icon: "fa fa-flask"} )
 					appCo = append(appCo, types.PkgItem{AppID: v.Name, Type: "8", Text: "Structs", Icon: "fa fa-share-alt"})
 					//appCo = append(appCo, types.PkgItem{AppID:v.Name,Type:"9",Text: "Interface funcs",Icon: "fa fa-share-alt-square"} )
 					appCo = append(appCo, types.PkgItem{Type: "10", AppID: v.Name, Text: "Template pipelines", Icon: "fa fa-exchange"})
