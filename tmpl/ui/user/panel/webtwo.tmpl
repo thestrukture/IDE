@@ -22,6 +22,27 @@
 	 //editors["{{.ID}}"].setTheme("ace/theme/clouds_midnight");
 	 editors[{{.ID}} + "c"] = {wrap:false};
 
+	 
+	editors["{{.ID}}-breakpoints"] = {{printf "%s" .BreakPoints}}
+
+	if(editors["{{.ID}}-breakpoints"] != ""){
+		
+		(function(){
+			var brFinal = [];
+			var arr = JSON.parse(editors["{{.ID}}-breakpoints"]);
+			for(var i = 0; i < arr.length;i++){
+			   var row = arr[i];
+			   if(row){
+			   	 brFinal.push(i); 
+			   }
+			}
+
+			editors["{{.ID}}"].session.setBreakpoints(brFinal);
+
+		})();
+
+	}
+	 
 	
 
 	{{if eq .Type "golang"}}
@@ -98,23 +119,27 @@
 		    if (target.className.indexOf("ace_gutter-cell") == -1)
 		        return; 
 
-		    if (!editor.isFocused()) 
+		    if (!editors["{{.ID}}"].isFocused()) 
 		        return; 
 		  
 		    if (e.clientX > 25 + target.getBoundingClientRect().left) 
 		        return; 
 
+
+		    var row = e.getDocumentPosition().row;
 		    var breakpoints = e.editor.session.getBreakpoints(row, 0);
-
-		    console.log(breakpoints);
-
-			var row = e.getDocumentPosition().row;
+	
 			if(typeof breakpoints[row] === typeof undefined)
 			    e.editor.session.setBreakpoint(row);
 			else
 			    e.editor.session.clearBreakpoint(row);
 			    e.stop();
-		})
+
+			breakpoints = e.editor.session.getBreakpoints(row, 0);
+		    console.log(breakpoints);
+		    
+		    SaveFileSrc('{{.ID}}', '{{.SavesTo}}-breakpoints','{{.PKG}}', JSON.stringify(breakpoints));
+		});
 
 
 		editors["{{.ID}}"].on('change', function() {

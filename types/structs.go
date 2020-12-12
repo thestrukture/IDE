@@ -46,6 +46,7 @@ type WebRootEdits struct {
 	SavesTo, Type, PreviewLink, ID, PKG string
 	Faas                                bool
 	File                                []byte
+	BreakPoints                         []byte
 }
 type TEditor struct {
 	PKG, Type, LType string

@@ -599,14 +599,17 @@
       }
     });
     }
-      function SaveFileSrc(editor, link,pkv){
+      function SaveFileSrc(editor, link,pkv, custom_data = null){
       
         var payload = {type:"30",target:link,pkg:pkv};
-        payload["data"] = editors[editor].getValue();
+        payload["data"] = custom_data ? custom_data : editors[editor].getValue();
       $.ajax({url:"/api/put", data: payload ,type:"POST",success:function(html){
-        $(".side-bay").html(html);
+
+        if(!custom_data)
+          $(".side-bay").html(html);
       },error:function(e){
-        $(".side-bay").html(e.responseText);
+        if(!custom_data)
+          $(".side-bay").html(e.responseText);
       }
     });
     }

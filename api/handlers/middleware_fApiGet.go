@@ -350,7 +350,18 @@ func fApiGet(w http.ResponseWriter, r *http.Request, session *sessions.Session) 
 
 		data, _ := ioutil.ReadFile(filep)
 		data = []byte(html.EscapeString(string(data)))
-		response = templates.WebRootEdittwo(types.WebRootEdits{SavesTo: id[1], Type: "golang", File: data, ID: methods.RandTen(), PKG: r.FormValue("space")})
+
+		breakPoints, err := ioutil.ReadFile(filep + "-breakpoints")
+
+		editor := types.WebRootEdits{SavesTo: id[1], Type: "golang", File: data, ID: methods.RandTen(), PKG: r.FormValue("space")}
+
+		if err == nil {
+			editor.BreakPoints = breakPoints
+		}
+
+		//BreakPoints
+
+		response = templates.WebRootEdittwo(editor)
 
 	} else if r.FormValue("type") == "61" {
 		id := strings.Split(r.FormValue("id"), "@pkg:")

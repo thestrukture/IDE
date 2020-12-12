@@ -187,6 +187,7 @@
 			SavesTo,Type,PreviewLink,ID,PKG string
 			Faas bool
 			File []byte
+			BreakPoints []byte
 		</struct>
 
 
@@ -1048,7 +1049,18 @@ for _, v := range apps {
 
 				data,_ := ioutil.ReadFile(filep)
 				data =  []byte(html.EscapeString(string(data)))
-				response = net_bWebRootEdittwo(WebRootEdits{SavesTo:id[1],Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") })
+
+				breakPoints,err := ioutil.ReadFile(filep + "-breakpoints")
+
+				editor := WebRootEdits{SavesTo:id[1],Type:"golang",File:data,ID:net_RandTen(),PKG: r.FormValue("space") }
+
+				if err == nil {
+					editor.BreakPoints = breakPoints
+				} 
+
+				//BreakPoints
+
+				response = net_bWebRootEdittwo(editor)
 
 			} else if r.FormValue("type") == "61" {
 				id := strings.Split(r.FormValue("id"), "@pkg:")
