@@ -21,10 +21,13 @@
     </div>
   </div>
 </div>
+
+
     <script src="/dist/jquery.js"></script>
     <script src="/dist/bootstrap.js" ></script>
     <script type="text/javascript" src="/dist/havok.js"></script>
     <script src="/dist/jstree.min.js"></script>
+    <script src="/dist/jquery.toolbar.js"></script>
     <script src="/ajax-loading.js"></script>
     <script type="text/javascript">
     	var __loading = $.loading()
@@ -45,6 +48,11 @@
 
     var termsize = 0;
 
+
+
+    window.debugFn = (cmd) => {
+      socketTerminal.send(cmd + " \n");
+    }
 
     try {
       if(!window.localStorage["chatName"]){
@@ -434,8 +442,10 @@
 
             if(window.$awaitDelve && window.$startMap){
               var br = window.$breakpoints[ window.$arrayIndex ];
-              if(!br)
+              if(!br){
                 delete window.$awaitDelve
+                socketTerminal.send("continue \n");
+              }
               else {
 
                 socketTerminal.send(br + "\n");
@@ -726,6 +736,28 @@
                                 }, 2000)
                               }
                           };
+
+                          menu["DebugTest"] = {
+                              "label": "Launch Delve (Test)",
+                              "action": function (obj) {
+                                
+                                socketTerminal.send('cd $GOPATH/src/' + $node.original.appid + "\n");
+
+           
+                                setTimeout(() => {
+                                  
+                                    $.ajax({url:"/api/breakpoints", data: { id : $node.original.appid } ,type:"POST",success:function(html){
+                                       completeDelvLaunch(html, $node.original.appid, true);
+                                      },error:function(e){
+                                        completeDelvLaunch(e.responseText, $node.original.appid, true);
+                                      }
+                                    });
+
+                                 
+
+                                }, 2000)
+                              }
+                          };
                       }
 
                       if ($node.original.mtype){
@@ -767,7 +799,7 @@
     });
 
 
-    function completeDelvLaunch(data, appid){
+    function completeDelvLaunch(data, appid, test = false){
       var keys = Object.keys(data);
       var breakpoints = [];
 
@@ -799,7 +831,13 @@
       window.$startMap = false;
 
       setTimeout(() => {
+        if(!test){
          socketTerminal.send('dlv debug --allow-non-terminal-interactive ' + appid + " \n");
+         return;
+        }
+
+        socketTerminal.send('dlv test --allow-non-terminal-interactive ' + appid + " \n");
+
       }, 3500)
      
 

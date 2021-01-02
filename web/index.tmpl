@@ -17,6 +17,7 @@
     <link rel="stylesheet" type="text/css" href="dist/jquery.terminal-0.10.8.min.css">
     <link rel="stylesheet" href="/dist/jqx.base.css" type="text/css" />
     <link rel="stylesheet" href="/dist/jqx.black.css" type="text/css" />
+    <link href="/dist/jquery.toolbar.css" rel="stylesheet" />
 </head>
 
 <body class="full-height">
@@ -213,6 +214,14 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
         </div>
     </div>
     <div class="terminal-side">
+     
+        <div id="toolbar-options" class="toolbar-icons hidden">
+           <a href="#" class="btn-toolbar" >Locals</a>
+           <a href="#" class="btn-toolbar" >Rebuild</a>
+           <a href="#" class="btn-toolbar" ><i class="fa fa-backward"></i></a>
+           <a href="#" class="btn-toolbar" ><i class="fa fa-play"></i></a>
+           <a href="#" class="btn-toolbar" ><i class="fa fa-step-forward"></i></a>
+        </div> 
         <button onclick="toggleTerm()" style="color:#fff;" type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span class="fa fa-compress"></span>
         </button>
@@ -235,6 +244,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
     }
     window.boards = { placeholder: {} };
     </script>
+
     {{JS}}
     <script type="text/javascript" src="/dist/jqxcore.js"></script>
     <script type="text/javascript" src="/dist/jqxsortable.js"></script>
