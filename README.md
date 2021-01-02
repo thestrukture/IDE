@@ -12,7 +12,7 @@ IDE runs as a server and is accessed via web browser. Being a web server, the ID
 - Autocomplete between different files.
 - Syntax correction.
 - Server process management.
-- Basic terminal via stateless HTTP.
+- Interactive terminal via web socket.
 - Line tags in relation to failed build logs.
 - Project build scripts.
 - View web application output.
