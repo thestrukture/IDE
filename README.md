@@ -7,7 +7,7 @@
 Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 
 ## About project
-The strukture is an open source IDE. It is designed to build web applications, with the organizational help of [GopherSauce](http://gophersauce.com). The IDE runs as a server and is accessed via web browser. Being a web server, the IDE is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
+IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
 - Web application resource management.
 - Autocomplete between different files.
 - Syntax correction.
