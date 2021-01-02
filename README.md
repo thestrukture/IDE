@@ -17,6 +17,7 @@ IDE runs as a server and is accessed via web browser. Being a web server, the ID
 - Project build scripts.
 - View web application output.
 - Build docker images (Must have docker running on host) . 
+- Breakpoints and debugging with Delve.
 
 ## Requirements
 - Go v1.13+.
