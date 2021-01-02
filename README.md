@@ -20,7 +20,7 @@ IDE runs as a server and is accessed via web browser. Being a web server, the ID
 - Breakpoints and debugging with Delve.
 
 ## Requirements
-- Go v1.13+.
+- Go v1.15+.
 
 
 ## Install
