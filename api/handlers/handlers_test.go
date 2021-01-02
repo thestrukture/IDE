@@ -217,5 +217,5 @@ func TestApiTerminal_realtime(t *testing.T) {
 
 func TestPOSTApiBreakpoints(t *testing.T) {
 
-	t.Error("Test for handler POSTApiBreakpoints not implemented!!")
+	/* TODO : Implement breakpoint tests */
 }
