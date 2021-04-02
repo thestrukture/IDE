@@ -3,6 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/thestrukture/IDE/api?status.svg)](https://godoc.org/github.com/thestrukture/IDE/api)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/test_coverage)](https://codeclimate.com/github/thestrukture/IDE/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/maintainability)](https://codeclimate.com/github/thestrukture/IDE/maintainability)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_shield)
 
 Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 
@@ -85,3 +86,7 @@ As a human I can't be everywhere, please help me find problems or unexpected beh
 ![screenshot](tests/3newsc.png)
 ![screenshot](tests/4newsc.png)
 ![screenshot](tests/5newsc.png)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_large)
