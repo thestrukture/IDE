@@ -3,13 +3,17 @@
 package templates
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"html"
+	"html/template"
 	"log"
 
+	"github.com/fatih/color"
+	"github.com/thestrukture/IDE/api/assets"
 	"github.com/thestrukture/IDE/types"
 )
-
-// Template path
-var templateIDAlert = "tmpl/ui/alert.tmpl"
 
 //
 // Renders HTML of template
@@ -18,38 +22,128 @@ func Alert(d types.Alertbs) string {
 	return netbAlert(d)
 }
 
+// recovery function used to log a
+// panic.
+func templateFNAlert(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (ui/alert) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
+}
+
+var templateIDAlert = "tmpl/ui/alert.tmpl"
+
 // Render template with JSON string as
 // data.
 func netAlert(args ...interface{}) string {
 
-	// Get data from JSON
-	var d = netcAlert(args...)
-	return netbAlert(d)
+	localid := templateIDAlert
+	var d *types.Alertbs
+	defer templateFNAlert(localid, d)
+	if len(args) > 0 {
+		jso := args[0].(string)
+		var jsonBlob = []byte(jso)
+		err := json.Unmarshal(jsonBlob, d)
+		if err != nil {
+			return err.Error()
+		}
+	} else {
+		d = &types.Alertbs{}
+	}
+
+	output := new(bytes.Buffer)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := assets.Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Alert")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
+
+// alias of template render function.
+func bAlert(d types.Alertbs) string {
+	return netbAlert(d)
+}
+
+//
 
 // template render function
 func netbAlert(d types.Alertbs) string {
 	localid := templateIDAlert
-	name := "Alert"
-	defer templateRecovery(name, localid, &d)
+	defer templateFNAlert(localid, d)
+	output := new(bytes.Buffer)
 
-	// render and return template result
-	return executeTemplate(name, localid, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := assets.Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("Alert")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		log.Println(erro)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = types.Alertbs{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 
 // Unmarshal a json string to the template's struct
 // type
 func netcAlert(args ...interface{}) (d types.Alertbs) {
-
 	if len(args) > 0 {
-		jsonData := args[0].(string)
-		err := parseJSON(jsonData, &d)
+		var jsonBlob = []byte(args[0].(string))
+		err := json.Unmarshal(jsonBlob, &d)
 		if err != nil {
 			log.Println("error:", err)
 			return
 		}
+	} else {
+		d = types.Alertbs{}
 	}
+	return
+}
 
+// Create a struct variable of template.
+func cAlert(args ...interface{}) (d types.Alertbs) {
+	if len(args) > 0 {
+		d = netcAlert(args[0])
+	} else {
+		d = netcAlert()
+	}
 	return
 }

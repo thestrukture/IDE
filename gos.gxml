@@ -40,13 +40,15 @@
 	<!-- -->
 	<main>
 			// turn off modules, it does not play nice here
-			os.Setenv("GO111MODULE", "off")
+			
 			dfd = os.ExpandEnv("$GOPATH")
-			Windows = strings.Contains(runtime.GOOS, "windows") 
+			Windows = strings.Contains(runtime.GOOS, "windows")
+			trailerEx := ""
 			
 			fmt.Println("Using $GOPATH @ home/workspace")
 			if  Windows {
 					os.Chdir( os.ExpandEnv("$USERPROFILE") )
+					trailerEx = ".exe"
 			} else {
 					os.Chdir( os.ExpandEnv("$HOME") )
 			}
@@ -78,30 +80,42 @@
 				}
 			
 
-				dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos" 
+				dir := os.ExpandEnv("$GOPATH") + "/bin/gos" + trailerEx
 				if _, err := os.Stat(dir); os.IsNotExist(err) {
 					fmt.Println("Downloading GoS")
 			 		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
 			 		if err != nil {
 			 			color.Red("Please, install GO : https://golang.org/dl/ ")
 			 		} else {
-			 			core.RunCmdSmart("gos deps")
+			 			// removed gos support, should increase 1st launch
+			 			// time.
+			 			//core.RunCmdSmart("gos deps")
 			 		}
 			 	}
 
-			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/nsf/gocode/"); os.IsNotExist(err) {
+			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
 			 		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
-			 		core.RunCmdSmart("go get github.com/nsf/gocode")
+			 		if Windows {
+			 			//
+			 			core.RunCmdSmart("go get -u -ldflags -H=windowsgui github.com/mdempsky/gocode")
+			 		} else {
+
+			 			core.RunCmdSmart("go get -u github.com/mdempsky/gocode")
+
+			 		}
+			 		
 			 	}
 
-			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/golang/dep"); os.IsNotExist(err) {
+			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dep" + trailerEx); os.IsNotExist(err) {
 			 		fmt.Println("Go dep not present, installing from github.com/golang/dep")
 			 		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
 			 	}
 
-			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/go-delve/delve/cmd/dlv"); os.IsNotExist(err) {
+			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dlv" + trailerEx); os.IsNotExist(err) {
 			 		fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
+			 
 			 		core.RunCmdSmart("go get github.com/go-delve/delve/cmd/dlv")
+			 	
 			 	}
 
 			 	
@@ -1560,7 +1574,7 @@ for _, v := range apps {
 	     		inputs := []Inputs{}
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Package Name"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
-	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Build with GopherSauce", "Existing package", "faas"} })
+	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Existing package", "faas"} })
 	     		
 	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
 				
@@ -2398,6 +2412,7 @@ for _, v := range apps {
 
 					res, _ := core.RunCmdSmart(cmd)
 					response = res
+					
 					os.Remove(tempFile)
 
 				}

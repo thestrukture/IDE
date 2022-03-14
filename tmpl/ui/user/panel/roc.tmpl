@@ -19,9 +19,7 @@
     {{if .Pid | neq ""}}
         <p><span class="label label-success">Running... Pid : {{.Pid}}</span></p>
     {{end}}
-       <p><button class="btn btn-block btn-warning" onclick="StartServer('{{.Name}}')">Start/Reset</button></p>
-         <p><button class="btn btn-block btn-danger" onclick="StopServer('{{.Name}}')">Stop</button></p>
-           <p><button class="btn btn-block btn-info" onclick="ClearLogs('{{.Name}}')">Clear logs</button></p>
+         <p><button class="btn btn-block btn-info" onclick="ClearLogs('{{.Name}}')">Clear logs</button></p>
       </div>
     
    

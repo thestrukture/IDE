@@ -3,13 +3,17 @@
 package templates
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"html"
+	"html/template"
 	"log"
 
+	"github.com/fatih/color"
+	"github.com/thestrukture/IDE/api/assets"
 	"github.com/thestrukture/IDE/types"
 )
-
-// Template path
-var templateIDObjectEditor = "tmpl/editor/objects.tmpl"
 
 //
 // Renders HTML of template
@@ -18,38 +22,128 @@ func ObjectEditor(d types.VHuf) string {
 	return netbObjectEditor(d)
 }
 
+// recovery function used to log a
+// panic.
+func templateFNObjectEditor(localid string, d interface{}) {
+	if n := recover(); n != nil {
+		color.Red(fmt.Sprintf("Error loading template in path (editor/objects) : %s", localid))
+		// log.Println(n)
+		DebugTemplatePath(localid, d)
+	}
+}
+
+var templateIDObjectEditor = "tmpl/editor/objects.tmpl"
+
 // Render template with JSON string as
 // data.
 func netObjectEditor(args ...interface{}) string {
 
-	// Get data from JSON
-	var d = netcObjectEditor(args...)
-	return netbObjectEditor(d)
+	localid := templateIDObjectEditor
+	var d *types.VHuf
+	defer templateFNObjectEditor(localid, d)
+	if len(args) > 0 {
+		jso := args[0].(string)
+		var jsonBlob = []byte(jso)
+		err := json.Unmarshal(jsonBlob, d)
+		if err != nil {
+			return err.Error()
+		}
+	} else {
+		d = &types.VHuf{}
+	}
+
+	output := new(bytes.Buffer)
+
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := assets.Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("ObjectEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		color.Red(fmt.Sprintf("Error processing template %s", localid))
+		DebugTemplatePath(localid, d)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = nil
+	output.Reset()
+	output = nil
+	args = nil
+	return outpescaped
 
 }
+
+// alias of template render function.
+func bObjectEditor(d types.VHuf) string {
+	return netbObjectEditor(d)
+}
+
+//
 
 // template render function
 func netbObjectEditor(d types.VHuf) string {
 	localid := templateIDObjectEditor
-	name := "ObjectEditor"
-	defer templateRecovery(name, localid, &d)
+	defer templateFNObjectEditor(localid, d)
+	output := new(bytes.Buffer)
 
-	// render and return template result
-	return executeTemplate(name, localid, &d)
+	if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+		body, er := assets.Asset(localid)
+		if er != nil {
+			return ""
+		}
+		var localtemplate = template.New("ObjectEditor")
+		localtemplate.Funcs(TemplateFuncStore)
+		var tmpstr = string(body)
+		localtemplate.Parse(tmpstr)
+		body = nil
+		templateCache.Put(localid, localtemplate)
+	}
+
+	erro := templateCache.JGet(localid).Execute(output, d)
+	if erro != nil {
+		log.Println(erro)
+	}
+	var outps = output.String()
+	var outpescaped = html.UnescapeString(outps)
+	d = types.VHuf{}
+	output.Reset()
+	output = nil
+	return outpescaped
 }
 
 // Unmarshal a json string to the template's struct
 // type
 func netcObjectEditor(args ...interface{}) (d types.VHuf) {
-
 	if len(args) > 0 {
-		jsonData := args[0].(string)
-		err := parseJSON(jsonData, &d)
+		var jsonBlob = []byte(args[0].(string))
+		err := json.Unmarshal(jsonBlob, &d)
 		if err != nil {
 			log.Println("error:", err)
 			return
 		}
+	} else {
+		d = types.VHuf{}
 	}
+	return
+}
 
+// Create a struct variable of template.
+func cObjectEditor(args ...interface{}) (d types.VHuf) {
+	if len(args) > 0 {
+		d = netcObjectEditor(args[0])
+	} else {
+		d = netcObjectEditor()
+	}
 	return
 }

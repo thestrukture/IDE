@@ -18,13 +18,17 @@ import (
 )
 
 func LaunchServer() {
-	os.Setenv("GO111MODULE", "off")
+
+	// turn off modules, it does not play nice here
+
 	globals.Dfd = os.ExpandEnv("$GOPATH")
 	globals.Windows = strings.Contains(runtime.GOOS, "windows")
+	trailerEx := ""
 
-	fmt.Println("Using temporary $GOPATH")
+	fmt.Println("Using $GOPATH @ home/workspace")
 	if globals.Windows {
 		os.Chdir(os.ExpandEnv("$USERPROFILE"))
+		trailerEx = ".exe"
 	} else {
 		os.Chdir(os.ExpandEnv("$HOME"))
 	}
@@ -55,30 +59,34 @@ func LaunchServer() {
 
 	}
 
-	dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos"
+	dir := os.ExpandEnv("$GOPATH") + "/bin/gos" + trailerEx
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		fmt.Println("Downloading GoS")
 		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
 		if err != nil {
 			color.Red("Please, install GO : https://golang.org/dl/ ")
 		} else {
-			core.RunCmdSmart("gos deps")
+			// removed gos support, should increase 1st launch
+			// time.
+			//core.RunCmdSmart("gos deps")
 		}
 	}
 
-	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/nsf/gocode/"); os.IsNotExist(err) {
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
 		core.RunCmdSmart("go get github.com/nsf/gocode")
 	}
 
-	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/golang/dep"); os.IsNotExist(err) {
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dep" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Go dep not present, installing from github.com/golang/dep")
 		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
 	}
 
-	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/src/github.com/go-delve/delve/cmd/dlv"); os.IsNotExist(err) {
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dlv" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
+
 		core.RunCmdSmart("go get github.com/go-delve/delve/cmd/dlv")
+
 	}
 
 	globals.AutocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
