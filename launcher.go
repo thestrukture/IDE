@@ -18,42 +18,41 @@ import (
 )
 
 func LaunchServer() {
-
+	os.Setenv("GO111MODULE", "off")
 	globals.Dfd = os.ExpandEnv("$GOPATH")
 	globals.Windows = strings.Contains(runtime.GOOS, "windows")
-	if globals.Dfd == "" {
-		fmt.Println("Using temporary $GOPATH")
+
+	fmt.Println("Using temporary $GOPATH")
+	if globals.Windows {
+		os.Chdir(os.ExpandEnv("$USERPROFILE"))
+	} else {
+		os.Chdir(os.ExpandEnv("$HOME"))
+	}
+
+	err := os.MkdirAll("workspace/", 0700)
+	if err != nil {
+		fmt.Println(err.Error())
+
+	} else {
+		//download go
+		os.MkdirAll("workspace/src", 0700)
+		os.MkdirAll("workspace/bin", 0700)
+		cwd, _ := os.Getwd()
+		cwd = cwd + "/workspace"
+		os.Setenv("GOPATH", cwd)
+		pathbin := os.ExpandEnv("$PATH")
 		if globals.Windows {
-			os.Chdir(os.ExpandEnv("$USERPROFILE"))
+			os.Setenv("PATH", pathbin+":"+strings.Replace(cwd+"/bin", "/", "\\", -1))
 		} else {
-			os.Chdir(os.ExpandEnv("$HOME"))
+			os.Setenv("PATH", pathbin+":"+cwd+"/bin")
 		}
-
-		err := os.MkdirAll("workspace/", 0700)
-		if err != nil {
-			fmt.Println(err.Error())
-
-		} else {
-			//download go
-			os.MkdirAll("workspace/src", 0700)
-			os.MkdirAll("workspace/bin", 0700)
-			cwd, _ := os.Getwd()
-			cwd = cwd + "/workspace"
-			os.Setenv("GOPATH", cwd)
-			pathbin := os.ExpandEnv("$PATH")
-			if globals.Windows {
-				os.Setenv("PATH", pathbin+":"+strings.Replace(cwd+"/bin", "/", "\\", -1))
-			} else {
-				os.Setenv("PATH", pathbin+":"+cwd+"/bin")
-			}
-			_, goinvs := core.RunCmdSmart("go help build")
-			if goinvs != nil {
-				fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
-
-			}
-			globals.Dfd = cwd
+		_, goinvs := core.RunCmdSmart("go help build")
+		if goinvs != nil {
+			fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
 
 		}
+		globals.Dfd = cwd
+
 	}
 
 	dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos"

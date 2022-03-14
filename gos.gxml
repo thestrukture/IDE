@@ -39,15 +39,17 @@
 	<!-- The <init/> tag is similar to the init function within Go, -->
 	<!-- -->
 	<main>
+			// turn off modules, it does not play nice here
+			os.Setenv("GO111MODULE", "off")
 			dfd = os.ExpandEnv("$GOPATH")
 			Windows = strings.Contains(runtime.GOOS, "windows") 
-			if dfd ==  "" {
-				fmt.Println("Using temporary $GOPATH")
-				if  Windows {
-						os.Chdir( os.ExpandEnv("$USERPROFILE") )
-					} else {
-						os.Chdir( os.ExpandEnv("$HOME") )
-					}
+			
+			fmt.Println("Using $GOPATH @ home/workspace")
+			if  Windows {
+					os.Chdir( os.ExpandEnv("$USERPROFILE") )
+			} else {
+					os.Chdir( os.ExpandEnv("$HOME") )
+			}
 				
 				err := os.MkdirAll("workspace/",0700)
 				if err != nil {
@@ -74,7 +76,7 @@
 			 		dfd = cwd
 			 		
 				}
-			} 
+			
 
 				dir := os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos" 
 				if _, err := os.Stat(dir); os.IsNotExist(err) {

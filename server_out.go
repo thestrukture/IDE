@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/sessions"
 	"github.com/thestrukture/IDE/api/assets"
 	"github.com/thestrukture/IDE/api/handlers"
