@@ -7,13 +7,13 @@
 
 Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 
-## About project
-IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
+## About IDE
+This IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
 - Web application resource management.
 - Autocomplete between different files. ( This feature is broken as of now.)
 - Syntax correction.
 - Server process management.
-- Interactive terminal via web socket.
+- Interactive terminal via web socket. (Must have bash installed for windows users.)
 - Line tags in relation to failed build logs.
 - Project build scripts.
 - View web application output.

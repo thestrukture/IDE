@@ -24,7 +24,14 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 	}
 	defer c.Close()
 
-	ctx := exec.InteractiveExec("bash", "-i")
+	cm1, cm2 := "bash", "-i"
+
+	if globals.Windows {
+		cm1 = "start"
+		cm2 = "cmd"
+	}
+
+	ctx := exec.InteractiveExec(cm1, cm2)
 	reader := methods.Reader{Conn: c}
 	go ctx.Receive(&reader, 5*time.Hour)
 
@@ -48,7 +55,7 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 				fmt.Println("Restarting")
 				ctx.Cancel()
 				ctx.Stop()
-				ctx = exec.InteractiveExec("bash", "-i")
+				ctx = exec.InteractiveExec(cm1, cm2)
 				reader = methods.Reader{Conn: c}
 				go ctx.Receive(&reader, 5*time.Hour)
 			} else {

@@ -98,8 +98,8 @@ func ApiComplete(w http.ResponseWriter, r *http.Request, session *sessions.Sessi
 
 		res, _ := core.RunCmdSmart(cmd)
 		response = res
-		fmt.Println(tempFile, prefx)
-		//os.Remove(tempFile)
+
+		os.Remove(tempFile)
 
 	}
 
