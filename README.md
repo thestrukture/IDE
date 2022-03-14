@@ -1,4 +1,4 @@
-# Strukture IDE Beta II
+# Strukture IDE
 [![Build Status](https://travis-ci.org/thestrukture/IDE.svg?branch=master)](https://travis-ci.org/thestrukture/IDE)
 [![GoDoc](https://godoc.org/github.com/thestrukture/IDE/api?status.svg)](https://godoc.org/github.com/thestrukture/IDE/api)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/test_coverage)](https://codeclimate.com/github/thestrukture/IDE/test_coverage)
@@ -41,22 +41,7 @@ To add debug support, you must install delve. You can find the guide here. (Don'
 
 		$ IDE
 
-#### Launch with GUI (Electron View)
 
-###### Requires NodeJS
-- NodeJS [Downloads](https://nodejs.org/en/download/)
-
-Change to the ui directory within the root of this package. (Moved ui files to build package as go)
-
-		$ cd ui/
-		$ npm install
-		$ IDE --headless & npm start
-
-Take note of the pid ID to stop server process. Once your server is up feel free to use `npm start` directly.
-
-### IE Fix
-If build commands keep returning the same message, push the `F12` key down to open developer tools and try building again.
-	
 ## Access
 
 Visit [localhost:8884/index](http://localhost:8884/index). Access the IDE from any device on your network as well...
@@ -64,15 +49,10 @@ Visit [localhost:8884/index](http://localhost:8884/index). Access the IDE from a
 ## Bug reports & questions :
 Please create a new issue on Github to report a bug.
 
-## Wiki : How to use the strukture
+## How to use the strukture
 
-Visit https://github.com/thestrukture/IDE/wiki
+Built-in tutorials coming soon.
 
-## Misc info
-How to install GoS incase the built-in installer fails.
-
-- Install GoS [CLI](http://gophersauce.com). ( `$ go get github.com/cheikhshift/gos` )
-- Install `GoS` dependencies : `$ gos deps`
 
 ### Extending
 Automate your work flow with just lines of Javascript. Read the Guide [here](https://github.com/thestrukture/SpringMenu). 
@@ -80,11 +60,6 @@ Automate your work flow with just lines of Javascript. Read the Guide [here](htt
 ## Contributions
 Improvements to the codebase and pull requests are encouraged.
 
-### Teams and small businesses
-Get `IDE` setup for your business, with staff training. Learn more at [gophersauce.com](https://gophersauce.com).
-
-###### Reporting
-As a human I can't be everywhere, please help me find problems or unexpected behavior with this piece of software.
 
 ## Screenshots
 
