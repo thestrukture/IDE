@@ -34,10 +34,16 @@ func POSTApiAct(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			if strings.Contains(useGos, "Scratch") {
 				app.Type = "app"
-				err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name), 0700)
+
+				fullDir := filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name)
+				err = os.MkdirAll(fullDir, 0700)
 
 				if err != nil {
 					response = templates.Alert(types.Alertbs{Type: "danger", Text: "Error creating package " + r.FormValue("name") + ":" + err.Error(), Redirect: "javascript:console.log('error!')"})
+				} else {
+
+					os.Chdir(fullDir)
+					core.RunCmdSmart("go mod init")
 				}
 
 			} else if strings.Contains(useGos, "faas") {

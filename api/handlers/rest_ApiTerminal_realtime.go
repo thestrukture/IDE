@@ -31,7 +31,14 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 		cm2 = "cmd"
 	}
 
-	ctx := exec.InteractiveExec(cm1, cm2)
+	var ctx exec.ProcessContext
+
+	if globals.Windows {
+		ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO globals.Windows user.'")
+	} else {
+		ctx = exec.InteractiveExec(cm1, cm2)
+	}
+
 	reader := methods.Reader{Conn: c}
 	go ctx.Receive(&reader, 5*time.Hour)
 
@@ -55,7 +62,11 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 				fmt.Println("Restarting")
 				ctx.Cancel()
 				ctx.Stop()
-				ctx = exec.InteractiveExec(cm1, cm2)
+				if globals.Windows {
+					ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO globals.Windows user.'")
+				} else {
+					ctx = exec.InteractiveExec(cm1, cm2)
+				}
 				reader = methods.Reader{Conn: c}
 				go ctx.Receive(&reader, 5*time.Hour)
 			} else {

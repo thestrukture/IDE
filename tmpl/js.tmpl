@@ -410,14 +410,61 @@
 
     var working = false;
     var termx = null;
+    let winDir;
+    let comRan = 0
     let prevBuff = "";
     window.socketTerminal = new WebSocket("ws://" + window.location.host + "/api/terminal_realtime");
 
+    function reset(){
+
+         if(socketTerminal.readyState === 2 || socketTerminal.readyState === 3){
+            
+             window.socketTerminal = new WebSocket("ws://" + window.location.host + "/api/terminal_realtime");
+             working = false;
+             prevBuff = "";
+             comRan = 0
+             winDir = null
+             $('#terminaldefault').terminal().set_prompt('user@Strutkure $')
+             socketTerminal.addEventListener('message',  handleMsg);
+
+        }
+    }
 
       // Listen for messages
+      socketTerminal.addEventListener('error', function (event) {
+
+           reset()
+
+      })
     
-       socketTerminal.addEventListener('message', function (event) {
+    function handleMsg(event) {
             let term =  $('#terminaldefault').terminal();
+
+            
+
+            if(winDir == "await"){
+                if(prevBuff == event.data) return
+                let path = event.data.split("\n")
+                winDir = path[path.length - 1]
+            }
+
+            if(!comRan && event.data.includes("globals.Windows user.")){        
+                winDir = "await"
+                let path = event.data.split("\n")
+
+                if(path.length > 2){
+                   winDir = path[path.length - 1]
+                }
+            }
+
+            if (winDir && event.data.includes(winDir.replace(">", ""))){
+                working = false;
+                prevBuff = "";
+                term.set_prompt(winDir)
+                return
+            }
+
+            comRan++
 
             if(event.data.includes("bash") && event.data.includes("$") && event.data.length < 50){
                 working = false;
@@ -444,31 +491,46 @@
               var br = window.$breakpoints[ window.$arrayIndex ];
               if(!br){
                 delete window.$awaitDelve
-                socketTerminal.send("continue \n");
+                window.socketTerminal.send("continue \n");
               }
               else {
 
-                socketTerminal.send(br + "\n");
+                window.socketTerminal.send(br + "\n");
                 window.$arrayIndex++;
               }
               
 
             }
-    });
+    }
+    socketTerminal.addEventListener('message',  handleMsg);
 
     jQuery(function($, undefined) {
     $('#terminaldefault').terminal(function(command, term) {
       termx = term.echo;
         
+        if(winDir && command == "killnow") return reset()
+        
         if (command !== '') {
             working = true;
+            let cmC = command.trim()
+
+            if(winDir){
+              if(cmC[0] == "c" && cmC[1] == "d"){
+                  winDir = "await"
+                  prevBuff = command
+              }
+            }
 
             setTimeout(()=> {
-               socketTerminal.send(command + "\n");
+               window.socketTerminal.send(command + "\n");
             }, 400)
            
         } 
 
+        if(winDir){
+          term.set_prompt(( working ? "": winDir  ) )
+          return
+        }
         term.set_prompt(( working ? "":'user@Strutkure $' ) )
 
     }, {

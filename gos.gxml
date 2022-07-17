@@ -94,7 +94,7 @@
 			 	}
 
 			 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
-			 		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
+			 		fmt.Println("Go code completion not present, installing from github.com/mdempsky/gocode")
 			 		if Windows {
 			 			//
 			 			core.RunCmdSmart("go get -u -ldflags -H=windowsgui github.com/mdempsky/gocode")
@@ -1574,7 +1574,7 @@ for _, v := range apps {
 	     		inputs := []Inputs{}
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Package Name"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "0"})
-	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Existing package", "faas"} })
+	     		inputs = append(inputs, Inputs{Type:"select", Misc : "Project type" , Name: "usegos" ,Value: "Scratch", Options : []string{"Scratch", "Existing package"} })
 	     		
 	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
 				
@@ -1604,10 +1604,17 @@ for _, v := range apps {
 				if _, err := os.Stat(dir); os.IsNotExist(err) {
 					if strings.Contains(useGos, "Scratch")   {
 						app.Type = "app"
-						err = os.MkdirAll(filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name ), 0700 )
+
+						fullDir := filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name )
+						err = os.MkdirAll(fullDir, 0700 )
+						
 
 						if err != nil {
 							response = net_bAlert(Alertbs{Type:"danger",Text:"Error creating package " + r.FormValue("name") + ":" + err.Error(),Redirect: "javascript:console.log('error!')"})
+						} else {
+
+							os.Chdir(fullDir)
+							core.RunCmdSmart("go mod init")
 						}
 
 					} else if strings.Contains(useGos, "faas") {
@@ -2457,7 +2464,21 @@ for _, v := range apps {
 					}
 					defer c.Close()
 
-					ctx := exec.InteractiveExec("bash", "-i")
+					cm1,cm2 := "bash", "-i"
+
+					if Windows {
+						cm1 = "start"
+						cm2 = "cmd"
+					}
+
+					var ctx exec.ProcessContext
+
+					if Windows {
+						ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO Windows user.'") 
+					} else {
+						ctx = exec.InteractiveExec(cm1, cm2)
+					}
+
 			        reader :=  methods.Reader{Conn : c}
 			        go ctx.Receive(&reader, 5*time.Hour)
 			        
@@ -2482,7 +2503,11 @@ for _, v := range apps {
 								fmt.Println("Restarting")
 								ctx.Cancel()
 								ctx.Stop()
-								ctx = exec.InteractiveExec("bash", "-i")
+								if Windows {
+									ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO Windows user.'") 
+								} else {
+									ctx = exec.InteractiveExec(cm1, cm2)
+								}
 								reader = methods.Reader{Conn : c}
 						        go ctx.Receive(&reader, 5*time.Hour)
 							} else {
