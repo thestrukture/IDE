@@ -9,11 +9,9 @@ Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 
 ## About IDE
 This IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
-- Web application resource management.
-- Autocomplete between different files. ( This feature is broken as of now.)
+- Autocomplete.
 - Syntax correction.
-- Server process management.
-- Interactive terminal via web socket. (Must have bash installed for windows users.)
+- Interactive terminal via web socket.
 - Line tags in relation to failed build logs.
 - Project build scripts.
 - View web application output.
@@ -29,7 +27,7 @@ This IDE runs as a server and is accessed via web browser. Being a web server, t
 If the server launch hangs on startup, close it and install the additional requirements manually. Prior to running the commands, set your GOPATH to `$home/workspace`. You can do this on Windows with `set GOPATH=%USERPROFILE%\workspace`.
 Run the following command : 
 
-	go get github.com/nsf/gocode
+	go get github.com/mdempsky/gocode
 
 To add debug support, you must install delve. You can find the guide here. (Don't worry it is quick) [Install Delve](https://github.com/go-delve/delve/tree/master/Documentation/installation)
 
