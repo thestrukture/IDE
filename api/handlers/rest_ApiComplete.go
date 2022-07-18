@@ -33,7 +33,7 @@ func ApiComplete(w http.ResponseWriter, r *http.Request, session *sessions.Sessi
 
 	cmd := fmt.Sprintf(cms+" -f=json --in=%s autocomplete %s", tempFile, prefx)
 
-	res, err := core.RunCmdSmart(cmd)
+	res,_ := core.RunCmdSmart(cmd)
 	response = res
 
 	
