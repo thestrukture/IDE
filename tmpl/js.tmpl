@@ -439,9 +439,7 @@
     
     function handleMsg(event) {
             let term =  $('#terminaldefault').terminal();
-
-          
-            
+                      
 
             if(winDir == "await"){
                 if(prevBuff == event.data) return
@@ -461,6 +459,7 @@
             if (winDir && event.data.includes(winDir.replace(">", ""))){
                 working = false;
                 prevBuff = "";
+                $(".next-dlv").css("display", "none")
                 term.set_prompt(winDir)
                 return
             }
@@ -470,6 +469,7 @@
             if(event.data.includes("bash") && event.data.includes("$") && event.data.length < 50){
                 working = false;
                 prevBuff = "";
+                $(".next-dlv").css("display", "none")
                 term.set_prompt('user@Strutkure $')
                 return;
             } 
@@ -489,7 +489,9 @@
 
             if(window.$awaitDelve && window.$startMap){
               var br = window.$breakpoints[ window.$arrayIndex ];
+               term.echo(event.data);
               if(!br){
+                $(".next-dlv").css("display", "block")
                 delete window.$awaitDelve
                 window.socketTerminal.send("continue \n");
               }
@@ -505,6 +507,12 @@
           
     }
     socketTerminal.addEventListener('message',  handleMsg);
+
+    $(".next-dlv").click(() => {
+      socketTerminal.send("continue \n")    
+    })
+
+    $(".next-dlv").css("display", "none")
 
     jQuery(function($, undefined) {
     $('#terminaldefault').terminal(function(command, term) {
