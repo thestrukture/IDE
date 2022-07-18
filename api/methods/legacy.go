@@ -3,6 +3,7 @@ package methods
 import (
 	"archive/zip"
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -203,13 +204,15 @@ type Reader struct {
 }
 
 func (r *Reader) OnData(b []byte) bool {
-	r.Conn.WriteMessage(1, b)
+	newB := bytes.ToValidUTF8(b, []byte(""))
+	r.Conn.WriteMessage(1, newB)
 	return false
 }
 
 func (r *Reader) OnError(b []byte) bool {
 	if r.Conn != nil {
-		r.Conn.WriteMessage(1, b)
+		newB := bytes.ToValidUTF8(b, []byte(""))
+		r.Conn.WriteMessage(1, newB)
 	}
 	return false
 }

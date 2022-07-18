@@ -440,6 +440,7 @@
     function handleMsg(event) {
             let term =  $('#terminaldefault').terminal();
 
+          
             
 
             if(winDir == "await"){
@@ -481,11 +482,10 @@
             if(working)
               term.set_prompt('>')
 
-            if(event.data.includes("(dlv)")){
+            if(event.data.includes("(dlv)") || (event.data.includes("Type 'help' for list of commands.") && window.$awaitDelve ) ){
               window.$startMap = true;
               term.set_prompt('>')
             }
-
 
             if(window.$awaitDelve && window.$startMap){
               var br = window.$breakpoints[ window.$arrayIndex ];
@@ -499,8 +499,10 @@
                 window.$arrayIndex++;
               }
               
-
+              return
             }
+
+          
     }
     socketTerminal.addEventListener('message',  handleMsg);
 
@@ -509,7 +511,7 @@
       termx = term.echo;
         
         if(winDir && command == "killnow") return reset()
-        
+
         if (command !== '') {
             working = true;
             let cmC = command.trim()
@@ -879,7 +881,8 @@
           var ent = brs[v];
 
           if(ent){
-            breakpoints.push(`break ${k.replace("-breakpoints", "")}:${v + 1}`);
+            breakpoints.push(`break ${k.replace("-breakpoints", "")
+            .replace("\\", "")}:${v + 1}`);
           }
 
 

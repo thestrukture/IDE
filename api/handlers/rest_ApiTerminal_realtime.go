@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/adlane/exec"
@@ -34,7 +36,10 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 	var ctx exec.ProcessContext
 
 	if globals.Windows {
-		ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO globals.Windows user.'")
+		tc := strings.Replace("set PATH=%PATH%;"+os.ExpandEnv("$GOPATH")+"\\bin", "/", "\\", -1)
+
+		ctx = exec.InteractiveExec("cmd", "/k", tc)
+		c.WriteMessage(1, []byte("HELLO globals.Windows user."))
 	} else {
 		ctx = exec.InteractiveExec(cm1, cm2)
 	}
@@ -63,15 +68,23 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 				ctx.Cancel()
 				ctx.Stop()
 				if globals.Windows {
-					ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO globals.Windows user.'")
+					tc := strings.Replace("set PATH=%PATH%;"+os.ExpandEnv("$GOPATH")+"\\bin", "/", "\\", -1)
+
+					ctx = exec.InteractiveExec("cmd", "/k", tc)
+					c.WriteMessage(1, []byte("HELLO globals.Windows user."))
 				} else {
 					ctx = exec.InteractiveExec(cm1, cm2)
 				}
 				reader = methods.Reader{Conn: c}
 				go ctx.Receive(&reader, 5*time.Hour)
-			} else {
-				ctx.Send(msg)
+				continue
+
+			} else if strings.Contains(msg, "$GOPATH") && globals.Windows {
+
+				msg = strings.ReplaceAll(msg, "$GOPATH", globals.Dfd)
 			}
+
+			ctx.Send(msg)
 
 		}
 

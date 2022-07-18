@@ -2474,7 +2474,10 @@ for _, v := range apps {
 					var ctx exec.ProcessContext
 
 					if Windows {
-						ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO Windows user.'") 
+						tc := strings.Replace("set PATH=%PATH%;" + os.ExpandEnv("$GOPATH") + "\\bin", "/", "\\", -1) 
+						
+						ctx = exec.InteractiveExec("cmd", "/k", tc)
+						c.WriteMessage(1, []byte("HELLO Windows user."))
 					} else {
 						ctx = exec.InteractiveExec(cm1, cm2)
 					}
@@ -2500,19 +2503,27 @@ for _, v := range apps {
 							msg := string(message)
 
 							if msg == "killnow\n" {
-								fmt.Println("Restarting")
-								ctx.Cancel()
-								ctx.Stop()
-								if Windows {
-									ctx = exec.InteractiveExec("cmd", "/k", "echo 'HELLO Windows user.'") 
-								} else {
-									ctx = exec.InteractiveExec(cm1, cm2)
-								}
-								reader = methods.Reader{Conn : c}
-						        go ctx.Receive(&reader, 5*time.Hour)
+							fmt.Println("Restarting")
+							ctx.Cancel()
+							ctx.Stop()
+							if Windows {
+									tc := strings.Replace("set PATH=%PATH%;" + os.ExpandEnv("$GOPATH") + "\\bin", "/", "\\", -1) 
+						
+									ctx = exec.InteractiveExec("cmd", "/k", tc)
+									c.WriteMessage(1, []byte("HELLO Windows user."))
 							} else {
-								ctx.Send(msg)
+								ctx = exec.InteractiveExec(cm1, cm2)
 							}
+							reader = methods.Reader{Conn: c}
+							go ctx.Receive(&reader, 5*time.Hour)
+							continue
+
+							} else if strings.Contains(msg, "$GOPATH") && Windows {
+
+								msg = strings.ReplaceAll(msg, "$GOPATH", dfd)
+							}  
+								
+							ctx.Send(msg)
 
 							
 						}
