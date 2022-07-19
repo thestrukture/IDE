@@ -9,7 +9,7 @@ Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
 Get training for $299 [https://thestrukture.gumroad.com/l/strukture_live_training](https://thestrukture.gumroad.com/l/strukture_live_training)
 
 ## About IDE
-This IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network.Compared to Microsoft VS Code and Eclipse CHE, this IDE is very minimalistic. It features :
+This IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network. It features :
 - Autocomplete.
 - Syntax correction.
 - Interactive terminal via web socket.
