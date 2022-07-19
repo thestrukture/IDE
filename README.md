@@ -6,7 +6,7 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_shield)
 
 Go lang IDE. Built with [GopherSauce](http://gophersauce.com)
-Get training for $299 [https://thestrukture.gumroad.com/l/strukture_live_training](https://thestrukture.gumroad.com/l/strukture_live_training)
+
 
 ## About IDE
 This IDE runs as a server and is accessed via web browser. Being a web server, the IDE boasts a web (HTML) interface is accessible from any device on your network. It features :
@@ -50,26 +50,7 @@ Please create a new issue on Github to report a bug.
 
 ## How to use the strukture
 
-Built-in tutorials coming soon.
-
-
-### Extending
-Automate your work flow with just lines of Javascript. Read the Guide [here](https://github.com/thestrukture/SpringMenu). 
-
-## Contributions
-Improvements to the codebase and pull requests are encouraged.
-
-
-## Screenshots
-
-![screenshot](tests/5500.png)
-![screenshot](tests/5501.png)
-![screenshot](tests/1newsc.png)
-![screenshot](tests/2newsc.png)
-![screenshot](tests/3newsc.png)
-![screenshot](tests/4newsc.png)
-![screenshot](tests/5newsc.png)
-
+Get training for $299.99 [https://thestrukture.gumroad.com/l/strukture_live_training](https://thestrukture.gumroad.com/l/strukture_live_training)
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_large)
