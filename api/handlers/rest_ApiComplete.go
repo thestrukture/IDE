@@ -29,14 +29,13 @@ func ApiComplete(w http.ResponseWriter, r *http.Request, session *sessions.Sessi
 
 	if globals.Windows {
 		cms = strings.Replace(os.ExpandEnv("$GOPATH")+"\\bin\\gocode.exe", "/", "\\", -1)
+
 	}
 
 	cmd := fmt.Sprintf(cms+" -f=json --in=%s autocomplete %s", tempFile, prefx)
 
-	res,_ := core.RunCmdSmart(cmd)
+	res, _ := core.RunCmdSmart(cmd)
 	response = res
-
-	
 
 	os.Remove(tempFile)
 

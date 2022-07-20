@@ -73,8 +73,16 @@ func LaunchServer() {
 	}
 
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
-		fmt.Println("Go code completion not present, installing from github.com/nsf/gocode")
-		core.RunCmdSmart("go get github.com/nsf/gocode")
+		fmt.Println("Go code completion not present, installing from github.com/mdempsky/gocode")
+		if globals.Windows {
+			//
+			core.RunCmdSmart("go get -u -ldflags -H=windowsgui github.com/mdempsky/gocode")
+		} else {
+
+			core.RunCmdSmart("go get -u github.com/mdempsky/gocode")
+
+		}
+
 	}
 
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dep" + trailerEx); os.IsNotExist(err) {

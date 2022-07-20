@@ -336,7 +336,7 @@
                   id
                 },
                 success : function(html){
-                  let completions = html[1];
+                  let completions = html ? html[1] : false;
 
                   if(completions && completions.length > 0){
                    
