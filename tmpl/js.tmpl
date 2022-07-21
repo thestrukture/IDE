@@ -574,6 +574,11 @@
     });
    }
 
+  function resetTerminal(){
+    let term =  $('#terminaldefault').terminal();
+    term.exec([`killnow`]);
+  }
+
   function SavePKG(typ, pkv,editor){
       
       var payload = {type:typ,pkg:pkv};

@@ -1,4 +1,4 @@
- {{$me := SoftUser }}
+{{$me := SoftUser }}
 <!DOCTYPE html>
 <html class="full-height" lang="en">
 
@@ -152,7 +152,7 @@
             <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleTerm()"><i class="fa fa-terminal"></i> <span class="hidden-md-down">Terminal</span> </button>
             <button class="btn btn-sm btn-primary-outline open-terminal" onclick="toggleChat()"><i class="fa fa-user"></i> <span class="hidden-md-down">Chat</span> </button>
  
-            <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button> <button class="btn btn-sm btn-primary-outline int-guides-toggle" >Helper</button> </p>
+            <button class="btn new-package btn-sm btn-primary-outline xtrigger" path="/api/new?type=100">Plugins</button> </p>
     </div>
     <div class="container-fluid full-height40" style="" id="panel">
         <div class="row full-height " style="margin-bottom:15px;">
@@ -232,6 +232,7 @@ box-shadow: 14px 2px 5px -8px rgba(48,48,48,0.2);background:#00101d; z-index: 10
             <button class="term-b" onclick="addtermwidth()"><i class="fa fa-arrow-left"></i> </button>
             <label>Width</label>
             <button class="term-b" onclick="redtermwidth()"><i class="fa fa-arrow-right"></i></button>
+             <button onclick="resetTerminal()">Reset</button>
         </div>
         <div id="terminaldefault" class="terminal" style="clear:both"></div>
         <button style="position: absolute;bottom: 0;right: 0;" class="btn btn-primary-outline next-dlv">Next</button>
