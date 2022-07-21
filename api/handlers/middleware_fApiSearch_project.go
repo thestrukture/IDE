@@ -66,7 +66,7 @@ func fApiSearch_project(w http.ResponseWriter, r *http.Request, session *session
 
 			results = append(results, ent)
 
-			fmt.Println(path, info.Size())
+			//fmt.Println(path, info.Size())
 		}
 
 		return nil
@@ -110,7 +110,7 @@ func fApiSearch_project(w http.ResponseWriter, r *http.Request, session *session
 
 				results = append(results, ent)
 
-				fmt.Println(f.Name())
+				//	fmt.Println(f.Name())
 			}
 		}
 

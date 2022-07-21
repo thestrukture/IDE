@@ -2,7 +2,7 @@
 <div class="tabview" id="{{$rin}}" style="background-color:#fff;padding:10px;">
 
     <div style="height:100%;overflow-y: auto;background:#fff;" class="over-flow-fix">
-    <div>
+    <div style="margin-bottom:1em;">
         <p class="search-text" style="color:#333">Search for files in  {{.Link}}/{{.Misc}}</p>
         <textarea class="form-control search-field" placeholder="Search for" required></textarea>
         <hr>
@@ -22,10 +22,12 @@
       // $("#{{$rin}}
       function BindSearch() {
 
+          let pkg = "{{.Link}}"
+
           function search(text){
             return new Promise((resolve, reject) => {
                  let path = "{{.Misc}}"
-                 let pkg = "{{.Link}}"
+                 
                  let caseS = $("#{{$rin}} .sens").is(":checked") + ""
                  let top = $("#{{$rin}} .top").is(":checked") + ""
 
@@ -41,6 +43,77 @@
             })
           }
 
+          function process(records){
+
+              let results = []
+
+              for (var i = records.length - 1; i >= 0; i--) {
+                let r = records[i]
+                let plStr = r.Snippet.split("")
+                
+                for(var j = 0; j < r.Matches.length;j++){
+                    let pair = r.Matches[j]
+                    plStr[pair[0]] = "<span class='label label-primary'>" + plStr[pair[0]]
+                    plStr[pair[1]] =  plStr[pair[1]] + "</span>"
+
+                    let sliceStart = pair[0] > 36 ? pair[0] - 35 : 0
+                    let sliceEnd = plStr.length - pair[1] > 36 ? pair[1] + 35  : plStr.length
+
+                    let slice = plStr.slice(sliceStart, sliceEnd)
+                    
+                    let ent = {
+                      text : slice.join(""),
+                      path : r.File,
+                      pair
+                    }
+                    results.push(ent)
+
+                }
+              }
+
+
+              return results
+
+          }
+
+          function addToView(data){
+              $("#{{$rin}} .search-results").html("")
+
+              for (var i = data.length - 1; i >= 0; i--) {
+                let r = data[i]
+                r.text = r.text.split("\n").join("<br />")
+                let item = $("<div class='list-group-item'/>")
+                item.append("<small>" + r.path  + "<small>")
+                item.append("<p>...<br/>" + r.text  + "<br />...</p>")
+                let btn = $("<button class='btn btn-block btn-primary'>Open</button>")
+
+                btn.click( (e) => {
+                  if(working) return;
+                               
+                    working = true;
+                    $(".loader-prog").css("display","block");
+                    let fp = pkg + "@pkg:"+ r.path.split(pkg)[1]
+
+                    if(!fp) fp = r.path
+                    window.$goToPos = r.pair[0]
+
+                    $.ajax({url:"/api/get",type:"POST",data:{space:pkg,type:"60",id:fp}, error:function(e){
+                        working = false;
+                        $(".loader-prog").css("display","none");
+                        $(".ready-three").append($(e.responseText) );
+                      
+                    } 
+                  });
+                  
+                })
+
+                item.append(btn)
+
+                $("#{{$rin}} .search-results").append(item)
+              }
+
+          }
+
           $("#{{$rin}} .search-confirm").click(async function(){
               let val = $("#{{$rin}} .search-field").val()
               if(!val || val == ""){
@@ -49,7 +122,10 @@
               }
 
               try {
+
                 let result = await search(val)
+                let data = process(result)
+                addToView(data)
               
               } catch (e) {
                  swal("Internal server error", "Please verify your search query.", "error");
