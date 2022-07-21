@@ -81,3 +81,8 @@ func TestSROC(t *testing.T) {
 func TestVHuf(t *testing.T) {
 
 }
+
+func TestSearchResult(t *testing.T) {
+
+	t.Error("Test for data type SearchResult not implemented!!")
+}

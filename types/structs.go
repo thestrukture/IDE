@@ -9,6 +9,10 @@ type FSCs struct {
 	Hide bool
 	Form Forms
 }
+type SearchResult struct {
+	File, Snippet string
+	Matches       [][]int
+}
 type Dex struct {
 	Misc string
 	Text string

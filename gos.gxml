@@ -729,13 +729,109 @@
 					 path :=  filepath.Join(os.ExpandEnv("$GOPATH"), "src", r.FormValue("pkg"), r.FormValue("path") )
 					 search := r.FormValue("text")
 
-					 results = []SearchResult{}
-					 // file snippet matches
-					 
+					 if r.FormValue("caseS") == "false" {
+					 	search = "(?i)" + search
+					 }
 
-					 response = mResponse(results)
+					 rg, err := regexp.Compile(search)
 
-					 fmt.Println(path , search)
+					 if err != nil {
+					 	 response = fmt.Sprintf("%s", err)
+					 	 callmet = true
+					 	 return
+					 }
+
+					 results := []SearchResult{}
+					 walkfunc := func(path string, info os.FileInfo, err error) error {
+					    if err != nil {
+					        return err
+					    }
+
+					    if info.IsDir() {
+					    	return nil
+					    }
+
+					    if !strings.Contains( info.Name(), ".go") {
+					    	return nil
+					    }
+
+					    fData, err := ioutil.ReadFile(path)
+
+					    if err != nil {
+					    	return err
+					    }
+
+					    sData := string(fData)
+					    matches :=  rg.FindAllStringSubmatchIndex(sData, -1)
+
+					    if len(matches) > 0 {
+					    	ent := SearchResult{
+					    		File : path,
+					    		Snippet : sData,
+					    		Matches : matches,
+					    	}
+
+					    	results = append(results, ent)
+
+					    	fmt.Println(path, info.Size())
+					    }
+			    
+					    return nil
+					}
+					// file snippet matches
+
+					if r.FormValue("top") == "true" {
+
+						files, err := ioutil.ReadDir(path)
+
+						if err != nil {
+						    log.Fatal(err)
+						    return
+						}
+
+						for _, f := range files {
+						    if f.IsDir() {
+						    	continue
+						    }
+
+						    if !strings.Contains( f.Name(), ".go") {
+						    	continue
+						    }
+
+						    pathf := filepath.Join(path, f.Name())
+						    fData, err := ioutil.ReadFile(pathf)
+
+						    if err != nil {
+						    	continue
+						    }
+
+						    sData := string(fData)
+						    matches :=  rg.FindAllStringSubmatchIndex(sData, -1)
+
+						    if len(matches) > 0 {
+						    	ent := SearchResult{
+						    		File : f.Name(),
+						    		Snippet : sData,
+						    		Matches : matches,
+						    	}
+
+						    	results = append(results, ent)
+
+						    	fmt.Println(f.Name())
+						    }
+						}
+
+					} else {
+						err = filepath.Walk(path, walkfunc)
+
+						if err != nil {
+						    fmt.Println(err)
+						}
+					}
+
+					response = mResponse(results)
+					callmet = true
+
 				</end>
 				<end path="/api/get" method="mGet" type="f" >
 					me := SoftUser{Email:"Strukture user", Username:"Strukture user"}

@@ -31,8 +31,11 @@
 
                  $.ajax({url:"/api/search_project",type:"POST",data:{
                     pkg,path,text,top,caseS
+                  }, success:function(html){
+                      console.log(html)
+                      resolve(html)
                   }, error:function(e){
-                        resolve(e)    
+                      reject(e)    
                     } 
                   });
             })
@@ -45,8 +48,12 @@
                  return
               }
 
-              let result = await search(val)
+              try {
+                let result = await search(val)
               
+              } catch (e) {
+                 swal("Internal server error", "Please verify your search query.", "error");
+              }
 
           })
 

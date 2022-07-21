@@ -32,6 +32,28 @@ func CastFSCs(args ...interface{}) *FSCs {
 func NewFSCs() *FSCs { return &FSCs{} }
 
 // Asserts first argument, a map, as struct
+// SearchResult. This function is used with template functionality.
+func CastSearchResult(args ...interface{}) *SearchResult {
+
+	s := SearchResult{}
+	mapp := args[0].(db.O)
+	if _, ok := mapp["_id"]; ok {
+		mapp["Id"] = mapp["_id"]
+	}
+	data, _ := json.Marshal(&mapp)
+
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return &s
+}
+
+// Create a new SearchResult struct and return the pointer.
+func NewSearchResult() *SearchResult { return &SearchResult{} }
+
+// Asserts first argument, a map, as struct
 // Dex. This function is used with template functionality.
 func CastDex(args ...interface{}) *Dex {
 

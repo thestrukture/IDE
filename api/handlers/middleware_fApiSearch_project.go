@@ -4,19 +4,126 @@ package handlers
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/gorilla/sessions"
+	types "github.com/thestrukture/IDE/types"
 )
 
 //
 func fApiSearch_project(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
 
 	path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", r.FormValue("pkg"), r.FormValue("path"))
+	search := r.FormValue("text")
 
-	fmt.Println(path)
+	if r.FormValue("caseS") == "false" {
+		search = "(?i)" + search
+	}
+
+	rg, err := regexp.Compile(search)
+
+	if err != nil {
+		response = fmt.Sprintf("%s", err)
+		callmet = true
+		return
+	}
+
+	results := []types.SearchResult{}
+	walkfunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		if !strings.Contains(info.Name(), ".go") {
+			return nil
+		}
+
+		fData, err := ioutil.ReadFile(path)
+
+		if err != nil {
+			return err
+		}
+
+		sData := string(fData)
+		matches := rg.FindAllStringSubmatchIndex(sData, -1)
+
+		if len(matches) > 0 {
+			ent := types.SearchResult{
+				File:    path,
+				Snippet: sData,
+				Matches: matches,
+			}
+
+			results = append(results, ent)
+
+			fmt.Println(path, info.Size())
+		}
+
+		return nil
+	}
+	// file snippet matches
+
+	if r.FormValue("top") == "true" {
+
+		files, err := ioutil.ReadDir(path)
+
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		for _, f := range files {
+			if f.IsDir() {
+				continue
+			}
+
+			if !strings.Contains(f.Name(), ".go") {
+				continue
+			}
+
+			pathf := filepath.Join(path, f.Name())
+			fData, err := ioutil.ReadFile(pathf)
+
+			if err != nil {
+				continue
+			}
+
+			sData := string(fData)
+			matches := rg.FindAllStringSubmatchIndex(sData, -1)
+
+			if len(matches) > 0 {
+				ent := types.SearchResult{
+					File:    f.Name(),
+					Snippet: sData,
+					Matches: matches,
+				}
+
+				results = append(results, ent)
+
+				fmt.Println(f.Name())
+			}
+		}
+
+	} else {
+		err = filepath.Walk(path, walkfunc)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	response = mResponse(results)
+	callmet = true
 
 	return
 }
