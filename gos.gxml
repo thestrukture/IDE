@@ -166,7 +166,10 @@
 			Hide bool
 			Form Forms
 		</struct>
-
+		<struct name="SearchResult">
+			File, Snippet string
+			Matches [][]int
+		</struct>
 		<struct name="Dex">
 			Misc string
 			Text string
@@ -609,7 +612,8 @@
 	    	 	 <template name="CrashedPage" tmpl="ui/crashedpage" struct="Dex" desc="Package Page Menu" />
 	    	 	 <template name="EndpointTesting" tmpl="ui/endpointtester" struct="Dex" />
 	    	 	 <template name="KanBan" tmpl="ui/kanban" struct="Dex" />
-	    	 	  <template name="Docker" tmpl="ui/docker" struct="Dex" />
+	    	 	 <template name="Docker" tmpl="ui/docker" struct="Dex" />
+	    	 	  <template name="SearchProject" tmpl="ui/search" struct="Dex" />
 	    	 	 <template name="NavPromo" tmpl="ui/navpromo" struct="Dex" desc="Package Page Menu" />
 
           </templates>
@@ -720,6 +724,18 @@
 					
 					methods.ClearLogs(r.FormValue("pkg"))
 					response = net_bAlert(Alertbs{Type:"success",Text:"Your build logs are cleared." })
+				</end>
+				<end path="/api/search_project" type="f" >
+					 path :=  filepath.Join(os.ExpandEnv("$GOPATH"), "src", r.FormValue("pkg"), r.FormValue("path") )
+					 search := r.FormValue("text")
+
+					 results = []SearchResult{}
+					 // file snippet matches
+					 
+
+					 response = mResponse(results)
+
+					 fmt.Println(path , search)
 				</end>
 				<end path="/api/get" method="mGet" type="f" >
 					me := SoftUser{Email:"Strukture user", Username:"Strukture user"}
@@ -1269,6 +1285,11 @@ for _, v := range apps {
 
 			} else if r.FormValue("type") == "5500" {
 				response = net_bDocker(Dex{Misc:r.FormValue("space")})
+			} else if r.FormValue("type") == "5505" {
+				response = net_bSearchProject(Dex{
+					Link : r.FormValue("pkg"),
+					Misc: r.FormValue("path"),
+				})
 			}
 
 			callmet = true
@@ -2459,6 +2480,7 @@ for _, v := range apps {
 							} else if strings.Contains(msg, "$GOPATH") && Windows {
 
 								msg = strings.ReplaceAll(msg, "$GOPATH", dfd)
+								msg = strings.ReplaceAll(msg, "/", "\\")
 							}  
 								
 							ctx.Send(msg)

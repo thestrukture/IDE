@@ -82,6 +82,7 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 			} else if strings.Contains(msg, "$GOPATH") && globals.Windows {
 
 				msg = strings.ReplaceAll(msg, "$GOPATH", globals.Dfd)
+				msg = strings.ReplaceAll(msg, "/", "\\")
 			}
 
 			ctx.Send(msg)

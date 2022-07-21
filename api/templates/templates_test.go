@@ -447,3 +447,8 @@ func TestDocker(t *testing.T) {
 func TestNavPromo(t *testing.T) {
 
 }
+
+func TestSearchProject(t *testing.T) {
+
+	t.Error("Test for template SearchProject not implemented!!")
+}

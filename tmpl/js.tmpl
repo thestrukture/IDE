@@ -728,8 +728,7 @@
           $.ajax({url:"/api/get",type:"POST",data:{space:node.appid,type:node.type,id:node.id}, error:function(e){
               working = false;
               $(".loader-prog").css("display","none");
-              $(".ready-three").append($(e.responseText) );
-            
+              $(".ready-three").append($(e.responseText) );      
           } 
         });
         }
@@ -762,6 +761,54 @@
                               }
                           };
                         }
+
+                      if ($node.original.dtype.includes("isDir=Yes")){
+
+                         menu["Run"] = {
+                              "label": "Open in terminal",
+                              "action": function (obj) {
+                               // isDirTerm
+                               let parts = $node.original.dtype.split("path=")
+                               
+                               if( winDir ){
+                                  winDir = ('src/' + $node.original.appid + "/" + parts[1]).split("/").join("\\") + ">"
+                               }
+
+                               socketTerminal.send('cd $GOPATH/src/' + $node.original.appid + "/" + parts[1] + "\n");
+
+                               setTimeout(() => {
+
+                                   if(!$(".terminal-side").hasClass('active')){
+                                      $(".terminal-side").addClass('active');
+                                      $(".terminal-side").css('display','block');
+                                  }
+
+                               }, 3000)
+                              }
+                          };
+
+                          menu["Search"] = {
+                              "label": "Search in folder",
+                              "action": function (obj) {
+                               // isDirTerm
+                               let parts = $node.original.dtype.split("path=")
+                               let id = $node.original.appid
+
+                               if(working) return;
+                               
+                                working = true;
+                                $(".loader-prog").css("display","block");
+                                $.ajax({url:"/api/get",type:"POST",data:{pkg:id,type:"5505",path:parts[1]}, error:function(e){
+                                    working = false;
+                                    $(".loader-prog").css("display","none");
+                                    $(".ready-three").append($(e.responseText) );
+                                  
+                                } 
+                              });
+
+                              }
+                          };
+                      }
 
                       if ($node.original.btype){
 

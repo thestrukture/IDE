@@ -30,6 +30,10 @@ func ApiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 		session, _ = sessionStore.Store.New(r, "session-")
 	}
 
+	if strings.Contains(r.URL.Path, "/api/search_project") {
+		response, callmet = fApiSearch_project(w, r, session)
+	}
+
 	if strings.Contains(r.URL.Path, "/api/get") {
 		response, callmet = fApiGet(w, r, session)
 	}

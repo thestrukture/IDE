@@ -543,6 +543,11 @@ func fApiGet(w http.ResponseWriter, r *http.Request, session *sessions.Session) 
 
 	} else if r.FormValue("type") == "5500" {
 		response = templates.Docker(types.Dex{Misc: r.FormValue("space")})
+	} else if r.FormValue("type") == "5505" {
+		response = templates.SearchProject(types.Dex{
+			Link: r.FormValue("pkg"),
+			Misc: r.FormValue("path"),
+		})
 	}
 
 	callmet = true

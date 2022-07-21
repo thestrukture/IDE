@@ -20,3 +20,8 @@ func TestfApiGet(t *testing.T) {
 
 	onyx.Handle(req, h, t)
 }
+
+func testfApiSearch_project(t *testing.T) {
+
+	t.Error("Test for middleware handler fApiSearch_project not implemented!!")
+}

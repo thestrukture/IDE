@@ -1,0 +1,62 @@
+{{$rin := RandTen}}
+<div class="tabview" id="{{$rin}}" style="background-color:#fff;padding:10px;">
+
+    <div style="height:100%;overflow-y: auto;background:#fff;" class="over-flow-fix">
+    <div>
+        <p class="search-text" style="color:#333">Search for files in  {{.Link}}/{{.Misc}}</p>
+        <textarea class="form-control search-field" placeholder="Search for" required></textarea>
+        <hr>
+        <button class="btn btn-primary search-confirm">Search</button>
+        <input type="checkbox" class="sens"><label style="color:#333;margin-left:5px;"> Case sensitive</label>
+        <input type="checkbox" class="top"><label style="color:#333;margin-left:5px;"> Search only this folder</label>
+    </div>
+
+    <div class="list-group search-results">
+      
+    </div>
+
+    </div>
+
+    <script type="text/javascript">
+    setTimeout(function() {
+      // $("#{{$rin}}
+      function BindSearch() {
+
+          function search(text){
+            return new Promise((resolve, reject) => {
+                 let path = "{{.Misc}}"
+                 let pkg = "{{.Link}}"
+                 let caseS = $("#{{$rin}} .sens").is(":checked") + ""
+                 let top = $("#{{$rin}} .top").is(":checked") + ""
+
+                 $.ajax({url:"/api/search_project",type:"POST",data:{
+                    pkg,path,text,top,caseS
+                  }, error:function(e){
+                        resolve(e)    
+                    } 
+                  });
+            })
+          }
+
+          $("#{{$rin}} .search-confirm").click(async function(){
+              let val = $("#{{$rin}} .search-field").val()
+              if(!val || val == ""){
+                 swal("", "Please enter a search value.", "error");
+                 return
+              }
+
+              let result = await search(val)
+              
+
+          })
+
+
+      }
+
+
+      BindSearch();
+
+    }, 300);
+    addTab("{{.Link}} - Search in {{.Misc}}", "{{$rin}}");
+    </script>
+</div>
