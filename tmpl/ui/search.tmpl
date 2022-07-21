@@ -8,7 +8,8 @@
         <hr>
         <button class="btn btn-primary search-confirm">Search</button>
         <input type="checkbox" class="sens"><label style="color:#333;margin-left:5px;"> Case sensitive</label>
-        <input type="checkbox" class="top"><label style="color:#333;margin-left:5px;"> Search only this folder</label>
+        <input type="checkbox" class="top"><label style="color:#333;margin-left:5px;"> Search only this folder</label><br/>
+        <p class="search-count label label-primary"> </p>
     </div>
 
     <div class="list-group search-results">
@@ -78,6 +79,7 @@
 
           function addToView(data){
               $("#{{$rin}} .search-results").html("")
+               $("#{{$rin}} .search-count").html("Found " + data.length  + " matche(s)")
 
               for (var i = data.length - 1; i >= 0; i--) {
                 let r = data[i]
@@ -130,7 +132,7 @@
                 addToView(data)
               
               } catch (e) {
-                 swal("Internal server error", "Please verify your search query.", "error");
+                 swal("Internal server error", "Please verify your search query. " + e.responseText, "error");
               }
 
           })
