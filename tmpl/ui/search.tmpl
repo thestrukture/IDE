@@ -92,9 +92,11 @@
                                
                     working = true;
                     $(".loader-prog").css("display","block");
-                    let fp = pkg + "@pkg:"+ r.path.split(pkg)[1]
+                    let parts = r.path.split(pkg)
+                    let oPath = parts[1] ? parts[1] : r.path
+                    let fp = pkg + "@pkg:"+ oPath
 
-                    if(!fp) fp = r.path
+                    
                     window.$goToPos = r.pair[0]
 
                     $.ajax({url:"/api/get",type:"POST",data:{space:pkg,type:"60",id:fp}, error:function(e){
