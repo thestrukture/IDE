@@ -31,7 +31,7 @@ To add debug support, you must install delve. You can find the guide here. (Don'
 
 ## Install
 
-		$ go get github.com/thestrukture/IDE
+		$ go install github.com/thestrukture/IDE@latest
 
 #### How to run
 
