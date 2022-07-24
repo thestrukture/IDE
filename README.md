@@ -36,7 +36,10 @@ To add debug support, you must install delve. You can find the guide here. (Don'
 #### How to run
 
 		$ IDE
+		
+#### Run as a server
 
+		$ IDE --headless
 
 ## Access
 
