@@ -12,4 +12,4 @@ RUN rm -rf ${WEBAPP}
 VOLUME /home
 RUN mkdir -p ${HOME}
 EXPOSE 8884
-CMD IDE
+CMD IDE --headless
