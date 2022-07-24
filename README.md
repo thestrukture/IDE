@@ -41,9 +41,6 @@ To add debug support, you must install delve. You can find the guide here. (Don'
 
 		$ IDE --headless
 
-## Access
-
-Visit [localhost:8884/index](http://localhost:8884/index). Access the IDE from any device on your network as well...
 
 ## Bug reports & questions :
 Please create a new issue on Github to report a bug.
