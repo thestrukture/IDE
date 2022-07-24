@@ -9,9 +9,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
+	
 	"github.com/cheikhshift/gos/core"
 	"github.com/fatih/color"
+	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/thestrukture/IDE/api/globals"
 	"github.com/thestrukture/IDE/api/methods"
 	"github.com/thestrukture/IDE/types"
@@ -41,6 +42,8 @@ func LaunchServer() {
 		//download go
 		os.MkdirAll("workspace/src", 0700)
 		os.MkdirAll("workspace/bin", 0700)
+		os.MkdirAll("workspace/cache", 0700)
+		os.MkdirAll("workspace/userData", 0700)
 		cwd, _ := os.Getwd()
 		cwd = cwd + "/workspace"
 		os.Setenv("GOPATH", cwd)
@@ -50,11 +53,7 @@ func LaunchServer() {
 		} else {
 			os.Setenv("PATH", pathbin+":"+cwd+"/bin")
 		}
-		_, goinvs := core.RunCmdSmart("go help build")
-		if goinvs != nil {
-			fmt.Println("If you do not have GO, remember to download and install GO to complete installation. Find Go here : https://golang.org/dl/ . ***Installing GO requires sudo permission.")
 
-		}
 		globals.Dfd = cwd
 
 	}
@@ -115,14 +114,23 @@ func LaunchServer() {
 	methods.SaveApps(newapps)
 
 	log.Println("Strukture up on port 8884")
-	if len(os.Args) == 1 && !globals.Windows {
-		if isMac := strings.Contains(runtime.GOOS, "arwin"); isMac {
-			core.RunCmd("open http://localhost:8884/index")
-		} else {
-			core.RunCmd("xdg-open http://localhost:8884/index")
-		}
-	} else if len(os.Args) == 1 && globals.Windows {
-		core.RunCmd("cmd /C start http://localhost:8884/index")
+
+	if len(os.Args) == 1 {
+
+		go func() {
+
+			dataDir := filepath.Join(globals.Dfd, "userData")
+			cache := filepath.Join(globals.Dfd, "cache")
+			c := chrome.Command("http://localhost:8884", dataDir, cache)
+
+			err := c.Run()
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			os.Exit(0)
+		}()
 	}
 
 }
