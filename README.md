@@ -15,7 +15,7 @@ Just a Go IDE. It features :
 - View web application output.
 - Build docker images (Must have docker running on host) . 
 - Breakpoints and debugging with Delve.
-
+- Regex directory search.
 ## Requirements
 - Go v1.15+.
 - Git. Git present as a command on your system.
