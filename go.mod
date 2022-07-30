@@ -9,7 +9,7 @@ require (
 	github.com/cheikhshift/gos v0.6.2
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fatih/color v1.7.0
-	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gorilla/mux v1.7.1 // indirect
 	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.5.0
