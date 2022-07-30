@@ -11,7 +11,6 @@ import (
 	"strings"
 	
 	"github.com/cheikhshift/gos/core"
-	"github.com/fatih/color"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/thestrukture/IDE/api/globals"
 	"github.com/thestrukture/IDE/api/methods"
@@ -58,18 +57,6 @@ func LaunchServer() {
 
 	}
 
-	dir := os.ExpandEnv("$GOPATH") + "/bin/gos" + trailerEx
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		fmt.Println("Downloading GoS")
-		_, err := core.RunCmdSmart("go get github.com/cheikhshift/gos")
-		if err != nil {
-			color.Red("Please, install GO : https://golang.org/dl/ ")
-		} else {
-			// removed gos support, should increase 1st launch
-			// time.
-			//core.RunCmdSmart("gos deps")
-		}
-	}
 
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Go code completion not present, installing from github.com/mdempsky/gocode")
@@ -78,21 +65,24 @@ func LaunchServer() {
 			core.RunCmdSmart("go get -u -ldflags -H=windowsgui github.com/mdempsky/gocode")
 		} else {
 
-			core.RunCmdSmart("go get -u github.com/mdempsky/gocode")
-
+			_ , err1 := core.RunCmdSmart("go install github.com/mdempsky/gocode@latest")
+		    
+		    if err1 != nil {
+		    	log.Fatal(err1)
+		    }
 		}
 
 	}
 
-	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dep" + trailerEx); os.IsNotExist(err) {
-		fmt.Println("Go dep not present, installing from github.com/golang/dep")
-		core.RunCmdSmart("go get github.com/golang/dep/cmd/dep")
-	}
 
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dlv" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
 
-		core.RunCmdSmart("go get github.com/go-delve/delve/cmd/dlv")
+		_, err1 := core.RunCmdSmart("go install github.com/go-delve/delve/cmd/dlv@latest")
+
+		if err1 != nil {
+		    	log.Fatal(err1)
+		}
 
 	}
 
