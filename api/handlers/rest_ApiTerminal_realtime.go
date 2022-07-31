@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -27,11 +28,7 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 	defer c.Close()
 
 	cm1, cm2 := "bash", "-i"
-
-	if globals.Windows {
-		cm1 = "start"
-		cm2 = "cmd"
-	}
+	isLinux := strings.Contains(runtime.GOOS, "linux")
 
 	var ctx exec.ProcessContext
 
@@ -40,6 +37,10 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 
 		ctx = exec.InteractiveExec("cmd", "/k", tc)
 		c.WriteMessage(1, []byte("HELLO globals.Windows user."))
+	} else if isLinux {
+		cm1 = "bash"
+		ctx = exec.InteractiveExec(cm1)
+
 	} else {
 		ctx = exec.InteractiveExec(cm1, cm2)
 	}
@@ -53,8 +54,10 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 			log.Println("read:", err)
 
 			if ctx != nil {
+
 				ctx.Cancel()
 				ctx.Stop()
+
 			}
 
 			break
@@ -65,15 +68,22 @@ func ApiTerminal_realtime(w http.ResponseWriter, r *http.Request, session *sessi
 
 			if msg == "killnow\n" {
 				fmt.Println("Restarting")
+
 				ctx.Cancel()
 				ctx.Stop()
+
 				if globals.Windows {
+
 					tc := strings.Replace("set PATH=%PATH%;"+os.ExpandEnv("$GOPATH")+"\\bin", "/", "\\", -1)
 
 					ctx = exec.InteractiveExec("cmd", "/k", tc)
 					c.WriteMessage(1, []byte("HELLO globals.Windows user."))
+				} else if isLinux {
+
+					ctx = exec.InteractiveExec(cm1)
 				} else {
 					ctx = exec.InteractiveExec(cm1, cm2)
+
 				}
 				reader = methods.Reader{Conn: c}
 				go ctx.Receive(&reader, 5*time.Hour)

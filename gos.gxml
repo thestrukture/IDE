@@ -2515,11 +2515,8 @@ for _, v := range apps {
 					defer c.Close()
 
 					cm1,cm2 := "bash", "-i"
+					isLinux := strings.Contains(runtime.GOOS, "linux")
 
-					if Windows {
-						cm1 = "start"
-						cm2 = "cmd"
-					}
 
 					var ctx exec.ProcessContext
 
@@ -2528,6 +2525,10 @@ for _, v := range apps {
 						
 						ctx = exec.InteractiveExec("cmd", "/k", tc)
 						c.WriteMessage(1, []byte("HELLO Windows user."))
+					} else if isLinux {
+						cm1 = "bash"
+						ctx = exec.InteractiveExec(cm1)
+
 					} else {
 						ctx = exec.InteractiveExec(cm1, cm2)
 					}
@@ -2541,9 +2542,11 @@ for _, v := range apps {
 						if err != nil {
 							log.Println("read:", err)
 
-							if ctx != nil {
+							if ctx != nil  {
+		
 								ctx.Cancel()
 								ctx.Stop()
+								
 							}
 
 							break
@@ -2554,15 +2557,22 @@ for _, v := range apps {
 
 							if msg == "killnow\n" {
 							fmt.Println("Restarting")
+							
 							ctx.Cancel()
 							ctx.Stop()
+
 							if Windows {
+									
 									tc := strings.Replace("set PATH=%PATH%;" + os.ExpandEnv("$GOPATH") + "\\bin", "/", "\\", -1) 
 						
 									ctx = exec.InteractiveExec("cmd", "/k", tc)
 									c.WriteMessage(1, []byte("HELLO Windows user."))
+							} else if isLinux {
+
+								ctx = exec.InteractiveExec(cm1)
 							} else {
 								ctx = exec.InteractiveExec(cm1, cm2)
+								
 							}
 							reader = methods.Reader{Conn: c}
 							go ctx.Receive(&reader, 5*time.Hour)

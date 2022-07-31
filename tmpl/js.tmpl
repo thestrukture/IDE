@@ -311,9 +311,15 @@
     }
 
       var langTools = ace.require("ace/ext/language_tools");
-
+      /*
+      {
+          "identifierRegexps": [
+              /\./,
+              /[^\s]+/
+          ]
+      }
+      */
       var autoCompleter = {
-        identifierRegexps: [/\./],
         getCompletions: function(editor, session, pos, prefix, callback) {
          
            let pkg  =  $(".tabview.active").attr("pkg"),
@@ -341,7 +347,7 @@
                   if(completions && completions.length > 0){
                    
                     callback(null, completions.map(function(ea) {
-                      console.log(prefix);
+                      console.log("auto",prefix);
                       if(prefix[prefix.length - 1] === ".")
                         ea.package = prefix;
 
@@ -522,6 +528,7 @@
             }
 
             setTimeout(()=> {
+               prevBuff = ""
                window.socketTerminal.send(command + "\n");
             }, 400)
            
@@ -534,7 +541,7 @@
         term.set_prompt(( working ? "":'user@Strutkure $' ) )
 
     }, {
-        greetings: 'Welcome to the Strukture v1.1\nA few notes :\nMake use of the kill command to stop a process.\n2.Command killnow will stop the current process.\n3. Ctrl + c is not supported yet (looking for unicode characters to replace it).',
+        greetings: 'Welcome to the Strukture v1.1\nA few notes :\nMake use of the kill command to stop a process.\n2.Command killnow will stop the current process.',
         name: 'struk_term',
         height: ($(".terminal-side").height() - 55),
         prompt: (working ? "":'user@Strutkure $'),
