@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	
+
 	"github.com/cheikhshift/gos/core"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/thestrukture/IDE/api/globals"
@@ -18,8 +18,6 @@ import (
 )
 
 func LaunchServer() {
-
-	// turn off modules, it does not play nice here
 
 	globals.Dfd = os.ExpandEnv("$GOPATH")
 	globals.Windows = strings.Contains(runtime.GOOS, "windows")
@@ -57,7 +55,6 @@ func LaunchServer() {
 
 	}
 
-
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/gocode" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Go code completion not present, installing from github.com/mdempsky/gocode")
 		if globals.Windows {
@@ -65,15 +62,14 @@ func LaunchServer() {
 			core.RunCmdSmart("go get -u -ldflags -H=windowsgui github.com/mdempsky/gocode")
 		} else {
 
-			_ , err1 := core.RunCmdSmart("go install github.com/mdempsky/gocode@latest")
-		    
-		    if err1 != nil {
-		    	log.Fatal(err1)
-		    }
+			_, err1 := core.RunCmdSmart("go install github.com/mdempsky/gocode@latest")
+
+			if err1 != nil {
+				log.Fatal(err1)
+			}
 		}
 
 	}
-
 
 	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dlv" + trailerEx); os.IsNotExist(err) {
 		fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
@@ -81,7 +77,7 @@ func LaunchServer() {
 		_, err1 := core.RunCmdSmart("go install github.com/go-delve/delve/cmd/dlv@latest")
 
 		if err1 != nil {
-		    	log.Fatal(err1)
+			log.Fatal(err1)
 		}
 
 	}

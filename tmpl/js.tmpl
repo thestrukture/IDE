@@ -312,8 +312,8 @@
 
       var langTools = ace.require("ace/ext/language_tools");
 
-        var rhymeCompleter = {
-        identifierRegexps: [/[a-zA-Z_0-9\.\-\u00A2-\uFFFF]/],
+      var autoCompleter = {
+        identifierRegexps: [/\./],
         getCompletions: function(editor, session, pos, prefix, callback) {
          
            let pkg  =  $(".tabview.active").attr("pkg"),
@@ -347,26 +347,16 @@
 
                       return {caption: ea.name, value:prefix[prefix.length - 1] === "." ? ea.package + ea.name : ea.name, score: 0, meta: ea.type + " " + ea.class, trigger : true}
                     }));
-                  } else callback(null, []);
+                  } 
                 }
               }
               )
 
               
-           } else {
-            if (prefix.length === 0) { callback(null, []); return }
-             $.getJSON(
-                "/api/complete?pref=" + prefix + "&pkg=" + pkg,
-                function(wordList) {
-                    // wordList like [{"word":"flow","freq":24,"score":300,"flags":"bc","syllables":"1"}]
-                    callback(null, wordList.map(function(ea) {
-                        return {name: ea.word, value: ea.value, score: ea.score, meta: ea.meta}
-                    }));
-                })
-           }
+           } 
         }
     }
-    langTools.addCompleter(rhymeCompleter);
+    langTools.addCompleter(autoCompleter);
 
 
     function ClearSideBay(){
