@@ -394,12 +394,17 @@
           $(".ace_gutter-cell",  "#" + id).each(function(e,i){
             let key = $(this).text().trim()
 
-          if (lineArr[key] && !$("i", this).length ){
-            $(this).attr("style", "height:12px;background:yellow;")
-            $(this).attr("title", lineArr[key].join("\n"))
-          
-          }
-        })
+            if (lineArr[key] && !$("i", this).length ){
+              $(this).attr("style", "height:12px;background:yellow;")
+             
+              $(this).unbind()
+              $(this).popover({
+                content : lineArr[key].join("<br />"),
+                placement : "right"
+              });
+            
+            }
+          })
 
        } });
 
@@ -435,7 +440,12 @@
 
           if (lineArr[key] && !$("i", this).length ){
             $(this).attr("style", "height:12px;background:yellow;")
-            $(this).attr("title", lineArr[key].join("\n"))
+
+            $(this).unbind()
+            $(this).popover({
+              content : lineArr[key].join("<br />"),
+              placement : "right"
+            });
           
           }
         })
@@ -449,9 +459,11 @@
         if ( $("i", this).length  )
           return
 
+     
+
         let el = $(this)
         el.attr("style", "height:12px")
-        el.attr("title", null)
+        el.unbind()
       })
     }
       
