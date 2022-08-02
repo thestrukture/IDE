@@ -313,16 +313,19 @@
       var langTools = ace.require("ace/ext/language_tools");
       
       var autoCompleter = {
+        identifierRegexps: [/[a-zA-Z_0-9]\.\s/],
         getCompletions: function(editor, session, pos, prefix, callback) {
          
            let pkg  =  $(".tabview.active").attr("pkg"),
            id = $(".tabview.active").attr("id");
 
+           //console.log(session, pos, prefix)
+
            if(editor.custom){
 
               let latest = editor.getValue();
               let index = editor.session.doc.positionToIndex(editor.selection.getCursor()) ;
-              
+              let lastEntry;
               $.ajax(
               {
                 url : "/api/complete",
@@ -340,11 +343,13 @@
                   if(completions && completions.length > 0){
                    
                     callback(null, completions.map(function(ea) {
-                      console.log("auto",prefix);
+                      
                       if(prefix[prefix.length - 1] === ".")
                         ea.package = prefix;
 
-                      return {caption: ea.name, value:prefix[prefix.length - 1] === "." ? ea.package + ea.name : ea.name, score: 0, meta: ea.type + " " + ea.class, trigger : true}
+                      let ret = {caption: ea.name, value:prefix[prefix.length - 1] === "." ? ea.package + ea.name : ea.name, score: 0, meta: ea.type + " " + ea.class, trigger : true}
+
+                      return ret
                     }));
                   } 
                 }
