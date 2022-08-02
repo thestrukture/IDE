@@ -13,12 +13,12 @@ import (
 	"github.com/cheikhshift/gos/core"
 	"github.com/gorilla/sessions"
 	templates "github.com/thestrukture/IDE/api/templates"
+	"gopkg.in/mgo.v2/bson"
 
 	methods "github.com/thestrukture/IDE/api/methods"
 
 	"github.com/thestrukture/IDE/api/globals"
 	types "github.com/thestrukture/IDE/types"
-	"gopkg.in/mgo.v2/bson"
 )
 
 //

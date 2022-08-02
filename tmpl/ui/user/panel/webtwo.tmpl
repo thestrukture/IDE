@@ -130,9 +130,43 @@
 
 		editorPaths['{{.PKG}} - {{.SavesTo}}'.replace("\\", "/")] = editors["{{.ID}}"];
 
+		function vetAndLint(){
+			let file = {{ .SavesTo }}
+		    $.ajax({type : "POST", data : { 
+		    	pkg : {{ .PKG }}
+		    } ,url: "/api/govet", success:function(html){
+		    	
+		    	let cText = html.Text.split("\n")
 
+		    	for(var i = 1; i < cText.length;i++){
+
+		    		let line = cText[i]
+
+		    		if ( line.includes(file) ){
+		    			let lineParts = line.split(":")
+		    			if( lineParts[2] ){
+		    				let lastBit = lineParts[ lineParts.length - 1]
+		    				console.log(lineParts[2], lastBit)
+
+		    			}
+		    		}
+		    	}
+			 } });
+
+
+		      $.ajax({type : "POST", data : { 
+		    	pkg : {{ .PKG }},
+		    	path : {{ .SavesTo }}
+		    },url: "/api/golint", success:function(html){
+		    	console.log(html)
+			 } });
+		}
 	  	
 	    setTimeout(function(){
+
+
+	    vetAndLint()
+
 	 
 	 	$.ajax({url: "/api/pkg-bugs?pkg=" + {{.PKG}}, success:function(html){
 	 		//console.log(html)

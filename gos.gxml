@@ -662,24 +662,28 @@
 					pkg := r.FormValue("pkg")
 					file := r.FormValue("path")
 					path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, file)
-
+					
 					cmd := exec.Command("golint", path)
 					stOut, _ := cmd.CombinedOutput()
 
-					response = string(stOut)
+					res := Dex{ Text : string(stOut) }
+
+					response = mResponse (res)
 
 				</end>
 
 				<end path="/api/govet" type="POST" >
 					
 					pkg := r.FormValue("pkg")
-					file := r.FormValue("path")
-					path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, file)
-
-					cmd := exec.Command("go", "vet", path)
+					path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg)
+					
+					os.Chdir(path)
+					cmd := exec.Command("go", "vet")
 					stOut, _ := cmd.CombinedOutput()
 
-					response = string(stOut)
+					res := Dex{ Text : string(stOut) }
+
+					response = mResponse (res)
 
 				</end>
 

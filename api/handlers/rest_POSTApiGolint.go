@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/sessions"
+	types "github.com/thestrukture/IDE/types"
 )
 
 //
@@ -21,7 +22,9 @@ func POSTApiGolint(w http.ResponseWriter, r *http.Request, session *sessions.Ses
 	cmd := exec.Command("golint", path)
 	stOut, _ := cmd.CombinedOutput()
 
-	response = string(stOut)
+	res := types.Dex{Text: string(stOut)}
+
+	response = mResponse(res)
 
 	callmet = true
 	return

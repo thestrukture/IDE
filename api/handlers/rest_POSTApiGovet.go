@@ -9,19 +9,22 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/sessions"
+	types "github.com/thestrukture/IDE/types"
 )
 
 //
 func POSTApiGovet(w http.ResponseWriter, r *http.Request, session *sessions.Session) (response string, callmet bool) {
 
 	pkg := r.FormValue("pkg")
-	file := r.FormValue("path")
-	path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, file)
+	path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg)
 
-	cmd := exec.Command("go", "vet", path)
+	os.Chdir(path)
+	cmd := exec.Command("go", "vet")
 	stOut, _ := cmd.CombinedOutput()
 
-	response = string(stOut)
+	res := types.Dex{Text: string(stOut)}
+
+	response = mResponse(res)
 
 	callmet = true
 	return
