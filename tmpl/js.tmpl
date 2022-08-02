@@ -10,7 +10,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Welcome to the Strukture! To get started enter a username that will be with chat.</p>
+        <p>Welcome to the Strukture! To get started enter a username that will be used for chat.</p>
         <hr>
         <p><input type="text" class="form-control username-input" name="" placeholder="username"></p>
       </div>
@@ -61,7 +61,7 @@
       }
 
       if(!window.localStorage["struktureid"]){
-        window.localStorage.struktureid = `makeid()-makeid()-(new Date()).getTime()`;
+        window.localStorage.struktureid = `${makeid()}-${makeid()}-${(new Date()).getTime()}`;
       }
 
     } catch(e) {
@@ -362,6 +362,99 @@
     }
     langTools.addCompleter(autoCompleter);
 
+     function vetAndLint(id,pkg, path){
+      resetVetter(id)
+      let file = path
+      let lineArr = {}
+        $.ajax({type : "POST", data : { 
+          pkg 
+        } ,url: "/api/govet", success:function(html){
+          
+          let cText = html.Text.split("\n")
+          
+          for(var i = 1; i < cText.length;i++){
+
+            let line = cText[i]
+
+            if ( line.includes(file) ){
+              let lineParts = line.split(":")
+              if( lineParts[2] ){
+                let lastBit = lineParts[ lineParts.length - 1]
+                console.log(lineParts[2], lastBit)
+                if(!lineArr[lineParts[2]]){
+                  lineArr[ lineParts[2] ] = []
+                }
+
+                lineArr[ lineParts[2] ].push(lastBit)
+
+              }
+            }
+          }
+          
+          $(".ace_gutter-cell",  "#" + id).each(function(e,i){
+            let key = $(this).text().trim()
+
+          if (lineArr[key] && !$("i", this).length ){
+            $(this).attr("style", "height:12px;background:yellow;")
+            $(this).attr("title", lineArr[key].join("\n"))
+          
+          }
+        })
+
+       } });
+
+
+        $.ajax({type : "POST", data : { 
+          pkg,
+          path 
+        },url: "/api/golint", success:function(html){
+          
+          let cText = html.Text.split("\n")
+          
+          for(var i = 0; i < cText.length;i++){
+
+            let line = cText[i]
+
+            if ( line.includes(file) ){
+              let lineParts = line.split(":")
+              if( lineParts[1] ){
+                let lastBit = lineParts[ lineParts.length - 1]
+                console.log(lineParts[1], lastBit)
+                if(!lineArr[lineParts[1]]){
+                  lineArr[ lineParts[1] ] = []
+                }
+
+                lineArr[ lineParts[1] ].push(lastBit)
+
+              }
+            }
+          }
+          console.log(lineArr)
+          $(".ace_gutter-cell",  "#" + id).each(function(e,i){
+            let key = $(this).text().trim()
+
+          if (lineArr[key] && !$("i", this).length ){
+            $(this).attr("style", "height:12px;background:yellow;")
+            $(this).attr("title", lineArr[key].join("\n"))
+          
+          }
+        })
+
+       } });
+    }
+
+    function resetVetter(id){
+      $(".ace_gutter-cell",  "#" + id).each(function(e,i){
+
+        if ( $("i", this).length  )
+          return
+
+        let el = $(this)
+        el.attr("style", "height:12px")
+        el.attr("title", null)
+      })
+    }
+      
 
     function ClearSideBay(){
       $(".side-bay").html("");
@@ -708,9 +801,13 @@
 
         if(!custom_data)
           $(".side-bay").html(html);
+
+        vetAndLint(editor,  pkv, link)
       },error:function(e){
         if(!custom_data)
           $(".side-bay").html(e.responseText);
+
+        vetAndLint(editor, pkv, link)
       }
     });
     }
