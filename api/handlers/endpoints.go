@@ -47,6 +47,14 @@ func ApiAttempt(w http.ResponseWriter, r *http.Request) (callmet bool) {
 
 		response, callmet = POSTApiComposer(w, r, session)
 
+	} else if isURL := (r.URL.Path == "/api/golint" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+
+		response, callmet = POSTApiGolint(w, r, session)
+
+	} else if isURL := (r.URL.Path == "/api/govet" && r.Method == strings.ToUpper("POST")); !callmet && isURL {
+
+		response, callmet = POSTApiGovet(w, r, session)
+
 	} else if !callmet && gosweb.UrlAtZ(r.URL.Path, "/api/socket") {
 
 		response, callmet = ApiSocket(w, r, session)

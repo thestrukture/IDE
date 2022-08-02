@@ -93,11 +93,22 @@
 
 				}
 
-
+				
 				if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/dlv" + trailerEx); os.IsNotExist(err) {
 					fmt.Println("Delve not present, installing from github.com/go-delve/delve/cmd/dlv")
 
 					_, err1 := core.RunCmdSmart("go install github.com/go-delve/delve/cmd/dlv@latest")
+
+					if err1 != nil {
+					    	log.Fatal(err1)
+					}
+
+				}
+
+				if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/golint" + trailerEx); os.IsNotExist(err) {
+					fmt.Println("Golint not present, installing from golang.org/x/lint/golint")
+
+					_, err1 := core.RunCmdSmart("go install golang.org/x/lint/golint@latest")
 
 					if err1 != nil {
 					    	log.Fatal(err1)
@@ -644,6 +655,32 @@
 				<end path="/api/composer" type="POST" >
 					methods.GenerateComposeFile(r)
 					response = "OK"
+				</end>
+
+				<end path="/api/golint" type="POST" >
+					
+					pkg := r.FormValue("pkg")
+					file := r.FormValue("path")
+					path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, file)
+
+					cmd := exec.Command("golint", path)
+					stOut, _ := cmd.CombinedOutput()
+
+					response = string(stOut)
+
+				</end>
+
+				<end path="/api/govet" type="POST" >
+					
+					pkg := r.FormValue("pkg")
+					file := r.FormValue("path")
+					path := filepath.Join(os.ExpandEnv("$GOPATH"), "src", pkg, file)
+
+					cmd := exec.Command("go", "vet", path)
+					stOut, _ := cmd.CombinedOutput()
+
+					response = string(stOut)
+
 				</end>
 
 

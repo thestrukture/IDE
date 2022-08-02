@@ -219,3 +219,13 @@ func TestPOSTApiBreakpoints(t *testing.T) {
 
 	/* TODO : Implement breakpoint tests */
 }
+
+func TestPOSTApiGolint(t *testing.T) {
+
+	t.Error("Test for handler POSTApiGolint not implemented!!")
+}
+
+func TestPOSTApiGovet(t *testing.T) {
+
+	t.Error("Test for handler POSTApiGovet not implemented!!")
+}

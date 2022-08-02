@@ -82,6 +82,17 @@ func LaunchServer() {
 
 	}
 
+	if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/bin/golint" + trailerEx); os.IsNotExist(err) {
+		fmt.Println("Golint not present, installing from golang.org/x/lint/golint")
+
+		_, err1 := core.RunCmdSmart("go install golang.org/x/lint/golint@latest")
+
+		if err1 != nil {
+			log.Fatal(err1)
+		}
+
+	}
+
 	globals.AutocompletePath = filepath.Join(os.ExpandEnv("$GOPATH"), "strukture-autocomplete")
 
 	if _, err := os.Stat(globals.AutocompletePath); os.IsNotExist(err) {
