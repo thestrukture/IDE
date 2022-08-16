@@ -48,6 +48,8 @@ Please create a new issue on Github to report a bug.
 
 ## How to use the strukture
 
+[Debug with the strukture](https://youtu.be/p5qVzv-dojo)
+
 Get training for $299.99 [https://thestrukture.gumroad.com/l/strukture_live_training](https://thestrukture.gumroad.com/l/strukture_live_training)
 
 ## License
