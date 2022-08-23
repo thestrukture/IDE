@@ -47,7 +47,7 @@ func POSTApiPut(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 
 		response = templates.Alert(types.Alertbs{Type: "warning", Text: r.FormValue("target") + " saved!"})
 	} else if r.FormValue("type") == "30" {
-		ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+filepath.Join(r.FormValue("pkg"), r.FormValue("target")), []byte(r.FormValue("data")), 0777)
+		ioutil.WriteFile(filepath.Join(os.ExpandEnv("$GOPATH"), "src" ,r.FormValue("pkg"), r.FormValue("target")), []byte(r.FormValue("data")), 0777)
 
 		response = templates.Alert(types.Alertbs{Type: "warning", Text: r.FormValue("target") + " saved!"})
 	} else if r.FormValue("type") == "4" {

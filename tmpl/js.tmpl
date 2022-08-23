@@ -48,7 +48,93 @@
 
     var termsize = 0;
 
+    var dirHandle;
 
+    async function uploadDirectory(project){
+
+      dirHandle = await window.showDirectoryPicker();
+
+      iterateOver(dirHandle, project)
+    }
+
+    const headers = {
+            "accept": "*/*",
+            "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest"
+    }
+
+    async function iterateOver(dirHandle, project, path = "/"){
+
+      var it = dirHandle.entries()
+      var next = await it.next()
+
+      while(!next.done){
+
+        const [name, handler] = next.value
+
+         if (handler.kind === 'directory') {
+              // run directory code
+              let newPath = path == "/"  ? path + name  : path + "/" +  name
+              //mkdir
+              await fetch("http://localhost:8884/api/act", {
+                headers,
+                "referrer": "http://localhost:8884/",
+                "referrerPolicy": "strict-origin-when-cross-origin",
+                "body": `type=60&pkg=${project}&prefix=${path}&path=${name}&basesix=&fmode=dir`,
+                "method": "POST",
+                "mode": "cors",
+                "credentials": "include"
+              });
+
+              await iterateOver(handler, project, newPath)
+
+         } else  {
+
+            // write file
+            
+              
+          await fetch("http://localhost:8884/api/act", {
+             headers,
+            "referrer": "http://localhost:8884/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": `type=60&pkg=${project}&prefix=${path}&path=${name}&basesix=&fmode=touch`,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          });
+
+          fileData = await handler.getFile();
+          let text = await fileData.text()
+
+
+          await fetch("http://localhost:8884/api/put", {
+            headers,
+            "referrer": "http://localhost:8884/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": `type=30&target=${path}/${name}&pkg=${project}&data=${encodeURIComponent(text)}`,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          });
+
+          
+
+           
+          
+
+         }
+
+
+        next = await it.next()
+      }
+
+      $(".modal .close").click()
+      updateTree()
+    }
 
     window.debugFn = (cmd) => {
       socketTerminal.send(cmd + " \n");
@@ -351,6 +437,8 @@
 
                       return ret
                     }));
+                  } else {
+                     callback(null, [])
                   } 
                 }
               }
@@ -365,12 +453,14 @@
      function vetAndLint(id,pkg, path){
       resetVetter(id)
       let file = path
-      let lineArr = {}
+
+      let errors = []
         $.ajax({type : "POST", data : { 
           pkg 
         } ,url: "/api/govet", success:function(html){
           
           let cText = html.Text.split("\n")
+         
           
           for(var i = 1; i < cText.length;i++){
 
@@ -380,31 +470,22 @@
               let lineParts = line.split(":")
               if( lineParts[2] ){
                 let lastBit = lineParts[ lineParts.length - 1]
-                console.log(lineParts[2], lastBit)
-                if(!lineArr[lineParts[2]]){
-                  lineArr[ lineParts[2] ] = []
-                }
-
-                lineArr[ lineParts[2] ].push(lastBit)
+                
+                errors.push({
+                    row: parseInt(lineParts[1]) - 1,
+                    column: 0,
+                    text: lastBit, 
+                    type: "warning" //This would give a red x on the gutter
+                })
+          
 
               }
             }
           }
-          
-          $(".ace_gutter-cell",  "#" + id).each(function(e,i){
-            let key = $(this).text().trim()
 
-            if (lineArr[key] && !$("i", this).length ){
-              $(this).attr("style", "height:12px;background:yellow;")
-             
-              $(this).unbind()
-              $(this).popover({
-                content : lineArr[key].join("<br />"),
-                placement : "right"
-              });
-            
-            }
-          })
+          editors[id].getSession().setAnnotations(errors)
+          
+          
 
        } });
 
@@ -416,6 +497,7 @@
           
           let cText = html.Text.split("\n")
           
+          
           for(var i = 0; i < cText.length;i++){
 
             let line = cText[i]
@@ -424,47 +506,26 @@
               let lineParts = line.split(":")
               if( lineParts[1] ){
                 let lastBit = lineParts[ lineParts.length - 1]
-                console.log(lineParts[1], lastBit)
-                if(!lineArr[lineParts[1]]){
-                  lineArr[ lineParts[1] ] = []
-                }
+                
+                errors.push({
+                    row: parseInt(lineParts[1]) - 1,
+                    column: 0,
+                    text: lastBit, 
+                    type: "warning" //This would give a red x on the gutter
+                })
 
-                lineArr[ lineParts[1] ].push(lastBit)
 
               }
             }
           }
-          console.log(lineArr)
-          $(".ace_gutter-cell",  "#" + id).each(function(e,i){
-            let key = $(this).text().trim()
-
-          if (lineArr[key] && !$("i", this).length ){
-            $(this).attr("style", "height:12px;background:yellow;")
-
-            $(this).unbind()
-            $(this).popover({
-              content : lineArr[key].join("<br />"),
-              placement : "right"
-            });
           
-          }
-        })
+          editors[id].getSession().setAnnotations(errors)
 
        } });
     }
 
     function resetVetter(id){
-      $(".ace_gutter-cell",  "#" + id).each(function(e,i){
-
-        if ( $("i", this).length  )
-          return
-
-     
-
-        let el = $(this)
-        el.attr("style", "height:12px")
-        el.unbind()
-      })
+      editors[id].getSession().clearAnnotations()
     }
       
 

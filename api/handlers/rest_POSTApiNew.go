@@ -20,7 +20,7 @@ func POSTApiNew(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		inputs := []types.Inputs{}
 		inputs = append(inputs, types.Inputs{Type: "text", Name: "name", Misc: "required", Text: "Package Name"})
 		inputs = append(inputs, types.Inputs{Type: "hidden", Name: "type", Value: "0"})
-		inputs = append(inputs, types.Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Existing package"}})
+		inputs = append(inputs, types.Inputs{Type: "select", Misc: "Project type", Name: "usegos", Value: "Scratch", Options: []string{"Scratch", "Existing package", "Select from folder"}})
 
 		response = templates.Modal(types.SModal{Body: "", Title: "Add Package", Color: "#ededed", Form: types.Forms{Link: "/api/act", CTA: "Add Package", Class: "warning btn-block", Buttons: []types.SButton{}, Inputs: inputs}})
 

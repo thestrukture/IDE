@@ -1732,10 +1732,12 @@ for _, v := range apps {
 	     		response = net_bModal(sModal{Body: "",Title: "Add Package",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"Add Package",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
 				
 			} else if r.FormValue("type") == "100" {
+
 	     		inputs := []Inputs{}
 	     		inputs = append(inputs, Inputs{Type:"text",Name:"name",Misc: "required",Text:"Plugin install path"})
 	     		inputs = append(inputs, Inputs{Type:"hidden", Name: "type" ,Value: "100"})
 	     		response = net_bModal(sModal{Body: "",Title: "PLUGINS",Color: "#ededed",Form:Forms{Link:"/api/act",CTA:"ADD",Class:"warning btn-block",Buttons:[]SButton{}, Inputs:inputs }})
+
 			} else if r.FormValue("type") == "101" {
 	     		
 	     		response = bPluginList(gosweb.NoStruct{})
@@ -1795,6 +1797,9 @@ for _, v := range apps {
 				    //Users.Update(bson.M{"uid": me.UID}, me)
 				    methods.SaveApps(apps)
 			    	response = net_bAlert(Alertbs{Type:"warning",Text:"Success package " + r.FormValue("name") + " was created!",Redirect: "javascript:updateTree()"})
+
+			    	if strings.Contains(useGos, "Scratch")   {
+
 				}
 			} else 	if r.FormValue("type") == "100" {
 				plugins := methods.GetPlugins()

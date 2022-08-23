@@ -26,16 +26,17 @@ func POSTApiAct(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 		apps := methods.GetApps()
 		app := types.App{Type: "webapp", Name: r.FormValue("name")}
 		useGos := r.FormValue("usegos")
+		fullDir := filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name)
 
 		var err error
 
 		dir := os.ExpandEnv("$GOPATH") + "/src/" + r.FormValue("name")
 
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			if strings.Contains(useGos, "Scratch") {
+			if strings.Contains(useGos, "Scratch") || strings.Contains(useGos, "Select") {
 				app.Type = "app"
 
-				fullDir := filepath.Join(os.ExpandEnv("$GOPATH"), "src", app.Name)
+				
 				err = os.MkdirAll(fullDir, 0700)
 
 				if err != nil {
@@ -63,13 +64,22 @@ func POSTApiAct(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 			}
 		} else {
 			app.Type = "app"
+			
 		}
 
 		if err == nil {
 			apps = append(apps, app)
-			//Users.Update(bson.M{"uid": me.UID}, me)
+			
 			methods.SaveApps(apps)
 			response = templates.Alert(types.Alertbs{Type: "warning", Text: "Success package " + r.FormValue("name") + " was created!", Redirect: "javascript:updateTree()"})
+			
+			if strings.Contains(useGos, "Select")   {
+				response += fmt.Sprintf(`<h3>Action Required:</h3><br/><button 
+					onclick="uploadDirectory('%s')" 
+					class="btn btn-block btn-primary"
+				  >Upload files</button><br/>`, app.Name)
+			}
+
 		}
 	} else if r.FormValue("type") == "100" {
 		plugins := methods.GetPlugins()
@@ -153,9 +163,7 @@ func POSTApiAct(w http.ResponseWriter, r *http.Request, session *sessions.Sessio
 
 		if r.FormValue("fmode") == "touch" {
 			addstr := ""
-			if !strings.Contains(r.FormValue("path"), ".go") {
-				addstr = ".go"
-			}
+	
 			_, err := os.Create(filepath.Join(os.ExpandEnv("$GOPATH"), "/src/", r.FormValue("pkg"), r.FormValue("prefix"), r.FormValue("path")+addstr))
 
 			if err != nil {

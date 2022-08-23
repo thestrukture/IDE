@@ -5,6 +5,8 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/d46b0bfb51e827632710/maintainability)](https://codeclimate.com/github/thestrukture/IDE/maintainability)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_shield)
 
+
+
 ## About IDE
 Just a Go IDE. It features :
 - Autocomplete.
@@ -17,9 +19,9 @@ Just a Go IDE. It features :
 - Breakpoints and debugging with Delve.
 - Regex directory search.
 - Automatically lints your code in the background, and suggests code fixes.
+
 ## Requirements
-- Go v1.15+.
-- Git. Git present as a command on your system.
+- Go v1.18+.
 
 ## First Launch
 
