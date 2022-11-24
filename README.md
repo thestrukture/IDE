@@ -52,7 +52,7 @@ Please create a new issue on Github to report a bug.
 
 [Debug with the strukture](https://youtu.be/p5qVzv-dojo)
 
-Get training for $299.99 [https://thestrukture.gumroad.com/l/strukture_live_training](https://thestrukture.gumroad.com/l/strukture_live_training)
+
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fthestrukture%2FIDE.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fthestrukture%2FIDE?ref=badge_large)
